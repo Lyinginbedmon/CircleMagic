@@ -1,0 +1,7 @@
+{
+    "parent": "item/generated",
+    "textures":
+    {
+    	"layer0": "misc19:items/pendulum_weight"
+    }
+}

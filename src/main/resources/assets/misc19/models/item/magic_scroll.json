@@ -1,0 +1,8 @@
+{
+    "parent": "item/generated",
+    "textures":
+    {
+    	"layer0": "misc19:items/spell_scroll",
+    	"layer1": "misc19:items/spell_scroll_rune"
+    }
+}

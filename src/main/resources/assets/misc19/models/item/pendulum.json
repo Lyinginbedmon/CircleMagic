@@ -1,0 +1,14 @@
+{
+    "parent": "item/handheld_rod",
+    "textures": {
+        "layer0": "misc19:items/pendulum"
+    },
+    "overrides": [
+        {
+            "predicate": {
+                "misc19:cast": 1
+            },
+            "model": "misc19:item/pendulum_cast"
+        }
+    ]
+}
