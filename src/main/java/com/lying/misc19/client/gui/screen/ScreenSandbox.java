@@ -9,6 +9,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.lwjgl.glfw.GLFW;
 
 import com.lying.misc19.client.Canvas;
+import com.lying.misc19.client.GraphicsTest;
 import com.lying.misc19.client.gui.menu.MenuSandbox;
 import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
@@ -68,6 +69,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private Button printButton, nextCatButton, prevCatButton;
 	private ImageButton copyButton, pasteButton;
+	
+	GraphicsTest test = new GraphicsTest();
 	
 	public ScreenSandbox(MenuSandbox menuIn, Inventory inv, Component p_96550_)
 	{
@@ -205,6 +208,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		}
 		
 		super.render(matrixStack, mouseX, mouseY, partialTicks);
+		
+		test.render(mouseX, mouseY, matrixStack);
 	}
 	
 	/** Returns true if the part will be added as an input, false for an output */
