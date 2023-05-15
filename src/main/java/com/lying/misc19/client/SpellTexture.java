@@ -42,7 +42,9 @@ public class SpellTexture
 	final ResourceLocation textureLocation;
 	NativeImage image = new NativeImage(TEX_SIZE, TEX_SIZE, false);
 	DynamicTexture tex = new DynamicTexture(image);
+	final int resolution = 1;	// How many pixels in the texture vs rendered image, usually a power of 2
 	
+	private Vec2 centre = new Vec2(TEX_SIZE / 2, TEX_SIZE / 2);
 	private int minX = TEX_SIZE / 2, minY = TEX_SIZE / 2;
 	private int maxX = 0, maxY = 0;
 	
@@ -153,11 +155,13 @@ public class SpellTexture
 			dirty = false;
 		}
 		
+		float wide = ((float)width() / resolution) / 2;
+		float high = ((float)height() / resolution) / 2;
 		Vec2[] vertices = new Vec2[]{
-				new Vec2(screenX - width() / 2, screenY - height() / 2),
-				new Vec2(screenX + width() / 2, screenY - height() / 2),
-				new Vec2(screenX + width() / 2, screenY + height() / 2),
-				new Vec2(screenX - width() / 2, screenY + height() / 2)};
+				new Vec2(screenX - wide, screenY - high),
+				new Vec2(screenX + wide, screenY - high),
+				new Vec2(screenX + wide, screenY + high),
+				new Vec2(screenX - wide, screenY + high)};
 		
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.setShaderTexture(0, this.textureLocation);
@@ -173,19 +177,25 @@ public class SpellTexture
 	
 	public void drawCircle(int x, int y, int radius, List<PixelProvider> conflictors)
 	{
-		Vec2 offset = new Vec2(0, radius);
+		Vec2 origin = centre.add(new Vec2(x, y).add(centre.negated()).scale(resolution));
+		Vec2 offset = new Vec2(0, radius).scale(resolution);
 		double rads = Math.toRadians(11.25D);
 		double cos = Math.cos(rads);
 		double sin = Math.sin(rads);
 		for(int i=0; i<32; i++)
 		{
-			Vec2 pos = new Vec2(x, y).add(offset);
-			Vec2 posB = new Vec2(x, y).add(offset = M19Utils.rotate(offset, cos, sin));
-			drawLine(pos, posB, conflictors);
+			Vec2 pos = origin.add(offset);
+			Vec2 posB = origin.add(offset = M19Utils.rotate(offset, cos, sin));
+			drawLineBetween(pos, posB, conflictors);
 		}
 	}
 	
 	public void drawLine(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
+	{
+		drawLineBetween(a.scale(resolution), b.scale(resolution), conflictors);
+	}
+	
+	public void drawLineBetween(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
 	{
 		Vec2 dir = b.add(a.negated());
 		double len = dir.length();
@@ -213,7 +223,7 @@ public class SpellTexture
 	
 	public void setPixel(int x, int y, List<PixelProvider> conflictors)
 	{
-		if(x < 0 || x > width() || y < 0 || y > height())
+		if(x < 0 || x >= width() || y < 0 || y >= height())
 			return;
 		
 		for(PixelProvider conflictor : conflictors)
