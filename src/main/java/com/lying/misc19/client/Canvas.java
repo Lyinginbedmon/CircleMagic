@@ -31,9 +31,31 @@ public class Canvas
 	public static final int EXCLUSIONS = 10;
 	public static final int DECORATIONS = 15;
 	
-	private Map<Integer, List<ICanvasObject>> elements = new HashMap<>();
+	private final SpellTexture texture;
+	private final Map<Integer, List<ICanvasObject>> elements = new HashMap<>();
 	
-	public void clear() { this.elements.clear(); }
+	public Canvas()
+	{
+		this(SpellTexture.HELD);
+	}
+	
+	public Canvas(ResourceLocation locationIn)
+	{
+		this(new SpellTexture(locationIn));
+	}
+	
+	public Canvas(SpellTexture textureIn)
+	{
+		texture = textureIn;
+	}
+	
+	public void clear()
+	{
+		this.elements.clear();
+		texture.clear();
+	}
+	
+	public SpellTexture texture() { return this.texture; }
 	
 	public void addElement(ICanvasObject object, int zLevel)
 	{
@@ -42,8 +64,9 @@ public class Canvas
 		elements.put(zLevel, objects);
 	}
 	
-	public void drawIntoGUI(PoseStack matrixStack, int width, int height)
+	public void drawIntoGUI(PoseStack matrixStack, int posX, int posY, int width, int height)
 	{
+		this.texture.render(posX, posY);
 		draw(matrixStack, (element, matrix, exclusions) -> element.drawGui(matrixStack, exclusions, width, height));
 	}
 	

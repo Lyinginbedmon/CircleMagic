@@ -1,25 +1,25 @@
 package com.lying.misc19.client.renderer.magic;
 
+import java.util.function.BiConsumer;
+
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.Canvas.Circle;
-import com.lying.misc19.client.Canvas.Line;
+import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.magic.ISpellComponent;
 
 import net.minecraft.world.phys.Vec2;
 
 public class CircleRenderer extends ComponentRenderer
 {
-	public void addToCanvas(ISpellComponent component, Canvas canvas)
+	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
 	{
-		super.addToCanvas(component, canvas);
+		super.addToTexture(component, func);
 		
 		Vec2 pos = component.position();
 		Vec2 core = component.core();
 		Vec2 up = component.up();
-		
-		canvas.addElement(new Line(pos.add(up.scale(-10F)), core.add(up.scale(10F)), 1F), Canvas.DECORATIONS);
-		canvas.addElement(new Circle(core, 10, 1.25F), Canvas.DECORATIONS);
-		canvas.addElement(new Circle(component.core(), 55, 1.25F), Canvas.DECORATIONS);
-		canvas.addElement(new Circle(component.core(), 65, 1.25F), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 10), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 55), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 65), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addLine(pos.add(up.scale(-10F)), core.add(up.scale(10F))), Canvas.DECORATIONS);
 	}
 }

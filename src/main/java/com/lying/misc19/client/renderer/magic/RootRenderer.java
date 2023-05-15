@@ -1,8 +1,10 @@
 package com.lying.misc19.client.renderer.magic;
 
+import java.util.function.BiConsumer;
+
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.Canvas.Circle;
 import com.lying.misc19.client.Canvas.ExclusionCircle;
+import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.magic.ISpellComponent;
 
 import net.minecraft.world.phys.Vec2;
@@ -14,10 +16,15 @@ public class RootRenderer extends ComponentRenderer
 	public void addToCanvas(ISpellComponent component, Canvas canvas)
 	{
 		Vec2 pos = component.position();
-		canvas.addElement(new Circle(pos, spriteScale() + 5, 1.5F), Canvas.GLYPHS);
 		canvas.addElement(new ExclusionCircle(pos, spriteScale() + 5), Canvas.EXCLUSIONS);
+	}
+	
+	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
+	{
+		Vec2 pos = component.position();
+		func.accept(SpellTexture.addCircleConflictor((int)pos.x, (int)pos.y, spriteScale() + 5), Canvas.GLYPHS);
 		
-		canvas.addElement(new Circle(pos, 75, 1.25F), Canvas.DECORATIONS);
-		canvas.addElement(new Circle(pos, 85, 1.25F), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 75), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 85), Canvas.DECORATIONS);
 	}
 }

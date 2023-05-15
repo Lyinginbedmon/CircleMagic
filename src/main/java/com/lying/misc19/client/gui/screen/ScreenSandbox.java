@@ -9,7 +9,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.lwjgl.glfw.GLFW;
 
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.GraphicsTest;
+import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.client.gui.menu.MenuSandbox;
 import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
@@ -69,8 +69,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private Button printButton, nextCatButton, prevCatButton;
 	private ImageButton copyButton, pasteButton;
-	
-	GraphicsTest test = new GraphicsTest();
 	
 	public ScreenSandbox(MenuSandbox menuIn, Inventory inv, Component p_96550_)
 	{
@@ -172,7 +170,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			Vec2 currentPos = new Vec2(scrollX, scrollY);
 			if(currentPos != lastPosition)
 				updateCanvas(arrangement);
-			this.canvas.drawIntoGUI(matrixStack, width, height);
+			this.canvas.drawIntoGUI(matrixStack, (width / 2) + (int)scrollX, (height / 2) + (int)scrollY, width, height);
 			this.lastPosition = currentPos;
 			
 			hoveredPart = getComponentAt(mouseX, mouseY);
@@ -196,7 +194,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		else if(attachPart != null)
 		{
 			attachPart.setPosition(mouseX, mouseY);
-			ComponentRenderers.renderGUI(attachPart, matrixStack, width, height);
+			ComponentRenderers.renderGUI(attachPart, matrixStack, mouseX, mouseY, width, height);
 			
 			if(hoveredPart != null)
 			{
@@ -208,8 +206,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		}
 		
 		super.render(matrixStack, mouseX, mouseY, partialTicks);
-		
-		test.render(mouseX, mouseY, matrixStack);
 	}
 	
 	/** Returns true if the part will be added as an input, false for an output */
@@ -231,7 +227,10 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private void updateCanvas(ISpellComponent arrangement)
 	{
-		this.canvas = ComponentRenderers.populateCanvas(arrangement, null);
+		if(this.canvas != null)
+			this.canvas.texture().close();
+		
+		this.canvas = ComponentRenderers.populateCanvas(arrangement, null, SpellTexture.TEXTURE_LOCATION_1);
 	}
 	
 	public void setNewPart(ResourceLocation component)

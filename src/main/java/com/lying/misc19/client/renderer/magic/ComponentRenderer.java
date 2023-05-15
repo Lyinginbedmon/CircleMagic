@@ -1,9 +1,11 @@
 package com.lying.misc19.client.renderer.magic;
 
+import java.util.function.BiConsumer;
+
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.Canvas.Circle;
 import com.lying.misc19.client.Canvas.ExclusionCircle;
 import com.lying.misc19.client.Canvas.Sprite;
+import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.magic.ISpellComponent;
 
@@ -26,6 +28,18 @@ public class ComponentRenderer
 	{
 		Vec2 pos = component.position();
 		canvas.addElement(new ExclusionCircle(pos, spriteScale() - 6), Canvas.EXCLUSIONS);
-		canvas.addElement(new Circle(pos, spriteScale() - 6, 1.25F), Canvas.GLYPHS);
+	}
+	
+	public final void addToTextureRecursive(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
+	{
+		addToTexture(component, func);
+		component.inputs().forEach((input) -> ComponentRenderers.get(input.getRegistryName()).addToTextureRecursive(input, func));
+		component.outputs().forEach((output) -> ComponentRenderers.get(output.getRegistryName()).addToTextureRecursive(output, func));
+	}
+	
+	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
+	{
+		Vec2 pos = component.position();
+		func.accept(SpellTexture.addCircleConflictor((int)pos.x, (int)pos.y, spriteScale() - 6), Canvas.GLYPHS);
 	}
 }

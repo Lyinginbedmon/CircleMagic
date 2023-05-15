@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.lying.misc19.client.Canvas;
+import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.client.renderer.magic.CircleRenderer;
 import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.HertzRenderer;
@@ -39,10 +40,10 @@ public class ComponentRenderers
 	
 	public static ComponentRenderer get(ResourceLocation name) { return REGISTRY.getOrDefault(name, new ComponentRenderer()); }
 	
-	public static void renderGUI(ISpellComponent component, PoseStack matrixStack, int width, int height)
+	public static void renderGUI(ISpellComponent component, PoseStack matrixStack, int posX, int posY, int width, int height)
 	{
 		// FIXME Don't render any component that is outside the bounds of the GUI
-		populateCanvas(component, matrixStack).drawIntoGUI(matrixStack, width, height);
+		populateCanvas(component, matrixStack).drawIntoGUI(matrixStack, posX, posY, width, height);
 	}
 	
 	public static void renderWorld(ISpellComponent component, PoseStack matrixStack, MultiBufferSource bufferSource)
@@ -52,12 +53,18 @@ public class ComponentRenderers
 	
 	public static Canvas populateCanvas(ISpellComponent component, PoseStack matrixStack)
 	{
-		Canvas canvas = new Canvas();
+		return populateCanvas(component, matrixStack, SpellTexture.TEXTURE_LOCATION_2);
+	}
+	
+	public static Canvas populateCanvas(ISpellComponent component, PoseStack matrixStack, ResourceLocation textureLocation)
+	{
+		Canvas canvas = new Canvas(textureLocation);
 		
 		ResourceLocation registryName = component.getRegistryName();
 		ComponentRenderer renderer = REGISTRY.getOrDefault(registryName, new ComponentRenderer());
 		
 		renderer.addToCanvasRecursive(component, canvas);
+		canvas.texture().update(component);
 		return canvas;
 	}
 }
