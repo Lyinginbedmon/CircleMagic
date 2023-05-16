@@ -72,13 +72,19 @@ public class SpellTexture
 	public void clear()
 	{
 		if(!this.dirty)
-			image.copyFrom(new NativeImage(TEX_SIZE, TEX_SIZE, false));
+		{
+			NativeImage blank = new NativeImage(image.getWidth(), image.getHeight(), false);
+			image.copyFrom(blank);
+			blank.close();
+		}
 		this.dirty = true;
 	}
 	
 	public void close()
 	{
-		image.copyFrom(new NativeImage(TEX_SIZE, TEX_SIZE, false));
+		NativeImage blank = new NativeImage(image.getWidth(), image.getHeight(), false);
+		image.copyFrom(blank);
+		blank.close();
 		this.tex.upload();
 		
 		image.close();
@@ -116,20 +122,15 @@ public class SpellTexture
 		layerMap.put(layer, set);
 	}
 	
-	public static PixelProvider addCircle(int xIn, int yIn, int radius)
+	public static PixelProvider addCircle(int xIn, int yIn, int radius, float thickness, boolean isConflictor)
 	{
 		return new PixelProvider()
 				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawCircle(xIn, yIn, radius, conflictors); }
-				};
-	}
-	
-	public static PixelProvider addCircleConflictor(int xIn, int yIn, int radius)
-	{
-		return new PixelProvider()
-				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawCircle(xIn, yIn, radius, conflictors); }
-					public boolean shouldExclude(int x, int y) { return new Vec2(x, y).distanceToSqr(new Vec2(xIn, yIn)) < (radius * radius); }
+					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors)
+					{
+						texture.drawCircle(xIn, yIn, radius, conflictors);
+					}
+					public boolean shouldExclude(int x, int y) { return isConflictor ? new Vec2(x, y).distanceToSqr(new Vec2(xIn, yIn)) < (radius * radius) : false; }
 				};
 	}
 	
@@ -138,6 +139,20 @@ public class SpellTexture
 		return new PixelProvider()
 				{
 					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawLine(a, b, conflictors); }
+				};
+	}
+	
+	public static PixelProvider addPolygon(Vec2... points)
+	{
+		return new PixelProvider()
+				{
+					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors)
+					{
+						for(int i=0; i<points.length; i++)
+						{
+							texture.drawLine(points[i], points[(i+1)%points.length], conflictors);
+						}
+					}
 				};
 	}
 	
@@ -165,7 +180,7 @@ public class SpellTexture
 		
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.setShaderTexture(0, this.textureLocation);
-	    RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+		RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 		RenderUtils.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX, (buffer) -> 
 		{
 			buffer.vertex(vertices[0].x, vertices[0].y, 0).uv(0F, 0F).endVertex();
@@ -182,6 +197,7 @@ public class SpellTexture
 		double rads = Math.toRadians(11.25D);
 		double cos = Math.cos(rads);
 		double sin = Math.sin(rads);
+		
 		for(int i=0; i<32; i++)
 		{
 			Vec2 pos = origin.add(offset);
@@ -195,7 +211,7 @@ public class SpellTexture
 		drawLineBetween(a.scale(resolution), b.scale(resolution), conflictors);
 	}
 	
-	public void drawLineBetween(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
+	private void drawLineBetween(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
 	{
 		Vec2 dir = b.add(a.negated());
 		double len = dir.length();
@@ -208,7 +224,7 @@ public class SpellTexture
 		}
 	}
 	
-	public void drawSquare(int minX, int minY, int maxX, int maxY, List<PixelProvider> conflictors)
+	private void drawSquare(int minX, int minY, int maxX, int maxY, List<PixelProvider> conflictors)
 	{
 		Vec2 xy = new Vec2(minX, minY);
 		Vec2 Xy = new Vec2(maxX, minY);
@@ -221,14 +237,125 @@ public class SpellTexture
 		drawLine(xY, xy, conflictors);
 	}
 	
-	public void setPixel(int x, int y, List<PixelProvider> conflictors)
+	private static final Vec2[] scanDirections = new Vec2[] 
+			{
+				new Vec2(+1, 0),
+				new Vec2(-1, 0),
+				new Vec2(0, +1),
+				new Vec2(0, -1)
+			};
+	
+	// FIXME Correct inside-polygon confirmation for shape fill
+	/** Performs a simple flood fill on all points inside the given polygon */
+	private void fillPolygon(List<PixelProvider> conflictors, Vec2... points)
+	{
+		if(points.length == 2)
+		{
+			drawLine(points[0], points[1], conflictors);
+			return;
+		}
+		else if(points.length < 2)
+			return;
+		
+		System.out.println("Starting to fill "+points.length+"-pointed polygon");
+		List<Vec2> filled = Lists.newArrayList();
+		List<Vec2> toBeFilled = Lists.newArrayList();
+		Vec2 firstPoint = getFirstPointInside(points);
+		if(firstPoint == null)
+			return;
+		
+		toBeFilled.add(firstPoint);
+		while(!toBeFilled.isEmpty())
+		{
+			System.out.println(" # "+toBeFilled.size()+" points to fill");
+			List<Vec2> nextSet = Lists.newArrayList();
+			
+			for(Vec2 point : toBeFilled)
+			{
+				setPixel((int)point.x, (int)point.y, conflictors);
+				filled.add(point);
+				
+				for(Vec2 dir : scanDirections)
+				{
+					Vec2 offset = point.add(dir);
+					if(nextSet.contains(offset) || filled.contains(offset))
+						continue;
+					
+					if(isInsidePolygon(offset, points))
+						nextSet.add(offset);
+				}
+			}
+			
+			nextSet.removeAll(toBeFilled);
+			toBeFilled.clear();
+			toBeFilled.addAll(nextSet);
+		}
+		System.out.println(" # Complete, "+filled.size()+" points filled");
+	}
+	
+	private static Vec2 getFirstPointInside(Vec2... points)
+	{
+		float minX = Float.MAX_VALUE;
+		float minY = Float.MAX_VALUE;
+		float maxX = Float.MIN_VALUE;
+		float maxY = Float.MIN_VALUE;
+		for(Vec2 point : points)
+		{
+			if(point.x < minX)
+				minX = point.x;
+			if(point.x > maxX)
+				maxX = point.x;
+			if(point.y < minY)
+				minY = point.y;
+			if(point.y > maxY)
+				maxY = point.y;
+		}
+		
+		for(float x=minX; x<maxX; x++)
+			for(float y=minY; y<maxY; y++)
+				if(isInsidePolygon(new Vec2(x, y), points))
+					return new Vec2(x, y);
+		
+		return null;
+	}
+	
+	private static boolean isInsidePolygon(Vec2 point, Vec2... points)
+	{
+		if(points.length < 3)
+			return false;
+		
+		double totalAngle = 0D;
+		for(int i=0; i<points.length; i++)
+		{
+			Vec2 a = points[i];
+			Vec2 b = points[(i+1)%points.length];
+			totalAngle += angle(a.x - point.x, a.y - point.y, b.x - point.x, b.y - point.y);
+		}
+		return Math.abs(totalAngle) >= Math.PI;
+	}
+	
+	private static double angle(double x1, double y1, double x2, double y2)
+	{
+		double theta1 = Math.atan2(y1,x1);
+		double theta2 = Math.atan2(y2,x2);
+		
+		double dtheta = theta2 - theta1;
+		while (dtheta > Math.PI)
+			dtheta -= Math.PI * 2;
+		while (dtheta < -Math.PI)
+			dtheta += Math.PI * 2;
+		
+		return dtheta;
+	}
+	
+	public boolean setPixel(int x, int y, List<PixelProvider> conflictors)
 	{
 		if(x < 0 || x >= width() || y < 0 || y >= height())
-			return;
+			return false;
 		
 		for(PixelProvider conflictor : conflictors)
 			if(conflictor.shouldExclude(x, y))
-				return;
+				return false;
 		
 		image.setPixelRGBA(x, y, -1);
 		
@@ -243,5 +370,6 @@ public class SpellTexture
 			maxY = y;
 		
 		this.dirty = true;
+		return true;
 	}
 }

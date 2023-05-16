@@ -17,9 +17,9 @@ public class CircleRenderer extends ComponentRenderer
 		Vec2 pos = component.position();
 		Vec2 core = component.core();
 		Vec2 up = component.up();
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 10), Canvas.DECORATIONS);
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 55), Canvas.DECORATIONS);
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 65), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 10, 1.25F, false), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 55, 1.25F, false), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 65, 1.25F, false), Canvas.DECORATIONS);
 		func.accept(SpellTexture.addLine(pos.add(up.scale(-10F)), core.add(up.scale(10F))), Canvas.DECORATIONS);
 	}
 }

@@ -20,6 +20,6 @@ public class HertzRenderer extends ComponentRenderer
 	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
 	{
 		Vec2 pos = component.position();
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6), Canvas.GLYPHS);
+		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 1.25F, false), Canvas.GLYPHS);
 	}
 }

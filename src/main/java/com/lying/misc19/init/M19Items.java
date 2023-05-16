@@ -27,6 +27,18 @@ public class M19Items
     // Block items
     public static final RegistryObject<Item> SANDBOX_ITEM = ITEMS.register("sandbox", () -> new BlockItem(M19Blocks.SANDBOX.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> PHANTOM_CUBE_ITEM = ITEMS.register("phantom_cube", () -> new BlockItem(M19Blocks.PHANTOM_CUBE.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> CRUCIBLE_ITEM = ITEMS.register("crucible", () -> new BlockItem(M19Blocks.CRUCIBLE.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> FAIRY_JAR_ITEM = ITEMS.register("fairy_jar", () -> new BlockItem(M19Blocks.FAIRY_JAR.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> MAGIC_SAPLING_ITEM = ITEMS.register("magic_sapling", () -> new BlockItem(M19Blocks.MAGIC_SAPLING.get(), new Item.Properties().tab(TAB)));
+    
+    public static final RegistryObject<Item> INSCRIPTION_STONE_ITEM = ITEMS.register("inscription_stone", () -> new BlockItem(M19Blocks.INSCRIPTION_STONE.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_OAK_ITEM = ITEMS.register("inscription_oak", () -> new BlockItem(M19Blocks.INSCRIPTION_OAK.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_SPRUCE_ITEM = ITEMS.register("inscription_spruce", () -> new BlockItem(M19Blocks.INSCRIPTION_SPRUCE.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_BIRCH_ITEM = ITEMS.register("inscription_birch", () -> new BlockItem(M19Blocks.INSCRIPTION_BIRCH.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_DARK_OAK_ITEM = ITEMS.register("inscription_dark_oak", () -> new BlockItem(M19Blocks.INSCRIPTION_DARK_OAK.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_CRIMSON_ITEM = ITEMS.register("inscription_crimson", () -> new BlockItem(M19Blocks.INSCRIPTION_CRIMSON.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_WARPED_ITEM = ITEMS.register("inscription_warped", () -> new BlockItem(M19Blocks.INSCRIPTION_WARPED.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> INSCRIPTION_MANGROVE_ITEM = ITEMS.register("inscription_mangrove", () -> new BlockItem(M19Blocks.INSCRIPTION_MANGROVE.get(), new Item.Properties().tab(TAB)));
     
 	public static Item register(String nameIn, Item itemIn)
 	{

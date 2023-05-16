@@ -1,6 +1,6 @@
 package com.lying.misc19.init;
 
-import com.lying.misc19.blocks.entity.PhantomBlockEntity;
+import com.lying.misc19.blocks.entity.*;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.Util;
@@ -18,4 +18,18 @@ public class M19BlockEntities
 	public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, Reference.ModInfo.MOD_ID);
 	
 	public static final RegistryObject<BlockEntityType<PhantomBlockEntity>> PHANTOM_CUBE = BLOCK_ENTITIES.register("phantom_cube", () -> BlockEntityType.Builder.of(PhantomBlockEntity::new, M19Blocks.PHANTOM_CUBE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "phantom_cube")));
+	public static final RegistryObject<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE = BLOCK_ENTITIES.register("crucible", () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, M19Blocks.CRUCIBLE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "crucible")));
+	public static final RegistryObject<BlockEntityType<FairyJarBlockEntity>> FAIRY_JAR = BLOCK_ENTITIES.register("fairy_jar", () -> BlockEntityType.Builder.of(FairyJarBlockEntity::new, M19Blocks.FAIRY_JAR.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "fairy_jar")));
+	
+	public static final RegistryObject<BlockEntityType<InscriptionBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscription", () -> BlockEntityType.Builder.of(InscriptionBlockEntity::new, 
+			M19Blocks.INSCRIPTION_ACACIA.get(),
+			M19Blocks.INSCRIPTION_BIRCH.get(),
+			M19Blocks.INSCRIPTION_CRIMSON.get(),
+			M19Blocks.INSCRIPTION_DARK_OAK.get(),
+			M19Blocks.INSCRIPTION_JUNGLE.get(),
+			M19Blocks.INSCRIPTION_MANGROVE.get(),
+			M19Blocks.INSCRIPTION_OAK.get(),
+			M19Blocks.INSCRIPTION_SPRUCE.get(),
+			M19Blocks.INSCRIPTION_STONE.get(),
+			M19Blocks.INSCRIPTION_WARPED.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "inscription")));
 }

@@ -165,7 +165,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				}
 			}
 			
-			arrangement.setPosition((width / 2) + scrollX, (height / 2) + scrollY);
+			arrangement.setPosition((width / 2) + (int)scrollX, (height / 2) + (int)scrollY);
 			
 			Vec2 currentPos = new Vec2(scrollX, scrollY);
 			if(currentPos != lastPosition)
@@ -194,6 +194,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		else if(attachPart != null)
 		{
 			attachPart.setPosition(mouseX, mouseY);
+			// TODO Render attach part as icon only
 			ComponentRenderers.renderGUI(attachPart, matrixStack, mouseX, mouseY, width, height);
 			
 			if(hoveredPart != null)

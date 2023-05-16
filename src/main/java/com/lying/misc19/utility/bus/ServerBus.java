@@ -1,11 +1,21 @@
 package com.lying.misc19.utility.bus;
 
+import com.lying.misc19.blocks.ICruciblePart;
+import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
+import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.reference.Reference;
+import com.lying.misc19.utility.CrucibleManager;
 import com.lying.misc19.utility.SpellManager;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.level.BlockEvent.BreakEvent;
+import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -31,5 +41,48 @@ public class ServerBus
 			return;
 		
 		SpellManager.instance(event.getEntity().getLevel()).removeSpellsFrom(event.getEntity());
+	}
+	
+	/**
+	 * When block is placed, if block is crucible expansion, then notify nearby crucibles
+	 */
+	@SubscribeEvent
+	public static void onBlockPlaced(EntityPlaceEvent event)
+	{
+		if(event.getPlacedBlock().getBlock() instanceof ICruciblePart)
+		{
+			LevelAccessor world = event.getLevel();
+			
+			CrucibleManager manager = CrucibleManager.instance((Level)world);
+			for(BlockPos crucible : manager.getCruciblesWithin(event.getPos(), 64D))
+			{
+				BlockEntity entity = world.getBlockEntity(crucible);
+				if(entity == null || entity.getType() != M19BlockEntities.CRUCIBLE.get())
+					continue;
+				
+				CrucibleBlockEntity crucibleEntity = (CrucibleBlockEntity)entity;
+				crucibleEntity.assessAndAddExpansion(event.getPos());
+			}
+		}
+	}
+	
+	@SubscribeEvent
+	public static void onBlockBroken(BreakEvent event)
+	{
+		if(event.getState().getBlock() instanceof ICruciblePart)
+		{
+			LevelAccessor world = event.getLevel();
+			
+			CrucibleManager manager = CrucibleManager.instance((Level)world);
+			for(BlockPos crucible : manager.getCruciblesWithin(event.getPos(), 16D))
+			{
+				BlockEntity entity = world.getBlockEntity(crucible);
+				if(entity == null || entity.getType() != M19BlockEntities.CRUCIBLE.get())
+					continue;
+				
+				CrucibleBlockEntity crucibleEntity = (CrucibleBlockEntity)entity;
+				crucibleEntity.removeExpansion(event.getPos());
+			}
+		}
 	}
 }

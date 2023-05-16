@@ -22,9 +22,15 @@ public class RootRenderer extends ComponentRenderer
 	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
 	{
 		Vec2 pos = component.position();
-		func.accept(SpellTexture.addCircleConflictor((int)pos.x, (int)pos.y, spriteScale() + 5), Canvas.GLYPHS);
 		
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 75), Canvas.DECORATIONS);
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 85), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addPolygon(
+				pos.add(component.up().scale(spriteScale() + 5)), 
+				pos.add(component.right().scale(spriteScale() + 5)), 
+				pos.add(component.down().scale(spriteScale() + 5)), 
+				pos.add(component.left().scale(spriteScale() + 5))), Canvas.GLYPHS);
+//		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() + 5, 1.5F, true), Canvas.GLYPHS);
+		
+		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 75, 1.25F, false), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 85, 1.25F, false), Canvas.DECORATIONS);
 	}
 }
