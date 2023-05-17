@@ -21,15 +21,15 @@ public class M19BlockEntities
 	public static final RegistryObject<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE = BLOCK_ENTITIES.register("crucible", () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, M19Blocks.CRUCIBLE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "crucible")));
 	public static final RegistryObject<BlockEntityType<FairyJarBlockEntity>> FAIRY_JAR = BLOCK_ENTITIES.register("fairy_jar", () -> BlockEntityType.Builder.of(FairyJarBlockEntity::new, M19Blocks.FAIRY_JAR.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "fairy_jar")));
 	
-	public static final RegistryObject<BlockEntityType<InscriptionBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscription", () -> BlockEntityType.Builder.of(InscriptionBlockEntity::new, 
-			M19Blocks.INSCRIPTION_ACACIA.get(),
-			M19Blocks.INSCRIPTION_BIRCH.get(),
-			M19Blocks.INSCRIPTION_CRIMSON.get(),
-			M19Blocks.INSCRIPTION_DARK_OAK.get(),
-			M19Blocks.INSCRIPTION_JUNGLE.get(),
-			M19Blocks.INSCRIPTION_MANGROVE.get(),
-			M19Blocks.INSCRIPTION_OAK.get(),
-			M19Blocks.INSCRIPTION_SPRUCE.get(),
-			M19Blocks.INSCRIPTION_STONE.get(),
-			M19Blocks.INSCRIPTION_WARPED.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "inscription")));
+	public static final RegistryObject<BlockEntityType<InscriptionBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscribed", () -> BlockEntityType.Builder.of(InscriptionBlockEntity::new, 
+			M19Blocks.INSCRIBED_ACACIA.get(),
+			M19Blocks.INSCRIBED_BIRCH.get(),
+			M19Blocks.INSCRIBED_CRIMSON.get(),
+			M19Blocks.INSCRIBED_DARK_OAK.get(),
+			M19Blocks.INSCRIBED_JUNGLE.get(),
+			M19Blocks.INSCRIBED_MANGROVE.get(),
+			M19Blocks.INSCRIBED_OAK.get(),
+			M19Blocks.INSCRIBED_SPRUCE.get(),
+			M19Blocks.INSCRIBED_STONE.get(),
+			M19Blocks.INSCRIBED_WARPED.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "inscribed")));
 }

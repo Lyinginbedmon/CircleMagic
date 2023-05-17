@@ -36,7 +36,7 @@ public class InscribedBlock extends Block implements ICruciblePart, EntityBlock
 		this(p_49795_, (state) -> state.is(matIn));
 	}
 	
-	public static InscribedBlock log(Properties properties, Block matIn)
+	public static InscribedBlock pillar(Properties properties, Block matIn)
 	{
 		return new InscribedBlock(properties, (state) -> state.is(matIn) && state.getValue(RotatedPillarBlock.AXIS) == Axis.Y);
 	}

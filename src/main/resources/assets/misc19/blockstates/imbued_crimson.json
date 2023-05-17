@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "misc19:block/imbued_crimson",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "misc19:block/imbued_crimson"
+    },
+    "axis=z": {
+      "model": "misc19:block/imbued_crimson",
+      "x": 90
+    }
+  }
+}

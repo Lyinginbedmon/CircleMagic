@@ -1,5 +1,6 @@
 package com.lying.misc19.client;
 
+import com.lying.misc19.Misc19;
 import com.lying.misc19.client.gui.screen.ScreenSandbox;
 import com.lying.misc19.client.renderer.entity.PendulumLayer;
 import com.lying.misc19.client.renderer.entity.SpellLayer;
@@ -8,9 +9,11 @@ import com.lying.misc19.init.M19Items;
 import com.lying.misc19.init.M19Menus;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.SpellManager;
+import com.lying.misc19.utility.bus.ClientBus;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -21,6 +24,7 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -35,6 +39,8 @@ public class ClientSetupEvents
 	{
 		event.enqueueWork(() ->
 		{
+			Misc19.EVENT_BUS.register(new ClientBus());
+			
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.PHANTOM_CUBE.get(), RenderType.translucent());
 			
 //        	MinecraftForge.EVENT_BUS.register(ClientBus.class);
@@ -47,6 +53,12 @@ public class ClientSetupEvents
 			MenuScreens.register(M19Menus.SANDBOX_MENU.get(), ScreenSandbox::new);
 		});
 	}
+    
+    @SubscribeEvent
+    public static void registerColorHandlersBlock(final RegisterColorHandlersEvent.Block event)
+    {
+    	event.register((blockState, tintGetter, pos, layer) -> { return tintGetter != null && pos != null ? BiomeColors.getAverageWaterColor(tintGetter, pos) : -1; }, M19Blocks.CRUCIBLE.get());
+    }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	@SubscribeEvent

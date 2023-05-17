@@ -1,5 +1,6 @@
 package com.lying.misc19.blocks.entity;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,6 @@ import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.VariableSet.Slot;
-import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.CrucibleManager;
 
 import net.minecraft.core.BlockPos;
@@ -25,9 +25,14 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 
 public class CrucibleBlockEntity extends BlockEntity
 {
+	private static final AABB RENDER_AABB = new AABB(-16, -1, -16, 16, 1, 16);
+	public static final int PILLAR_SPACING = 5;
+	
 	private Map<PartType, List<BlockPos>> expansionMap = new HashMap<>();
 	private boolean hasNotifiedManager = false;
 	
@@ -45,6 +50,8 @@ public class CrucibleBlockEntity extends BlockEntity
 	{
 		super(M19BlockEntities.CRUCIBLE.get(), pos, state);
 	}
+	
+	public AABB getRenderBoundingBox() { return RENDER_AABB.move(getBlockPos()); }
 	
 	protected void saveAdditional(CompoundTag compound)
 	{
@@ -79,20 +86,44 @@ public class CrucibleBlockEntity extends BlockEntity
 		;
 	}
 	
+	/** Groups positions together based on the closest multiple of spaces from it to the crucible */
+	public static Map<Integer, List<BlockPos>> delineatePillars(List<BlockPos> pillars, BlockPos crucible)
+	{
+		Map<Integer, List<BlockPos>> delineated = new HashMap<>();
+		
+		// Collect all positions together based on their nearest multiple of spacing distance from the crucible
+		for(BlockPos pillar : pillars)
+		{
+			int ring = Math.round((int)pillar.distSqr(crucible) / PILLAR_SPACING);
+			List<BlockPos> set = delineated.getOrDefault(ring, Lists.newArrayList());
+			set.add(pillar);
+			delineated.put(ring, set);
+		}
+		
+		// Sort all rings radially around the crucible
+		Vec2 crucibleVec = new Vec2(crucible.getX(), crucible.getZ());
+		for(List<BlockPos> val : delineated.values())
+			val.sort(new Comparator<BlockPos>()
+						{
+							public int compare(BlockPos pos1, BlockPos pos2)
+							{
+								Vec2 vec1 = new Vec2(pos1.getX(), pos1.getZ());
+								Vec2 vec2 = new Vec2(pos2.getX(), pos2.getZ());
+								double angle1 = Math.atan2(vec1.x, vec1.y) - Math.atan2(crucibleVec.x, crucibleVec.y);
+								double angle2 = Math.atan2(vec2.x, vec2.y) - Math.atan2(crucibleVec.x, crucibleVec.y);
+								return angle1 > angle2 ? 1 : angle1 < angle2 ? -1 : 0;
+							}
+						});
+		
+		return delineated;
+	}
+	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
 	{
 		if(!tile.hasNotifiedManager)
 		{
 			CrucibleManager.instance(world).addCrucibleAt(pos);
 			tile.hasNotifiedManager = true;
-		}
-		
-		if(world.getGameTime() % Reference.Values.TICKS_PER_SECOND == 0)
-		{
-			System.out.println("# Crucible status #");
-			System.out.println(" # Glyph cap: "+tile.glyphCap()+" ("+tile.getExpansions(PartType.PILLAR).size()+" pillars)");
-			System.out.println(" # Suggestions: "+tile.hasSuggestions()+" ("+tile.getExpansions(PartType.FAIRY).size()+" fairies)");
-			System.out.println(" # Holder points: "+tile.getExpansions(PartType.BOUGH).size());
 		}
 	}
 	

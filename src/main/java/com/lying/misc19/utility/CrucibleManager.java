@@ -17,21 +17,18 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 
+/**
+ * Tracks all known crucibles in the world as a convenient location database
+ * @author Remem
+ *
+ */
 public class CrucibleManager extends SavedData
 {
-	protected static CrucibleManager INSTANCE = null;
 	protected static final String DATA_NAME = Reference.ModInfo.MOD_ID+"_crucible_manager";
 	
 	private List<BlockPos> activeCrucibles = Lists.newArrayList();
 	
-	@SuppressWarnings("unused")
-	private Level world;
-	
-	private CrucibleManager() { this(null); }
-	public CrucibleManager(@Nullable Level worldIn)
-	{
-		this.world = worldIn;
-	}
+	private CrucibleManager() { }
 	
 	@Nullable
 	public static CrucibleManager instance(Level worldIn)
@@ -39,13 +36,7 @@ public class CrucibleManager extends SavedData
 		if(worldIn.isClientSide())
 			return null;
 		
-		if(INSTANCE == null)
-		{
-			ServerLevel overworld = ((ServerLevel)worldIn).getServer().getLevel(Level.OVERWORLD);
-			INSTANCE = overworld.getDataStorage().computeIfAbsent(CrucibleManager::fromNbt, CrucibleManager::new, DATA_NAME);
-			INSTANCE.world = worldIn;
-		}
-		return INSTANCE;
+		return ((ServerLevel)worldIn).getDataStorage().computeIfAbsent(CrucibleManager::fromNbt, CrucibleManager::new, DATA_NAME);
 	}
 	
 	public static CrucibleManager fromNbt(CompoundTag tag)
@@ -59,14 +50,14 @@ public class CrucibleManager extends SavedData
 	{
 		ListTag expansions = new ListTag();
 		activeCrucibles.forEach((block) -> expansions.add(NbtUtils.writeBlockPos(block)));
-		data.put("Expansions", expansions);
+		data.put("Crucibles", expansions);
 		return data;
 	}
 	
 	public void read(CompoundTag data)
 	{
 		this.activeCrucibles.clear();
-		ListTag expansions = data.getList("Expansions", Tag.TAG_COMPOUND);
+		ListTag expansions = data.getList("Crucibles", Tag.TAG_COMPOUND);
 		for(int i=0; i<expansions.size(); i++)
 			activeCrucibles.add(NbtUtils.readBlockPos(expansions.getCompound(i)));
 	}

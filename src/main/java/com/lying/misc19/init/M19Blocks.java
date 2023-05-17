@@ -1,10 +1,15 @@
 package com.lying.misc19.init;
 
-import com.lying.misc19.blocks.*;
+import com.lying.misc19.blocks.Crucible;
+import com.lying.misc19.blocks.FairyJar;
+import com.lying.misc19.blocks.InscribedBlock;
+import com.lying.misc19.blocks.MagicTree;
+import com.lying.misc19.blocks.PhantomBlock;
+import com.lying.misc19.blocks.Sandbox;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.registries.DeferredRegister;
@@ -34,53 +39,69 @@ public class M19Blocks
      *  * Can they be provided in multiple visual forms?
      */
     
-    public static final RegistryObject<Block> CRUCIBLE = BLOCKS.register("crucible", () -> new Crucible(BlockBehaviour.Properties.of(Material.METAL).noOcclusion()));
+    // Dwarf in the flask
+    	/**
+    	 * First crafted item<br>
+    	 * Unlocks recipe for multiblock<br>
+    	 * As part of multiblock: Gives suggestions and hints in editor
+    	 */
     public static final RegistryObject<Block> FAIRY_JAR = BLOCKS.register("fairy_jar", () -> new FairyJar(BlockBehaviour.Properties.of(Material.GLASS).noOcclusion()));
+    
+    // Crucible of Inscription
+    	/**
+    	 * Central inscribing block<br>
+    	 * Resembles a cauldron<br>
+    	 * Can only inscribe scrolls with 5 or fewer components by default
+    	 */
+    public static final RegistryObject<Block> CRUCIBLE = BLOCKS.register("crucible", () -> new Crucible(BlockBehaviour.Properties.of(Material.METAL).noOcclusion()));
+    
+    // Magecrafted Bough
+    	/**
+    	 * Planted as sapling, grown to use in multiblock<br>
+    	 * Resembles a young tree or bonsai tree that has grown into a spiral<br>
+    	 * As part of multiblock: Holds objects for inscribing
+    	 */
     public static final RegistryObject<Block> MAGIC_SAPLING = BLOCKS.register("magic_sapling", () -> new Block(BlockBehaviour.Properties.of(Material.PLANT).noOcclusion()));
     public static final RegistryObject<Block> MAGIC_TREE = BLOCKS.register("magic_tree", () -> new MagicTree(BlockBehaviour.Properties.of(Material.WOOD).noOcclusion()));
     
-    // Dwarf in the flask
-    	/*
-    	 * First crafted item
-    	 * Unlocks recipe for multiblock
-    	 * As part of multiblock: Gives suggestions and hints in editor
-    	 */
-    
-    // Crucible of Inscription
-    	/*
-    	 * Central inscribing block
-    	 * Resembles cauldron
-    	 * Can only inscribe scrolls with 5 or fewer components by default
-    	 */
-    
-    // Magecrafted Bough
-    	/*
-    	 * Planted as sapling, grown to use in multiblock
-    	 * Resembles a young tree or bonsai tree that has grown into a spiral
-    	 * As part of multiblock: Holds objects for inscribing
-    	 */
-    
     // Pillars
-    	/*
-    	 * Inscribed block between two decorative blocks
-    	 * Placed in concentric rings around crucible in sets of 3, 5, 7 etc.
+    	/**
+    	 * Inscribed block between two decorative blocks<br>
+    	 * Placed in concentric rings around crucible in sets of 3, 5, 7 etc.<br>
     	 * As part of multiblock: Increases editor component cap
     	 */
-    public static final RegistryObject<Block> INSCRIPTION_STONE = BLOCKS.register("inscription_stone", () -> new InscribedBlock(BlockBehaviour.Properties.of(Material.STONE), Blocks.STONE));
-    public static final RegistryObject<Block> INSCRIPTION_OAK = BLOCKS.register("inscription_oak", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.OAK_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_SPRUCE = BLOCKS.register("inscription_spruce", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.SPRUCE_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_BIRCH = BLOCKS.register("inscription_birch", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.BIRCH_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_ACACIA = BLOCKS.register("inscription_acacia", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.ACACIA_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_JUNGLE = BLOCKS.register("inscription_jungle", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.JUNGLE_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_DARK_OAK = BLOCKS.register("inscription_dark_oak", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.DARK_OAK_LOG));
-    public static final RegistryObject<Block> INSCRIPTION_CRIMSON = BLOCKS.register("inscription_crimson", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.CRIMSON_STEM));
-    public static final RegistryObject<Block> INSCRIPTION_WARPED = BLOCKS.register("inscription_warped", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.WARPED_STEM));
-    public static final RegistryObject<Block> INSCRIPTION_MANGROVE = BLOCKS.register("inscription_mangrove", () -> InscribedBlock.log(BlockBehaviour.Properties.of(Material.WOOD), Blocks.MANGROVE_LOG));
+    public static final RegistryObject<Block> IMBUED_STONE = BLOCKS.register("imbued_stone", () -> new Block(BlockBehaviour.Properties.of(Material.STONE)));
+    public static final RegistryObject<Block> IMBUED_OAK = BLOCKS.register("imbued_oak", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_SPRUCE = BLOCKS.register("imbued_spruce", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_BIRCH = BLOCKS.register("imbued_birch", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_ACACIA = BLOCKS.register("imbued_acacia", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_JUNGLE = BLOCKS.register("imbued_jungle", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_DARK_OAK = BLOCKS.register("imbued_dark_oak", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_CRIMSON = BLOCKS.register("imbued_crimson", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_WARPED = BLOCKS.register("imbued_warped", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
+    public static final RegistryObject<Block> IMBUED_MANGROVE = BLOCKS.register("imbued_mangrove", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
     
-    // [Decorative spell holder]
-    	/*
-    	 * Displays last spell used aimed at it
+    public static final RegistryObject<Block> INSCRIBED_STONE = BLOCKS.register("inscribed_stone", () -> new InscribedBlock(BlockBehaviour.Properties.of(Material.STONE), IMBUED_STONE.get()));
+    public static final RegistryObject<Block> INSCRIBED_OAK = BLOCKS.register("inscribed_oak", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_OAK.get()));
+    public static final RegistryObject<Block> INSCRIBED_SPRUCE = BLOCKS.register("inscribed_spruce", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_SPRUCE.get()));
+    public static final RegistryObject<Block> INSCRIBED_BIRCH = BLOCKS.register("inscribed_birch", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_BIRCH.get()));
+    public static final RegistryObject<Block> INSCRIBED_ACACIA = BLOCKS.register("inscribed_acacia", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_ACACIA.get()));
+    public static final RegistryObject<Block> INSCRIBED_JUNGLE = BLOCKS.register("inscribed_jungle", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_JUNGLE.get()));
+    public static final RegistryObject<Block> INSCRIBED_DARK_OAK = BLOCKS.register("inscribed_dark_oak", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_DARK_OAK.get()));
+    public static final RegistryObject<Block> INSCRIBED_CRIMSON = BLOCKS.register("inscribed_crimson", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_CRIMSON.get()));
+    public static final RegistryObject<Block> INSCRIBED_WARPED = BLOCKS.register("inscribed_warped", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_WARPED.get()));
+    public static final RegistryObject<Block> INSCRIBED_MANGROVE = BLOCKS.register("inscribed_mangrove", () -> InscribedBlock.pillar(BlockBehaviour.Properties.of(Material.WOOD), IMBUED_MANGROVE.get()));
+    
+    // [Decorative spell holder, name pending]
+    	/**
+    	 * Displays last spell used aimed at it<br>
     	 * Controls for PYR offsets and speeds
+    	 */
+    
+    // Tilled sand
+    	/**
+    	 * Created at the base of completed pillars or by tilling sand with a hoe<br>
+    	 * Behaves like minecart rails in connection patterns, otherwise purely decorative
     	 */
     
     public static void init() { }
