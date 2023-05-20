@@ -53,6 +53,9 @@ public class M19Items
     public static final RegistryObject<Item> INSCRIBED_WARPED_ITEM = ITEMS.register("inscribed_warped", () -> new BlockItem(M19Blocks.INSCRIBED_WARPED.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> INSCRIBED_MANGROVE_ITEM = ITEMS.register("inscribed_mangrove", () -> new BlockItem(M19Blocks.INSCRIBED_MANGROVE.get(), new Item.Properties().tab(TAB)));
     
+    public static final RegistryObject<Item> TILLED_SAND_ITEM = ITEMS.register("tilled_sand", () -> new BlockItem(M19Blocks.TILLED_SAND.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> TILLED_RED_SAND_ITEM = ITEMS.register("tilled_red_sand", () -> new BlockItem(M19Blocks.TILLED_RED_SAND.get(), new Item.Properties().tab(TAB)));
+    
 	public static Item register(String nameIn, Item itemIn)
 	{
 		ITEMS.register(Reference.ModInfo.MOD_ID+"."+nameIn, () -> itemIn);

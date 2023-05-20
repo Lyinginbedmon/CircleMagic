@@ -1,6 +1,7 @@
 {
-    "parent": "block/cube_all",
+    "parent": "block/cube_column",
     "textures": {
-        "all": "misc19:block/imbued_stone"
+        "side": "misc19:block/imbued_stone",
+        "end": "misc19:block/imbued_stone_top"
     }
 }

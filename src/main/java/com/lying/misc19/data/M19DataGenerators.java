@@ -11,5 +11,6 @@ public class M19DataGenerators
 		DataGenerator generator = event.getGenerator();
 		ExistingFileHelper fileHelper = event.getExistingFileHelper();
 		generator.addProvider(event.includeServer(), new M19BlockLootProvider(generator, fileHelper));
+		generator.addProvider(event.includeServer(), new M19ItemTags(generator, fileHelper));
 	}
 }

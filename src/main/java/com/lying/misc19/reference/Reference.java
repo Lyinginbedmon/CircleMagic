@@ -8,7 +8,7 @@ public class Reference
 		public static final String MOD_ID	= "misc19";
 		public static final String MOD_PREFIX	= MOD_ID + ":";
 		
-		public static final String VERSION	= "0.53";
+		public static final String VERSION	= "0.54";
 	}
 	
 	public static class Values

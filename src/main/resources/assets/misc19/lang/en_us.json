@@ -25,6 +25,8 @@
 	"block.misc19.imbued_warped": "Imbued Warped Stem",
 	"block.misc19.imbued_mangrove": "Imbued Mangrove Log",
 	"block.misc19.phantom_cube": "Phantom Cube",
+	"block.misc19.tilled_sand": "Tilled Sand",
+	"block.misc19.tilled_red_sand": "Tilled Red Sand",
 	"entity.misc19.spell": "Spell",
 	"variable.misc19.double": "Double[%s]",
 	"variable.misc19.boolean": "Boolean[%s]",

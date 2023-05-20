@@ -17,6 +17,7 @@ import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.LootTables;
@@ -41,7 +42,7 @@ public class M19BlockLootProvider extends LootTableProvider
 	@Override
 	public String getName()
 	{
-		return "Misc19 block loot tables";
+		return "Circle Magic block loot tables";
 	}
 	
     @Override
@@ -50,6 +51,36 @@ public class M19BlockLootProvider extends LootTableProvider
         tables.clear();
         
         addBlockLootTable("blocks/sandbox", dropSelf(M19Items.SANDBOX_ITEM.get()));
+        addBlockLootTable("blocks/crucible", dropSelf(M19Items.CRUCIBLE_ITEM.get()));
+        addBlockLootTable("blocks/fairy_jar", dropSelf(M19Items.FAIRY_JAR_ITEM.get()));
+        
+        addBlockLootTable("blocks/magic_sapling", dropSelf(M19Items.MAGIC_SAPLING_ITEM.get()));
+        addBlockLootTable("blocks/magic_tree", dropSelf(M19Items.MAGIC_SAPLING_ITEM.get()));
+        
+        addBlockLootTable("blocks/inscribed_stone", dropSelf(M19Items.INSCRIBED_STONE_ITEM.get()));
+        addBlockLootTable("blocks/imbued_stone", dropSelf(M19Items.IMBUED_STONE_ITEM.get()));
+        
+        addBlockLootTable("blocks/tilled_sand", dropSelf(Blocks.SAND));
+        addBlockLootTable("blocks/tilled_red_sand", dropSelf(Blocks.RED_SAND));
+        
+        addBlockLootTable("blocks/inscribed_acacia", dropSelf(M19Items.INSCRIBED_ACACIA_ITEM.get()));
+        addBlockLootTable("blocks/imbued_acacia", dropSelf(M19Items.IMBUED_ACACIA_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_birch", dropSelf(M19Items.INSCRIBED_BIRCH_ITEM.get()));
+        addBlockLootTable("blocks/imbued_birch", dropSelf(M19Items.IMBUED_BIRCH_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_crimson", dropSelf(M19Items.INSCRIBED_CRIMSON_ITEM.get()));
+        addBlockLootTable("blocks/imbued_crimson", dropSelf(M19Items.IMBUED_CRIMSON_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_dark_oak", dropSelf(M19Items.INSCRIBED_DARK_OAK_ITEM.get()));
+        addBlockLootTable("blocks/imbued_dark_oak", dropSelf(M19Items.IMBUED_DARK_OAK_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_jungle", dropSelf(M19Items.INSCRIBED_JUNGLE_ITEM.get()));
+        addBlockLootTable("blocks/imbued_jungle", dropSelf(M19Items.IMBUED_JUNGLE_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_mangrove", dropSelf(M19Items.INSCRIBED_MANGROVE_ITEM.get()));
+        addBlockLootTable("blocks/imbued_mangrove", dropSelf(M19Items.IMBUED_MANGROVE_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_oak", dropSelf(M19Items.INSCRIBED_OAK_ITEM.get()));
+        addBlockLootTable("blocks/imbued_oak", dropSelf(M19Items.IMBUED_OAK_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_spruce", dropSelf(M19Items.INSCRIBED_SPRUCE_ITEM.get()));
+        addBlockLootTable("blocks/imbued_spruce", dropSelf(M19Items.IMBUED_SPRUCE_ITEM.get()));
+        addBlockLootTable("blocks/inscribed_warped", dropSelf(M19Items.INSCRIBED_WARPED_ITEM.get()));
+        addBlockLootTable("blocks/imbued_warped", dropSelf(M19Items.IMBUED_WARPED_ITEM.get()));
         
         return tables;
     }

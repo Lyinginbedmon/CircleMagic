@@ -28,6 +28,6 @@ public class RenderRegistry
 		BlockEntityRenderers.register(M19BlockEntities.PHANTOM_CUBE.get(), PhantomBlockEntityRenderer::new);
 		BlockEntityRenderers.register(M19BlockEntities.CRUCIBLE.get(), CrucibleBlockEntityRenderer::new);
 		
-		BlockEntityRenderers.register(M19BlockEntities.INSCRIPTION.get(), InscriptionBlockEntityRenderer::new);
+		BlockEntityRenderers.register(M19BlockEntities.INSCRIPTION.get(), InscribedBlockEntityRenderer::new);
 	}
 }

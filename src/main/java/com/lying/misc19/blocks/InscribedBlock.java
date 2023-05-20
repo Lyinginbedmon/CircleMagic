@@ -3,7 +3,7 @@ package com.lying.misc19.blocks;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Predicate;
-import com.lying.misc19.blocks.entity.InscriptionBlockEntity;
+import com.lying.misc19.blocks.entity.InscribedBlockEntity;
 import com.lying.misc19.init.M19BlockEntities;
 
 import net.minecraft.core.BlockPos;
@@ -68,13 +68,13 @@ public class InscribedBlock extends Block implements ICruciblePart, EntityBlock
 	
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
-		return new InscriptionBlockEntity(pos, state);
+		return new InscribedBlockEntity(pos, state);
 	}
 	
 	@Nullable
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type)
 	{
-		return createTickerHelper(type, M19BlockEntities.INSCRIPTION.get(), world.isClientSide() ? InscriptionBlockEntity::tickClient : null);
+		return createTickerHelper(type, M19BlockEntities.INSCRIPTION.get(), world.isClientSide() ? InscribedBlockEntity::tickClient : InscribedBlockEntity::tickServer);
 	}
 	
 	@SuppressWarnings("unchecked")

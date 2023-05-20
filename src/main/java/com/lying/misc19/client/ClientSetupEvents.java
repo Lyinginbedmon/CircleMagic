@@ -42,6 +42,7 @@ public class ClientSetupEvents
 			Misc19.EVENT_BUS.register(new ClientBus());
 			
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.PHANTOM_CUBE.get(), RenderType.translucent());
+			ItemBlockRenderTypes.setRenderLayer(M19Blocks.FAIRY_JAR.get(), RenderType.cutout());
 			
 //        	MinecraftForge.EVENT_BUS.register(ClientBus.class);
 			

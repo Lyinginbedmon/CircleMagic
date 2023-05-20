@@ -1,17 +1,15 @@
 package com.lying.misc19.init;
 
-import com.lying.misc19.blocks.Crucible;
-import com.lying.misc19.blocks.FairyJar;
-import com.lying.misc19.blocks.InscribedBlock;
-import com.lying.misc19.blocks.MagicTree;
-import com.lying.misc19.blocks.PhantomBlock;
-import com.lying.misc19.blocks.Sandbox;
+import com.lying.misc19.blocks.*;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -45,7 +43,7 @@ public class M19Blocks
     	 * Unlocks recipe for multiblock<br>
     	 * As part of multiblock: Gives suggestions and hints in editor
     	 */
-    public static final RegistryObject<Block> FAIRY_JAR = BLOCKS.register("fairy_jar", () -> new FairyJar(BlockBehaviour.Properties.of(Material.GLASS).noOcclusion()));
+    public static final RegistryObject<Block> FAIRY_JAR = BLOCKS.register("fairy_jar", () -> new FairyJar(BlockBehaviour.Properties.of(Material.GLASS).sound(SoundType.GLASS).noOcclusion()));
     
     // Crucible of Inscription
     	/**
@@ -70,7 +68,7 @@ public class M19Blocks
     	 * Placed in concentric rings around crucible in sets of 3, 5, 7 etc.<br>
     	 * As part of multiblock: Increases editor component cap
     	 */
-    public static final RegistryObject<Block> IMBUED_STONE = BLOCKS.register("imbued_stone", () -> new Block(BlockBehaviour.Properties.of(Material.STONE)));
+    public static final RegistryObject<Block> IMBUED_STONE = BLOCKS.register("imbued_stone", () -> new ImbuedBlock(BlockBehaviour.Properties.of(Material.STONE)));
     public static final RegistryObject<Block> IMBUED_OAK = BLOCKS.register("imbued_oak", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
     public static final RegistryObject<Block> IMBUED_SPRUCE = BLOCKS.register("imbued_spruce", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
     public static final RegistryObject<Block> IMBUED_BIRCH = BLOCKS.register("imbued_birch", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of(Material.WOOD)));
@@ -103,6 +101,8 @@ public class M19Blocks
     	 * Created at the base of completed pillars or by tilling sand with a hoe<br>
     	 * Behaves like minecart rails in connection patterns, otherwise purely decorative
     	 */
+    public static final RegistryObject<Block> TILLED_SAND = BLOCKS.register("tilled_sand", () -> new TilledSand(14406560, BlockBehaviour.Properties.of(Material.SAND, MaterialColor.SAND).strength(0.5F).sound(SoundType.SAND), Blocks.SAND.defaultBlockState()));
+    public static final RegistryObject<Block> TILLED_RED_SAND = BLOCKS.register("tilled_red_sand", () -> new TilledSand(11098145, BlockBehaviour.Properties.of(Material.SAND, MaterialColor.COLOR_ORANGE).strength(0.5F).sound(SoundType.SAND), Blocks.RED_SAND.defaultBlockState()));
     
     public static void init() { }
 }

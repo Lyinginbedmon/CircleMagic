@@ -21,7 +21,7 @@ public class M19BlockEntities
 	public static final RegistryObject<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE = BLOCK_ENTITIES.register("crucible", () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, M19Blocks.CRUCIBLE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "crucible")));
 	public static final RegistryObject<BlockEntityType<FairyJarBlockEntity>> FAIRY_JAR = BLOCK_ENTITIES.register("fairy_jar", () -> BlockEntityType.Builder.of(FairyJarBlockEntity::new, M19Blocks.FAIRY_JAR.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "fairy_jar")));
 	
-	public static final RegistryObject<BlockEntityType<InscriptionBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscribed", () -> BlockEntityType.Builder.of(InscriptionBlockEntity::new, 
+	public static final RegistryObject<BlockEntityType<InscribedBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscribed", () -> BlockEntityType.Builder.of(InscribedBlockEntity::new, 
 			M19Blocks.INSCRIBED_ACACIA.get(),
 			M19Blocks.INSCRIBED_BIRCH.get(),
 			M19Blocks.INSCRIBED_CRIMSON.get(),

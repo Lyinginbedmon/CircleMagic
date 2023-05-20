@@ -1,0 +1,6 @@
+{
+    "parent": "misc19:block/tilled_red_sand",
+    "textures": {
+        "top": "misc19:block/tilled_red_sand_corner"
+    }
+}

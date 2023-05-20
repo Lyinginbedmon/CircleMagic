@@ -1,7 +1,7 @@
 {
     "parent": "block/cube_column",
     "textures": {
-        "end": "block/stone",
+        "end": "misc19:block/imbued_stone",
         "side": "misc19:block/inscribed_stone"
     }
 }

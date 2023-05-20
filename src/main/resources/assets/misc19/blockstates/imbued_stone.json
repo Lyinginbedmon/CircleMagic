@@ -1,5 +1,7 @@
 {
   "variants": {
-    "": { "model": "misc19:block/imbued_stone" }
+    "position=none": { "model": "misc19:block/imbued_stone" },
+    "position=top": { "model": "misc19:block/imbued_stone_cap" },
+    "position=bottom": { "model": "misc19:block/imbued_stone_cap", "x":180 }
   }
 }

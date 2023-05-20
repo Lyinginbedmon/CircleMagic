@@ -21,7 +21,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -59,7 +58,7 @@ public class CrucibleBlockEntityRenderer implements BlockEntityRenderer<Crucible
 		}
 		
 		Player player = mc.player;
-		if(isPillarBlock(player.getItemInHand(InteractionHand.MAIN_HAND)) || isPillarBlock(player.getItemInHand(InteractionHand.OFF_HAND)))
+		if(M19Utils.canSeeMagic(player))
 			guideTicksVisible = Math.min(guideTicksVisible + 1, Reference.Values.TICKS_PER_SECOND);
 		else if(guideTicksVisible > 0)
 			guideTicksVisible--;

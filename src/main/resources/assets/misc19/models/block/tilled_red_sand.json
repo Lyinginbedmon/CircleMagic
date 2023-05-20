@@ -1,0 +1,7 @@
+{
+    "parent": "misc19:block/tilled_sand",
+    "textures": {
+    	"top": "misc19:block/tilled_red_sand",
+    	"sand": "minecraft:block/red_sand"
+    }
+}
