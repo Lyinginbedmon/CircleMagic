@@ -16,15 +16,20 @@ import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.PixelProvider;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
-import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.M19Utils;
+import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Matrix4f;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec2;
@@ -33,11 +38,6 @@ public class SpellTexture
 {
 	private static final Minecraft mc = Minecraft.getInstance();
 	private static final int TEX_SIZE = 1000;
-	public static final ResourceLocation TEXTURE_LOCATION_1 = new ResourceLocation(Reference.ModInfo.MOD_ID, "magic/editor_display");
-	public static final ResourceLocation TEXTURE_LOCATION_2 = new ResourceLocation(Reference.ModInfo.MOD_ID, "magic/editor_held");
-	
-	public static SpellTexture EDITOR = new SpellTexture(TEXTURE_LOCATION_1);
-	public static SpellTexture HELD = new SpellTexture(TEXTURE_LOCATION_2);
 	
 	final ResourceLocation textureLocation;
 	NativeImage image = new NativeImage(TEX_SIZE, TEX_SIZE, false);
@@ -54,7 +54,7 @@ public class SpellTexture
 	
 	public SpellTexture()
 	{
-		this(TEXTURE_LOCATION_1);
+		this(SpellTextureManager.TEXTURE_EDITOR_MAIN);
 	}
 	
 	public SpellTexture(ResourceLocation location)
@@ -164,12 +164,7 @@ public class SpellTexture
 	
 	public void render(int screenX, int screenY)
 	{
-		if(dirty)
-		{
-			this.tex.upload();
-			dirty = false;
-		}
-		
+		checkDirty();
 		float wide = ((float)width() / resolution) / 2;
 		float high = ((float)height() / resolution) / 2;
 		Vec2[] vertices = new Vec2[]{
@@ -188,6 +183,44 @@ public class SpellTexture
 			buffer.vertex(vertices[2].x, vertices[2].y, 0).uv(1F, 1F).endVertex();
 			buffer.vertex(vertices[1].x, vertices[1].y, 0).uv(1F, 0F).endVertex();
 		});
+	}
+	
+	public void render(PoseStack matrixStack, MultiBufferSource bufferSource)
+	{
+		checkDirty();
+		float wide = ((float)width() / resolution) / 2;
+		float high = ((float)height() / resolution) / 2;
+		Vec2[] vertices = new Vec2[]{
+				new Vec2(-wide, -high),
+				new Vec2(+wide, -high),
+				new Vec2(+wide, +high),
+				new Vec2(-wide, +high)};
+		
+		VertexConsumer buffer = bufferSource.getBuffer(RenderType.text(textureLocation));
+		Matrix4f matrix = matrixStack.last().pose();
+		
+		matrixStack.pushPose();
+			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
+		matrixStack.popPose();
+		
+		matrixStack.pushPose();
+			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
+		matrixStack.popPose();
+	}
+	
+	protected void checkDirty()
+	{
+		if(dirty)
+		{
+			this.tex.upload();
+			dirty = false;
+		}
 	}
 	
 	public void drawCircle(int x, int y, int radius, List<PixelProvider> conflictors)

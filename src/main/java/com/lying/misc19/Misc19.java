@@ -44,8 +44,8 @@ public class Misc19
         EVENT_BUS.addListener(M19DataGenerators::onGatherData);
         
         M19Entities.ENTITIES.register(EVENT_BUS);
-        M19BlockEntities.BLOCK_ENTITIES.register(EVENT_BUS);
         M19Blocks.BLOCKS.register(EVENT_BUS);
+        M19BlockEntities.BLOCK_ENTITIES.register(EVENT_BUS);
         M19Items.ITEMS.register(EVENT_BUS);
         M19Menus.MENUS.register(EVENT_BUS);
         

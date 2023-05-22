@@ -9,7 +9,6 @@ import org.apache.commons.compress.utils.Lists;
 import org.lwjgl.glfw.GLFW;
 
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.client.gui.menu.MenuSandbox;
 import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
@@ -21,6 +20,7 @@ import com.lying.misc19.magic.ISpellComponent.Category;
 import com.lying.misc19.magic.ISpellComponent.Type;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.M19Utils;
+import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -53,7 +53,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private boolean isMoving = false;
 	
 	private int ticksOpen = 0;
-	private Canvas canvas = null;
+	private Canvas canvasMain = new Canvas(SpellTextureManager.TEXTURE_EDITOR_MAIN);
+	private Canvas canvasHeld = new Canvas(SpellTextureManager.TEXTURE_EDITOR_HELD);
 	
 	private Vec2 lastClicked = Vec2.ZERO;
 	private int clickTicks = 0;
@@ -63,7 +64,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private GlyphList glyphList;
 	/** The part we have selected to add with left-click */
-	public ISpellComponent attachPart = null;
+	private ISpellComponent attachPart = null;
 	
 	private ISpellComponent selectedPart = null;
 	
@@ -170,7 +171,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			Vec2 currentPos = new Vec2(scrollX, scrollY);
 			if(currentPos != lastPosition)
 				updateCanvas(arrangement);
-			this.canvas.drawIntoGUI(matrixStack, (width / 2) + (int)scrollX, (height / 2) + (int)scrollY, width, height);
+			this.canvasMain.drawIntoGUI(matrixStack, (width / 2) + (int)scrollX, (height / 2) + (int)scrollY, width, height);
 			this.lastPosition = currentPos;
 			
 			hoveredPart = getComponentAt(mouseX, mouseY);
@@ -182,7 +183,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		this.glyphList.setLeftPos(0);
 		this.glyphList.render(matrixStack, mouseX, mouseY, partialTicks);
 		
-		if(hoveredPart != null && attachPart == null)
+		if(hoveredPart != null && !hasNewPart())
 		{
 			List<Component> tooltip = Lists.newArrayList();
 			tooltip.add(hoveredPart.translatedName().withStyle(ChatFormatting.BOLD));
@@ -191,11 +192,10 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			
 			this.renderComponentTooltip(matrixStack, tooltip, mouseX, mouseY);
 		}
-		else if(attachPart != null)
+		else if(hasNewPart())
 		{
-			attachPart.setPosition(mouseX, mouseY);
-			// TODO Render attach part as icon only
-			ComponentRenderers.renderGUI(attachPart, matrixStack, mouseX, mouseY, width, height);
+//			attachPart.setPosition(mouseX, mouseY);
+			this.canvasHeld.drawIntoGUI(matrixStack, mouseX, mouseY, width, height);
 			
 			if(hoveredPart != null)
 			{
@@ -228,10 +228,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private void updateCanvas(ISpellComponent arrangement)
 	{
-		if(this.canvas != null)
-			this.canvas.texture().close();
-		
-		this.canvas = ComponentRenderers.populateCanvas(arrangement, null, SpellTexture.TEXTURE_LOCATION_1);
+		this.canvasMain.clear();
+		this.canvasMain.populate(arrangement);
 	}
 	
 	public void setNewPart(ResourceLocation component)
@@ -240,15 +238,26 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		clearSelected();
 	}
 	
-	public void setNewPart(ISpellComponent component)
+	public void setNewPart(@Nullable ISpellComponent component)
 	{
-		this.attachPart = SpellComponents.readFromNBT(ISpellComponent.saveToNBT(component));
-		
-		if(component.type() == Type.ROOT && menu.arrangement() == null && tryAddGlyph(null, component, false))
-			attachPart = null;
-		else if(component.type() == Type.HERTZ && menu.arrangement() != null && tryAddGlyph(menu.arrangement(), component, true))
-			attachPart = null;
+		this.canvasHeld.clear();
+		if(component == null)
+			this.attachPart = null;
+		else
+		{
+			if(component.type() == Type.ROOT && menu.arrangement() == null && tryAddGlyph(null, component, false))
+				setNewPart((ISpellComponent)null);
+			else if(component.type() == Type.HERTZ && menu.arrangement() != null && tryAddGlyph(menu.arrangement(), component, true))
+				setNewPart((ISpellComponent)null);
+			else
+			{
+				this.attachPart = SpellComponents.readFromNBT(ISpellComponent.saveToNBT(component));
+				this.canvasHeld.populate(this.attachPart);
+			}
+		}
 	}
+	
+	public boolean hasNewPart() { return this.attachPart != null; }
 	
 	@Nullable
 	public ISpellComponent getComponentAt(int mouseX, int mouseY)
@@ -331,7 +340,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			this.clickTicks = 10;
 		}
 		
-		if(attachPart != null)
+		if(hasNewPart())
 		{
 			if(mouseKey == 0)
 			{
@@ -346,13 +355,13 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				
 				if(tryAddGlyph(target, attachPart, asInput))
 				{
-					attachPart = null;
+					setNewPart((ISpellComponent)null);
 					return true;
 				}
 			}
 			else if(mouseKey == 1)
 			{
-				attachPart = null;
+				setNewPart((ISpellComponent)null);
 				return true;
 			}
 		}

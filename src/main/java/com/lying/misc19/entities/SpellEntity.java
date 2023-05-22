@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.lying.misc19.client.Canvas;
+import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.init.M19Entities;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
@@ -13,6 +15,7 @@ import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.EntityData;
 import com.lying.misc19.utility.SpellData;
 import com.lying.misc19.utility.SpellManager;
+import com.lying.misc19.utility.SpellTextureManager;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -25,6 +28,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class SpellEntity extends Entity
 {
@@ -32,6 +37,9 @@ public class SpellEntity extends Entity
 	protected static final EntityDataAccessor<CompoundTag> SPELL_CACHE = SynchedEntityData.defineId(SpellEntity.class, EntityDataSerializers.COMPOUND_TAG);
 	private static final EntityDataAccessor<Integer> VISIBILITY = SynchedEntityData.defineId(SpellEntity.class, EntityDataSerializers.INT);
 	private static final int VANISH_TIME = Reference.Values.TICKS_PER_SECOND * 2;
+	
+	@OnlyIn(Dist.CLIENT)
+	public Canvas canvas = new Canvas(SpellTextureManager.getNewTexture());
 	
 	protected SpellEntity(Level worldIn) { this(M19Entities.SPELL.get(), worldIn); }
 	public SpellEntity(EntityType<SpellEntity> typeIn, Level worldIn)
@@ -140,6 +148,25 @@ public class SpellEntity extends Entity
 		if(getLevel().isClientSide())
 			return new SpellData(SpellComponents.readFromNBT(getEntityData().get(SPELL_CACHE)), (EntityData)null);
 		return null;
+	}
+	
+	public void setSpell(ISpellComponent spell)
+	{
+		getEntityData().set(SPELL_CACHE, ISpellComponent.saveToNBT(spell));
+		
+		if(this.canvas != null)
+		{
+			this.canvas.clear();
+			this.canvas = ComponentRenderers.populateCanvas(spell);
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public Canvas getCanvas()
+	{
+		this.canvas.clear();
+		this.canvas.populate(getSpell().arrangement());
+		return this.canvas;
 	}
 	
 	public void kill()

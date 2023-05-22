@@ -6,9 +6,7 @@ import com.lying.misc19.blocks.Crucible;
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.ICruciblePart.PartType;
 import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
-import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.M19Utils;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -45,14 +43,13 @@ public class CrucibleBlockEntityRenderer implements BlockEntityRenderer<Crucible
 		// Render contained arrangement
 		if(crucibleTile.arrangement() != null)
 		{
-			ISpellComponent arrangement = crucibleTile.arrangement();
 			RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 			matrixStack.pushPose();
 				matrixStack.translate(0.5D, 0.5D, 0.5D);
 				matrixStack.mulPose(Vector3f.XP.rotationDegrees(-90F));
 				matrixStack.pushPose();
 					matrixStack.scale(5F, 5F, 5F);
-					ComponentRenderers.renderWorld(arrangement, matrixStack, bufferSource);
+					crucibleTile.getCanvas().drawIntoWorld(matrixStack, bufferSource);
 				matrixStack.popPose();
 			matrixStack.popPose();
 		}

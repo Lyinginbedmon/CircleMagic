@@ -1,6 +1,14 @@
 package com.lying.misc19.init;
 
-import com.lying.misc19.blocks.*;
+import com.lying.misc19.blocks.Crucible;
+import com.lying.misc19.blocks.FairyJar;
+import com.lying.misc19.blocks.ImbuedBlock;
+import com.lying.misc19.blocks.InscribedBlock;
+import com.lying.misc19.blocks.MagicSapling;
+import com.lying.misc19.blocks.MagicTree;
+import com.lying.misc19.blocks.PhantomBlock;
+import com.lying.misc19.blocks.Sandbox;
+import com.lying.misc19.blocks.TilledSand;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.world.level.block.Block;
@@ -59,8 +67,8 @@ public class M19Blocks
     	 * Resembles a young tree or bonsai tree that has grown into a spiral<br>
     	 * As part of multiblock: Holds objects for inscribing
     	 */
-    public static final RegistryObject<Block> MAGIC_SAPLING = BLOCKS.register("magic_sapling", () -> new Block(BlockBehaviour.Properties.of(Material.PLANT).noOcclusion()));
-    public static final RegistryObject<Block> MAGIC_TREE = BLOCKS.register("magic_tree", () -> new MagicTree(BlockBehaviour.Properties.of(Material.WOOD).noOcclusion()));
+    public static final RegistryObject<Block> MAGIC_SAPLING = BLOCKS.register("magic_sapling", () -> new MagicSapling(BlockBehaviour.Properties.of(Material.PLANT).noOcclusion().noCollission().randomTicks().instabreak().sound(SoundType.GRASS)));
+    public static final RegistryObject<Block> MAGIC_TREE = BLOCKS.register("magic_tree", () -> new MagicTree(BlockBehaviour.Properties.of(Material.WOOD).noOcclusion().sound(SoundType.WOOD)));
     
     // Pillars
     	/**

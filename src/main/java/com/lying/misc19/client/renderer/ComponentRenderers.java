@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.SpellTexture;
 import com.lying.misc19.client.renderer.magic.CircleRenderer;
 import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.HertzRenderer;
 import com.lying.misc19.client.renderer.magic.RootRenderer;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
+import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -43,28 +43,23 @@ public class ComponentRenderers
 	public static void renderGUI(ISpellComponent component, PoseStack matrixStack, int posX, int posY, int width, int height)
 	{
 		// FIXME Don't render any component that is outside the bounds of the GUI
-		populateCanvas(component, matrixStack).drawIntoGUI(matrixStack, posX, posY, width, height);
+		populateCanvas(component).drawIntoGUI(matrixStack, posX, posY, width, height);
 	}
 	
 	public static void renderWorld(ISpellComponent component, PoseStack matrixStack, MultiBufferSource bufferSource)
 	{
-		populateCanvas(component, matrixStack).drawIntoWorld(matrixStack, bufferSource);
+		populateCanvas(component).drawIntoWorld(matrixStack, bufferSource);
 	}
 	
-	public static Canvas populateCanvas(ISpellComponent component, PoseStack matrixStack)
+	public static Canvas populateCanvas(ISpellComponent component)
 	{
-		return populateCanvas(component, matrixStack, SpellTexture.TEXTURE_LOCATION_2);
+		return populateCanvas(component, SpellTextureManager.TEXTURE_EDITOR_HELD);
 	}
 	
-	public static Canvas populateCanvas(ISpellComponent component, PoseStack matrixStack, ResourceLocation textureLocation)
+	public static Canvas populateCanvas(ISpellComponent component, ResourceLocation textureLocation)
 	{
 		Canvas canvas = new Canvas(textureLocation);
-		
-		ResourceLocation registryName = component.getRegistryName();
-		ComponentRenderer renderer = REGISTRY.getOrDefault(registryName, new ComponentRenderer());
-		
-		renderer.addToCanvasRecursive(component, canvas);
-		canvas.texture().update(component);
+		canvas.populate(component);
 		return canvas;
 	}
 }

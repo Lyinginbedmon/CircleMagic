@@ -8,8 +8,12 @@ import java.util.Map.Entry;
 
 import org.apache.commons.compress.utils.Lists;
 
+import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
+import com.lying.misc19.client.renderer.magic.ComponentRenderer;
+import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.utility.M19Utils;
+import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -36,7 +40,7 @@ public class Canvas
 	
 	public Canvas()
 	{
-		this(SpellTexture.HELD);
+		this(new SpellTexture(SpellTextureManager.TEXTURE_EDITOR_HELD));
 	}
 	
 	public Canvas(ResourceLocation locationIn)
@@ -52,10 +56,19 @@ public class Canvas
 	public void clear()
 	{
 		this.elements.clear();
-		texture.clear();
+		this.texture.clear();
 	}
 	
 	public SpellTexture texture() { return this.texture; }
+	
+	public void populate(ISpellComponent component)
+	{
+		ResourceLocation registryName = component.getRegistryName();
+		ComponentRenderer renderer = ComponentRenderers.get(registryName);
+		
+		renderer.addToCanvasRecursive(component, this);
+		texture().update(component);
+	}
 	
 	public void addElement(ICanvasObject object, int zLevel)
 	{
@@ -75,6 +88,7 @@ public class Canvas
 		matrixStack.pushPose();
 			float scale = 0.005F;
 			matrixStack.scale(scale, -scale, scale);
+			this.texture.render(matrixStack, bufferSource);
 			draw(matrixStack, (element, matrix, exclusions) -> element.drawWorld(matrixStack, bufferSource, exclusions));
 		matrixStack.popPose();
 	}

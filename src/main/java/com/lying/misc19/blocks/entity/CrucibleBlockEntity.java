@@ -10,11 +10,13 @@ import org.apache.commons.compress.utils.Lists;
 
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.ICruciblePart.PartType;
+import com.lying.misc19.client.Canvas;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.VariableSet.Slot;
 import com.lying.misc19.utility.CrucibleManager;
+import com.lying.misc19.utility.SpellTextureManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -27,6 +29,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class CrucibleBlockEntity extends BlockEntity
 {
@@ -35,6 +39,9 @@ public class CrucibleBlockEntity extends BlockEntity
 	
 	private Map<PartType, List<BlockPos>> expansionMap = new HashMap<>();
 	private boolean hasNotifiedManager = false;
+	
+	@OnlyIn(Dist.CLIENT)
+	private Canvas canvas = new Canvas(SpellTextureManager.getNewTexture());
 	
 	private ISpellComponent arrangement = SpellComponents.create(SpellComponents.ROOT_DUMMY).addOutputs(SpellComponents.create(SpellComponents.CIRCLE_BASIC).addOutputs(
 			SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.BAST.glyph())),
@@ -83,7 +90,7 @@ public class CrucibleBlockEntity extends BlockEntity
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
 	{
-		;
+		
 	}
 	
 	/** Groups positions together based on the closest multiple of spaces from it to the crucible */
@@ -130,6 +137,14 @@ public class CrucibleBlockEntity extends BlockEntity
 	public ISpellComponent arrangement()
 	{
 		return this.arrangement;
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public Canvas getCanvas()
+	{
+		this.canvas.clear();
+		this.canvas.populate(arrangement());
+		return this.canvas;
 	}
 	
 	public List<BlockPos> getExpansions(PartType type) { return this.expansionMap.getOrDefault(type, Lists.newArrayList()); }
