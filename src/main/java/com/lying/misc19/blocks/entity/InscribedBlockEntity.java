@@ -43,6 +43,7 @@ public class InscribedBlockEntity extends BlockEntity
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, InscribedBlockEntity tile)
 	{
+		// TODO Add particles moving away from exposed horizontal faces
 		if(tile.isValid())
 			tile.ticksActive++;
 		else

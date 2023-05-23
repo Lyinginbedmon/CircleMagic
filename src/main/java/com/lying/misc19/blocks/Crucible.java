@@ -3,25 +3,17 @@ package com.lying.misc19.blocks;
 import javax.annotation.Nullable;
 
 import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
-import com.lying.misc19.client.gui.menu.MenuSandbox;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
-import com.lying.misc19.item.ISpellContainer;
-import com.lying.misc19.magic.ISpellComponent;
-import com.lying.misc19.reference.Reference;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
@@ -38,7 +30,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class Crucible extends Block implements MenuProvider, EntityBlock
+public class Crucible extends Block implements EntityBlock
 {
 	public static final BooleanProperty HAS_WATER = BooleanProperty.create("has_water");
 	
@@ -62,7 +54,10 @@ public class Crucible extends Block implements MenuProvider, EntityBlock
 				return fillBucket(world, pos, player, heldStack, hand);
 			else if(!world.isClientSide())
 			{
-				player.openMenu(this);
+				BlockEntity blockEntity = world.getBlockEntity(pos);
+				if(blockEntity.getType() == M19BlockEntities.CRUCIBLE.get())
+					((CrucibleBlockEntity)blockEntity).openEditorFor(player);
+				
 				return InteractionResult.CONSUME;
 			}
 		}
@@ -102,20 +97,6 @@ public class Crucible extends Block implements MenuProvider, EntityBlock
 		}
 		
 		return InteractionResult.sidedSuccess(world.isClientSide());
-	}
-	
-	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
-	{
-		ISpellComponent spell = null;
-		ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-		if(stack.getItem() instanceof ISpellContainer)
-			spell = ((ISpellContainer)stack.getItem()).getSpell(stack.getTag());
-		return new MenuSandbox(containerId, inventory, spell);
-	}
-	
-	public Component getDisplayName()
-	{
-		return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".crucible");
 	}
 	
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)

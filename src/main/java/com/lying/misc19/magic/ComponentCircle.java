@@ -45,13 +45,22 @@ public abstract class ComponentCircle extends ComponentBase
 		
 		float spin = 180F / inputGlyphs.size();
 		Vec2 offset = M19Utils.rotate(left().scale(separations().getLeft()), spin / 2);
-		for(ISpellComponent input : inputGlyphs)
+		if(inputGlyphs.size() == 1)
 		{
+			ISpellComponent input = inputGlyphs.get(0);
 			input.setParent(this);
-			input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
 			
-			offset = M19Utils.rotate(offset, spin);
+			Vec2 pos = core.add(up().scale(5));
+			input.setPositionAndOrganise(pos.x, pos.y);
 		}
+		else
+			for(ISpellComponent input : inputGlyphs)
+			{
+				input.setParent(this);
+				input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
+				
+				offset = M19Utils.rotate(offset, spin);
+			}
 		
 		spin = 360F / outputGlyphs.size();
 		offset = M19Utils.rotate(up().scale(separations().getRight()), spin / 2);

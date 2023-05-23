@@ -7,7 +7,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.init.M19Entities;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
@@ -39,7 +38,8 @@ public class SpellEntity extends Entity
 	private static final int VANISH_TIME = Reference.Values.TICKS_PER_SECOND * 2;
 	
 	@OnlyIn(Dist.CLIENT)
-	public Canvas canvas = new Canvas(SpellTextureManager.getNewTexture());
+	public Canvas canvas = new Canvas(SpellTextureManager.getNewTexture(), 8);
+	public boolean needsRedrawing = true;
 	
 	protected SpellEntity(Level worldIn) { this(M19Entities.SPELL.get(), worldIn); }
 	public SpellEntity(EntityType<SpellEntity> typeIn, Level worldIn)
@@ -153,19 +153,18 @@ public class SpellEntity extends Entity
 	public void setSpell(ISpellComponent spell)
 	{
 		getEntityData().set(SPELL_CACHE, ISpellComponent.saveToNBT(spell));
-		
-		if(this.canvas != null)
-		{
-			this.canvas.clear();
-			this.canvas = ComponentRenderers.populateCanvas(spell);
-		}
+		this.needsRedrawing = true;
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public Canvas getCanvas()
 	{
-		this.canvas.clear();
-		this.canvas.populate(getSpell().arrangement());
+		if(this.needsRedrawing)
+		{
+			this.canvas.clear();
+			this.canvas.populate(getSpell().arrangement());
+			this.needsRedrawing = false;
+		}
 		return this.canvas;
 	}
 	

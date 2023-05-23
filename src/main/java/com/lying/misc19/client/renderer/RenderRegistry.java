@@ -29,5 +29,6 @@ public class RenderRegistry
 		BlockEntityRenderers.register(M19BlockEntities.CRUCIBLE.get(), CrucibleBlockEntityRenderer::new);
 		
 		BlockEntityRenderers.register(M19BlockEntities.INSCRIPTION.get(), InscribedBlockEntityRenderer::new);
+		BlockEntityRenderers.register(M19BlockEntities.MAGIC_TREE.get(), MagicTreeBlockEntityRenderer::new);
 	}
 }

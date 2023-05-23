@@ -14,6 +14,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -66,7 +67,7 @@ public class Sandbox extends Block implements MenuProvider
 		ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
 		if(stack.getItem() instanceof ISpellContainer)
 			spell = ((ISpellContainer)stack.getItem()).getSpell(stack.getTag());
-		return new MenuSandbox(containerId, inventory, spell);
+		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), null, spell, 255);
 	}
 	
 	public Component getDisplayName()

@@ -16,7 +16,6 @@ import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.PixelProvider;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
-import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -37,30 +36,39 @@ import net.minecraft.world.phys.Vec2;
 public class SpellTexture 
 {
 	private static final Minecraft mc = Minecraft.getInstance();
-	private static final int TEX_SIZE = 1000;
+	private final int resolution;	// How many pixels in the texture vs rendered image, usually a power of 2
+	private final int tex_size;
 	
-	final ResourceLocation textureLocation;
-	NativeImage image = new NativeImage(TEX_SIZE, TEX_SIZE, false);
-	DynamicTexture tex = new DynamicTexture(image);
-	final int resolution = 1;	// How many pixels in the texture vs rendered image, usually a power of 2
+	private final ResourceLocation textureLocation;
+	private NativeImage image;
+	private DynamicTexture tex;
 	
-	private Vec2 centre = new Vec2(TEX_SIZE / 2, TEX_SIZE / 2);
-	private int minX = TEX_SIZE / 2, minY = TEX_SIZE / 2;
+	private final Vec2 centre;
+	private int minX, minY;
 	private int maxX = 0, maxY = 0;
 	
 	private Map<Integer, List<PixelProvider>> layerMap = new HashMap<>();
 	
 	boolean dirty = true;
 	
-	public SpellTexture()
+	public SpellTexture(int resolutionIn)
 	{
-		this(SpellTextureManager.TEXTURE_EDITOR_MAIN);
+		this(SpellTextureManager.TEXTURE_EDITOR_MAIN, resolutionIn);
 	}
 	
-	public SpellTexture(ResourceLocation location)
+	public SpellTexture(ResourceLocation location, int resolutionIn)
 	{
 		this.textureLocation = location;
+		this.resolution = resolutionIn;
+		this.tex_size = resolution * 1000;
+		
+		image = new NativeImage(tex_size, tex_size, false);
+		tex = new DynamicTexture(image);
 		mc.textureManager.register(location, this.tex);
+		
+		centre = new Vec2(tex_size / 2, tex_size / 2);
+		minX = tex_size / 2;
+		minY = tex_size / 2;
 	}
 	
 	public int width() { return image.getWidth(); }
@@ -98,7 +106,7 @@ public class SpellTexture
 			return;
 		
 		ISpellComponent comp = SpellComponents.readFromNBT(ISpellComponent.saveToNBT(arrangement));
-		comp.setPosition(TEX_SIZE / 2, TEX_SIZE / 2);
+		comp.setPosition(tex_size / 2, tex_size / 2);
 		
 		layerMap.clear();
 		addToTexture(comp, this::addPixels);
@@ -128,9 +136,27 @@ public class SpellTexture
 				{
 					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors)
 					{
-						texture.drawCircle(xIn, yIn, radius, conflictors);
+						texture.drawCircle(xIn, yIn, radius, thickness, conflictors);
 					}
-					public boolean shouldExclude(int x, int y) { return isConflictor ? new Vec2(x, y).distanceToSqr(new Vec2(xIn, yIn)) < (radius * radius) : false; }
+					
+					public boolean shouldExclude(int x, int y, int width, int height, int resolution)
+					{
+						if(!isConflictor)
+							return false;
+						
+						// Real position of the given pixel
+						Vec2 point = new Vec2(x, y);
+						
+						// Centre of image
+						Vec2 centre = new Vec2(width / 2, height / 2);
+						
+						// Centre of the circle modified by resolution
+						Vec2 core = new Vec2(centre.x + (xIn - centre.x) * resolution, centre.y + (yIn - centre.y) * resolution);
+						
+						// Radius of the circle modified by resolution
+						int size = radius * resolution;
+						return point.distanceToSqr(core) < (size * size);
+					}
 				};
 	}
 	
@@ -165,8 +191,8 @@ public class SpellTexture
 	public void render(int screenX, int screenY)
 	{
 		checkDirty();
-		float wide = ((float)width() / resolution) / 2;
-		float high = ((float)height() / resolution) / 2;
+		float wide = ((float)width() / resolution) * 0.5F;
+		float high = ((float)height() / resolution) * 0.5F;
 		Vec2[] vertices = new Vec2[]{
 				new Vec2(screenX - wide, screenY - high),
 				new Vec2(screenX + wide, screenY - high),
@@ -188,29 +214,43 @@ public class SpellTexture
 	public void render(PoseStack matrixStack, MultiBufferSource bufferSource)
 	{
 		checkDirty();
-		float wide = ((float)width() / resolution) / 2;
-		float high = ((float)height() / resolution) / 2;
+		Vec2 fullMax = new Vec2(width(), height());
+		Vec2 centre = fullMax.scale(0.5F);
+		
+		Vec2 realMin = new Vec2(minX, minY);
+		Vec2 realMax = new Vec2(maxX, maxY);
+		
+		float texXMin = realMin.x / width();
+		float texXMax = realMax.x / width();
+		float texYMin = realMin.y / height();
+		float texYMax = realMax.y / height();
+		
+		float xMin = realMin.add(centre.negated()).x / resolution;
+		float yMin = realMin.add(centre.negated()).y / resolution;
+		float xMax = realMax.add(centre.negated()).x / resolution;
+		float yMax = realMax.add(centre.negated()).y / resolution;
+		
 		Vec2[] vertices = new Vec2[]{
-				new Vec2(-wide, -high),
-				new Vec2(+wide, -high),
-				new Vec2(+wide, +high),
-				new Vec2(-wide, +high)};
+				new Vec2(xMin, yMin),
+				new Vec2(xMax, yMin),
+				new Vec2(xMax, yMax),
+				new Vec2(xMin, yMax)};
 		
 		VertexConsumer buffer = bufferSource.getBuffer(RenderType.text(textureLocation));
 		Matrix4f matrix = matrixStack.last().pose();
 		
 		matrixStack.pushPose();
-			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMin).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMin).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMax).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMax).uv2(255).endVertex();
 		matrixStack.popPose();
 		
 		matrixStack.pushPose();
-			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMax).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMax).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMin).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMin).uv2(255).endVertex();
 		matrixStack.popPose();
 	}
 	
@@ -223,20 +263,26 @@ public class SpellTexture
 		}
 	}
 	
-	public void drawCircle(int x, int y, int radius, List<PixelProvider> conflictors)
+	public void drawCircle(int x, int y, int radius, float thickness, List<PixelProvider> conflictors)
 	{
-		Vec2 origin = centre.add(new Vec2(x, y).add(centre.negated()).scale(resolution));
-		Vec2 offset = new Vec2(0, radius).scale(resolution);
-		double rads = Math.toRadians(11.25D);
-		double cos = Math.cos(rads);
-		double sin = Math.sin(rads);
+		x = (int)(centre.x + (x - centre.x) * resolution);
+		y = (int)(centre.y + (y - centre.y) * resolution);
+		radius *= resolution;
+		thickness *= resolution;
 		
-		for(int i=0; i<32; i++)
-		{
-			Vec2 pos = origin.add(offset);
-			Vec2 posB = origin.add(offset = M19Utils.rotate(offset, cos, sin));
-			drawLineBetween(pos, posB, conflictors);
-		}
+		double outerRadius = radius + (thickness / 2);
+		double innerRadius = radius - (thickness / 2);
+		int diameter = (int)(outerRadius * 2);
+		float minX = (float) (x - outerRadius);
+		float minY = (float) (y - outerRadius);
+		for(int i=0; i<diameter; i++)
+			for(int j=0; j<diameter; j++)
+			{
+				Vec2 point = new Vec2(i + minX, j + minY);
+				double dist = Math.sqrt(point.distanceToSqr(new Vec2(x, y)));
+				if(dist <= outerRadius && dist >= innerRadius)
+					setPixel((int)point.x, (int)point.y, conflictors);
+			}
 	}
 	
 	public void drawLine(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
@@ -386,8 +432,9 @@ public class SpellTexture
 		if(x < 0 || x >= width() || y < 0 || y >= height())
 			return false;
 		
+		
 		for(PixelProvider conflictor : conflictors)
-			if(conflictor.shouldExclude(x, y))
+			if(conflictor.shouldExclude(x, y, width(), height(), resolution))
 				return false;
 		
 		image.setPixelRGBA(x, y, -1);

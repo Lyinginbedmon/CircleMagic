@@ -40,12 +40,6 @@ public class ComponentRenderers
 	
 	public static ComponentRenderer get(ResourceLocation name) { return REGISTRY.getOrDefault(name, new ComponentRenderer()); }
 	
-	public static void renderGUI(ISpellComponent component, PoseStack matrixStack, int posX, int posY, int width, int height)
-	{
-		// FIXME Don't render any component that is outside the bounds of the GUI
-		populateCanvas(component).drawIntoGUI(matrixStack, posX, posY, width, height);
-	}
-	
 	public static void renderWorld(ISpellComponent component, PoseStack matrixStack, MultiBufferSource bufferSource)
 	{
 		populateCanvas(component).drawIntoWorld(matrixStack, bufferSource);
@@ -53,12 +47,12 @@ public class ComponentRenderers
 	
 	public static Canvas populateCanvas(ISpellComponent component)
 	{
-		return populateCanvas(component, SpellTextureManager.TEXTURE_EDITOR_HELD);
+		return populateCanvas(component, SpellTextureManager.TEXTURE_EDITOR_HELD, 4);
 	}
 	
-	public static Canvas populateCanvas(ISpellComponent component, ResourceLocation textureLocation)
+	public static Canvas populateCanvas(ISpellComponent component, ResourceLocation textureLocation, int resolution)
 	{
-		Canvas canvas = new Canvas(textureLocation);
+		Canvas canvas = new Canvas(textureLocation, resolution);
 		canvas.populate(component);
 		return canvas;
 	}

@@ -1,20 +1,26 @@
 package com.lying.misc19.blocks.entity;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.compress.utils.Lists;
 
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.ICruciblePart.PartType;
 import com.lying.misc19.client.Canvas;
+import com.lying.misc19.client.gui.menu.MenuSandbox;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.SpellComponents;
+import com.lying.misc19.item.ISpellContainer;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.VariableSet.Slot;
+import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.CrucibleManager;
 import com.lying.misc19.utility.SpellTextureManager;
 
@@ -23,7 +29,15 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,7 +46,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CrucibleBlockEntity extends BlockEntity
+public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 {
 	private static final AABB RENDER_AABB = new AABB(-16, -1, -16, 16, 1, 16);
 	public static final int PILLAR_SPACING = 5;
@@ -41,17 +55,20 @@ public class CrucibleBlockEntity extends BlockEntity
 	private boolean hasNotifiedManager = false;
 	
 	@OnlyIn(Dist.CLIENT)
-	private Canvas canvas = new Canvas(SpellTextureManager.getNewTexture());
+	private Canvas canvas = new Canvas(SpellTextureManager.getNewTexture(), 8);
+	private boolean needsRedrawing = true;
 	
-	private ISpellComponent arrangement = SpellComponents.create(SpellComponents.ROOT_DUMMY).addOutputs(SpellComponents.create(SpellComponents.CIRCLE_BASIC).addOutputs(
-			SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.BAST.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_TRUE)).addOutputs(SpellComponents.create(Slot.THOTH.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.SUTEKH.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ANUBIS.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.HORUS.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ISIS.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_OR).addInputs(SpellComponents.create(Slot.HORUS.glyph()), SpellComponents.create(Slot.ISIS.glyph())).addOutputs(SpellComponents.create(Slot.RA.glyph())),
-			SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.OSIRIS.glyph()))));
+	private ISpellComponent arrangement = SpellComponents.create(SpellComponents.ROOT_DUMMY).addOutputs(
+			SpellComponents.create(SpellComponents.CIRCLE_BASIC).addInputs(SpellComponents.create(SpellComponents.GLYPH_NAND).addInputs(SpellComponents.create(Slot.AGE.glyph()))).addOutputs(
+				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.BAST.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_TRUE)).addOutputs(SpellComponents.create(Slot.THOTH.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.SUTEKH.glyph()))),
+			SpellComponents.create(SpellComponents.CIRCLE_BASIC).addOutputs(
+				SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ANUBIS.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.HORUS.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ISIS.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_OR).addInputs(SpellComponents.create(Slot.HORUS.glyph()), SpellComponents.create(Slot.ISIS.glyph())).addOutputs(SpellComponents.create(Slot.RA.glyph())),
+				SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.OSIRIS.glyph()))));
 	
 	public CrucibleBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -97,18 +114,19 @@ public class CrucibleBlockEntity extends BlockEntity
 	public static Map<Integer, List<BlockPos>> delineatePillars(List<BlockPos> pillars, BlockPos crucible)
 	{
 		Map<Integer, List<BlockPos>> delineated = new HashMap<>();
+		Vec2 crucibleVec = new Vec2(crucible.getX() + 0.5F, crucible.getZ() + 0.5F);
 		
 		// Collect all positions together based on their nearest multiple of spacing distance from the crucible
 		for(BlockPos pillar : pillars)
 		{
-			int ring = Math.round((int)pillar.distSqr(crucible) / PILLAR_SPACING);
+			Vec2 pillarVec = new Vec2(pillar.getX() + 0.5F, pillar.getZ() + 0.5F);
+			int ring = (int)Math.round(Math.sqrt(pillarVec.distanceToSqr(crucibleVec)) / PILLAR_SPACING);
 			List<BlockPos> set = delineated.getOrDefault(ring, Lists.newArrayList());
 			set.add(pillar);
 			delineated.put(ring, set);
 		}
 		
 		// Sort all rings radially around the crucible
-		Vec2 crucibleVec = new Vec2(crucible.getX(), crucible.getZ());
 		for(List<BlockPos> val : delineated.values())
 			val.sort(new Comparator<BlockPos>()
 						{
@@ -139,11 +157,21 @@ public class CrucibleBlockEntity extends BlockEntity
 		return this.arrangement;
 	}
 	
+	public void setArrangement(ISpellComponent spellIn)
+	{
+		this.arrangement = spellIn;
+		this.needsRedrawing = true;
+	}
+	
 	@OnlyIn(Dist.CLIENT)
 	public Canvas getCanvas()
 	{
-		this.canvas.clear();
-		this.canvas.populate(arrangement());
+		if(this.needsRedrawing)
+		{
+			this.canvas.clear();
+			this.canvas.populate(arrangement());
+			this.needsRedrawing = false;
+		}
 		return this.canvas;
 	}
 	
@@ -180,15 +208,54 @@ public class CrucibleBlockEntity extends BlockEntity
 	
 	public int glyphCap()
 	{
-		int cap = 5;
-		for(BlockPos pos : getValidOfType(PartType.PILLAR))
+		double cap = 5;
+		BlockPos cruciblePos = getBlockPos();
+		Vec2 crucibleVec = new Vec2(cruciblePos.getX() + 0.5F, cruciblePos.getZ() + 0.5F);
+		Map<Integer, List<BlockPos>> pillarMap = delineatePillars(getValidOfType(PartType.PILLAR), cruciblePos);
+		for(int ring : pillarMap.keySet())
 		{
-			BlockState state = getLevel().getBlockState(pos);
-			ICruciblePart part = (ICruciblePart)state.getBlock();
-			cap += part.glyphCapBonus(pos, state, getLevel(), getBlockPos());
+			List<BlockPos> pillars = pillarMap.get(ring);
+			double idealDist = ring * PILLAR_SPACING;
+			
+			double avgDist = 0D;
+			for(int i=0; i<pillars.size(); i++)
+			{
+				BlockPos pillarA = pillars.get(i);
+				BlockPos pillarB = pillars.get((i + 1) % pillars.size());
+				
+				Vec2 vecA = new Vec2(pillarA.getX() + 0.5F, pillarA.getZ() + 0.5F);
+				Vec2 vecB = new Vec2(pillarB.getX() + 0.5F, pillarB.getZ() + 0.5F);
+				
+				avgDist += Math.sqrt(vecA.distanceToSqr(vecB));
+			}
+			avgDist /= pillars.size();
+			
+			for(int i=0; i<pillars.size(); i++)
+			{
+				BlockPos pillar = pillars.get(i);
+				
+				BlockState state = getLevel().getBlockState(pillar);
+				ICruciblePart part = (ICruciblePart)state.getBlock();
+				int bonus = part.glyphCapBonus(pillar, state, getLevel(), cruciblePos);
+				
+				// FIXME Reduce distance to whole blocks for fitting
+				Vec2 pillarVec = new Vec2(pillar.getX() + 0.5F, pillar.getZ() + 0.5F);
+				double distToCrucible = Math.sqrt(pillarVec.distanceToSqr(crucibleVec));
+				double spaceEfficiency = 1 - ((distToCrucible <= idealDist ? idealDist - distToCrucible : distToCrucible - idealDist) / idealDist);
+				
+				BlockPos neighbour = pillars.get((i + 1) % pillars.size());
+				Vec2 neighbourVec = new Vec2(neighbour.getX() + 0.5F, neighbour.getZ() + 0.5F);
+				double distToNeighbour = Math.sqrt(pillarVec.distanceToSqr(neighbourVec));
+				double spacingEfficiency = 1 - ((distToNeighbour <= avgDist ? avgDist - distToNeighbour : distToNeighbour - avgDist) / avgDist);
+				
+				cap += (bonus * (spaceEfficiency * spacingEfficiency));
+			}
 		}
-		return cap;
+		
+		return (int)cap;
 	}
+	
+	
 	
 	public boolean hasSuggestions()
 	{
@@ -254,4 +321,40 @@ public class CrucibleBlockEntity extends BlockEntity
 		this.saveAdditional(compound);
 		return compound;
 	}
+	
+	public void openEditorFor(Player player)
+	{
+		player.openMenu(this);
+	}
+	
+	@Nullable
+	public MagicTreeBlockEntity getFirstClosestItem(Level world)
+	{
+		Map<Integer, List<BlockPos>> boughMap = delineatePillars(getValidOfType(PartType.BOUGH), getBlockPos());
+		List<Integer> keySet = Lists.newArrayList();
+		keySet.addAll(boughMap.keySet());
+		Collections.sort(keySet);
+		for(Integer ring : keySet)
+		{
+			for(BlockPos bough : boughMap.get(ring))
+			{
+				MagicTreeBlockEntity boughTile = (MagicTreeBlockEntity)world.getBlockEntity(bough);
+				if(!boughTile.isEmpty())
+					return boughTile;
+			}
+		}
+		return null;
+	}
+	
+	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
+	{
+		ISpellComponent spell = null;
+		ItemStack heldStack = player.getItemInHand(InteractionHand.MAIN_HAND);
+		if(heldStack.getItem() instanceof ISpellContainer)
+			spell = ((ISpellContainer)heldStack.getItem()).getSpell(heldStack.getTag());
+		
+		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), getFirstClosestItem(player.getLevel()), spell, glyphCap());
+	}
+	
+	public Component getDisplayName() { return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".crucible"); }
 }

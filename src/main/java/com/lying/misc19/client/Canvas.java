@@ -40,12 +40,12 @@ public class Canvas
 	
 	public Canvas()
 	{
-		this(new SpellTexture(SpellTextureManager.TEXTURE_EDITOR_HELD));
+		this(new SpellTexture(SpellTextureManager.TEXTURE_EDITOR_HELD, 2));
 	}
 	
-	public Canvas(ResourceLocation locationIn)
+	public Canvas(ResourceLocation locationIn, int resolution)
 	{
-		this(new SpellTexture(locationIn));
+		this(new SpellTexture(locationIn, resolution));
 	}
 	
 	public Canvas(SpellTexture textureIn)

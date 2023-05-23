@@ -31,6 +31,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.nbt.CompoundTag;
@@ -39,10 +40,12 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 
-public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
+public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implements MenuAccess<MenuSandbox>
 {
 	public static final ResourceLocation HIGHLIGHT_TEXTURE = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/gui/sandbox_highlight.png");
 	private final MenuSandbox menu;
@@ -53,8 +56,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private boolean isMoving = false;
 	
 	private int ticksOpen = 0;
-	private Canvas canvasMain = new Canvas(SpellTextureManager.TEXTURE_EDITOR_MAIN);
-	private Canvas canvasHeld = new Canvas(SpellTextureManager.TEXTURE_EDITOR_HELD);
+	private final Canvas canvasMain = new Canvas(SpellTextureManager.TEXTURE_EDITOR_MAIN, 4);
+	private final Canvas canvasHeld = new Canvas(SpellTextureManager.TEXTURE_EDITOR_HELD, 1);
 	
 	private Vec2 lastClicked = Vec2.ZERO;
 	private int clickTicks = 0;
@@ -71,11 +74,16 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private Button printButton, nextCatButton, prevCatButton;
 	private ImageButton copyButton, pasteButton;
 	
-	public ScreenSandbox(MenuSandbox menuIn, Inventory inv, Component p_96550_)
+	public ScreenSandbox(MenuSandbox menuIn, Inventory inv, Component title)
 	{
-		super(p_96550_);
+		super(menuIn, inv, title);
 		this.menu = menuIn;
 		this.playerInv = inv;
+		menuIn.addSlotListener(new ContainerListener()
+		{
+		   public void slotChanged(AbstractContainerMenu p_97973_, int p_97974_, ItemStack p_97975_) { }
+		   public void dataChanged(AbstractContainerMenu p_169628_, int p_169629_, int p_169630_) { }
+		});
 	}
 	
 	public MenuSandbox getMenu() { return this.menu; }
@@ -134,15 +142,22 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		}, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_paste"), this));
 	}
 	
-	public void tick()
+	public void containerTick()
 	{
 		this.ticksOpen++;
 		
-		this.printButton.active = this.copyButton.active = this.copyButton.visible = menu.arrangement() != null;
+		this.copyButton.active = this.copyButton.visible = menu.arrangement() != null;
 		this.pasteButton.active = this.pasteButton.visible = !this.minecraft.keyboardHandler.getClipboard().isEmpty();
+		
+		this.printButton.active = menu.arrangement() != null && !isOverCap();
 		
 		this.glyphList.checkCategory(menu.arrangement());
 		this.nextCatButton.active = this.prevCatButton.active = menu.arrangement() != null;
+	}
+	
+	public boolean isOverCap()
+	{
+		return getCurrentParts() > menu.getCap();
 	}
 	
 	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
@@ -151,6 +166,9 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		
 		if(clickTicks > 0)
 			clickTicks--;
+		
+		Component cap = Component.literal(getCurrentParts()+" / "+menu.getCap());
+		this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5, 5, -1);
 		
 		if(menu.arrangement() != null)
 		{
@@ -168,6 +186,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			
 			arrangement.setPosition((width / 2) + (int)scrollX, (height / 2) + (int)scrollY);
 			
+			// TODO Only update canvas element positions, do not redraw texture
 			Vec2 currentPos = new Vec2(scrollX, scrollY);
 			if(currentPos != lastPosition)
 				updateCanvas(arrangement);
@@ -194,7 +213,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		}
 		else if(hasNewPart())
 		{
-//			attachPart.setPosition(mouseX, mouseY);
 			this.canvasHeld.drawIntoGUI(matrixStack, mouseX, mouseY, width, height);
 			
 			if(hoveredPart != null)
@@ -238,12 +256,17 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		clearSelected();
 	}
 	
+	public int getCurrentParts()
+	{
+		return menu.arrangement() == null ? 0 : menu.arrangement().getParts().size();
+	}
+	
 	public void setNewPart(@Nullable ISpellComponent component)
 	{
 		this.canvasHeld.clear();
 		if(component == null)
 			this.attachPart = null;
-		else
+		else if((getCurrentParts() + component.getParts().size()) <= menu.getCap())
 		{
 			if(component.type() == Type.ROOT && menu.arrangement() == null && tryAddGlyph(null, component, false))
 				setNewPart((ISpellComponent)null);
@@ -255,6 +278,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				this.canvasHeld.populate(this.attachPart);
 			}
 		}
+		else
+			this.attachPart = null;
 	}
 	
 	public boolean hasNewPart() { return this.attachPart != null; }
@@ -515,4 +540,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		};
 		return new ImageButton(posX, posY, width, height, texXStart, texYStart, yHoverOffset, texture, 16, 32, onPress, tooltip, displayText);
 	}
+	
+	protected void renderBg(PoseStack p_97787_, float p_97788_, int p_97789_, int p_97790_) { }
 }
