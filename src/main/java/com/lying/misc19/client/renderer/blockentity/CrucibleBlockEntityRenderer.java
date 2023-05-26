@@ -30,7 +30,7 @@ public class CrucibleBlockEntityRenderer implements BlockEntityRenderer<Crucible
 {
 	private static final Minecraft mc = Minecraft.getInstance();
 	
-	private static final int SPACING = CrucibleBlockEntity.PILLAR_SPACING;
+	private static final int SPACING = CrucibleBlockEntity.SPACING;
 	private static int guideTicksVisible = 0;
 	
 	public CrucibleBlockEntityRenderer(BlockEntityRendererProvider.Context context) { }

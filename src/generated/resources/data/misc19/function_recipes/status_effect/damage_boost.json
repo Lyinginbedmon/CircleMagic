@@ -1,0 +1,11 @@
+{
+  "Effects": [
+    "{Ambient:0b,Amplifier:0b,CurativeItems:[{Count:1b,id:\"minecraft:milk_bucket\"}],Duration:600,Id:5,ShowIcon:0b,ShowParticles:0b,\"forge:id\":\"minecraft:strength\"}"
+  ],
+  "ID": "misc19:status_effect/damage_boost",
+  "Ingredients": [
+    "mundus",
+    "ardere"
+  ],
+  "Type": "misc19:status_effect_function"
+}

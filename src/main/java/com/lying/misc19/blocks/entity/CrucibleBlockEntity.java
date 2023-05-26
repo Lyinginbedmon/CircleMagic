@@ -1,11 +1,9 @@
 package com.lying.misc19.blocks.entity;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
@@ -26,9 +24,6 @@ import com.lying.misc19.utility.SpellTextureManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.InteractionHand;
@@ -48,8 +43,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 {
-	private static final AABB RENDER_AABB = new AABB(-16, -1, -16, 16, 1, 16);
-	public static final int PILLAR_SPACING = 5;
+	public static final double RANGE = 16D;
+	public static final int SPACING = 5;
+	private static final AABB RENDER_AABB = new AABB(-RANGE, -1, -RANGE, RANGE, 1, RANGE);
 	
 	private Map<PartType, List<BlockPos>> expansionMap = new HashMap<>();
 	private boolean hasNotifiedManager = false;
@@ -80,67 +76,16 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 	protected void saveAdditional(CompoundTag compound)
 	{
 		super.saveAdditional(compound);
-		ListTag expansions = new ListTag();
-		for(PartType type : PartType.values())
-		{
-			ListTag entries = new ListTag();
-			getExpansions(type).forEach((block) -> entries.add(NbtUtils.writeBlockPos(block)));
-			expansions.add(entries);
-		}
-		compound.put("Expansions", expansions);
 	}
 	
 	public void load(CompoundTag compound)
 	{
 		super.load(compound);
-		this.expansionMap.clear();
-		ListTag expansions = compound.getList("Expansions", Tag.TAG_LIST);
-		for(PartType type : PartType.values())
-		{
-			ListTag entries = expansions.getList(type.ordinal());
-			List<BlockPos> pos = Lists.newArrayList();
-			for(int i=0; i<entries.size(); i++)
-				pos.add(NbtUtils.readBlockPos(entries.getCompound(i)));
-			this.expansionMap.put(type, pos);
-		}
 	}
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
 	{
 		
-	}
-	
-	/** Groups positions together based on the closest multiple of spaces from it to the crucible */
-	public static Map<Integer, List<BlockPos>> delineatePillars(List<BlockPos> pillars, BlockPos crucible)
-	{
-		Map<Integer, List<BlockPos>> delineated = new HashMap<>();
-		Vec2 crucibleVec = new Vec2(crucible.getX() + 0.5F, crucible.getZ() + 0.5F);
-		
-		// Collect all positions together based on their nearest multiple of spacing distance from the crucible
-		for(BlockPos pillar : pillars)
-		{
-			Vec2 pillarVec = new Vec2(pillar.getX() + 0.5F, pillar.getZ() + 0.5F);
-			int ring = (int)Math.round(Math.sqrt(pillarVec.distanceToSqr(crucibleVec)) / PILLAR_SPACING);
-			List<BlockPos> set = delineated.getOrDefault(ring, Lists.newArrayList());
-			set.add(pillar);
-			delineated.put(ring, set);
-		}
-		
-		// Sort all rings radially around the crucible
-		for(List<BlockPos> val : delineated.values())
-			val.sort(new Comparator<BlockPos>()
-						{
-							public int compare(BlockPos pos1, BlockPos pos2)
-							{
-								Vec2 vec1 = new Vec2(pos1.getX(), pos1.getZ());
-								Vec2 vec2 = new Vec2(pos2.getX(), pos2.getZ());
-								double angle1 = Math.atan2(vec1.x, vec1.y) - Math.atan2(crucibleVec.x, crucibleVec.y);
-								double angle2 = Math.atan2(vec2.x, vec2.y) - Math.atan2(crucibleVec.x, crucibleVec.y);
-								return angle1 > angle2 ? 1 : angle1 < angle2 ? -1 : 0;
-							}
-						});
-		
-		return delineated;
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
@@ -175,48 +120,27 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 		return this.canvas;
 	}
 	
-	public List<BlockPos> getExpansions(PartType type) { return this.expansionMap.getOrDefault(type, Lists.newArrayList()); }
-	
-	/** Retrieves all currently-valid positions of the given type, clears any that can't be valid any more */
-	protected List<BlockPos> getValidOfType(PartType type)
-	{
-		List<BlockPos> validated = Lists.newArrayList();
-		
-		List<BlockPos> invalidated = Lists.newArrayList();
-		List<BlockPos> points = getExpansions(type);
-		for(BlockPos pos : points)
-		{
-			BlockState state = getLevel().getBlockState(pos);
-			if(state.getBlock() instanceof ICruciblePart)
-			{
-				ICruciblePart part = (ICruciblePart)state.getBlock();
-				if(part.isPartValidFor(pos, state, getLevel(), getBlockPos()))
-					validated.add(pos);
-			}
-			else
-				invalidated.add(pos);
-		}
-		
-		if(!invalidated.isEmpty())
-		{
-			points.removeAll(invalidated);
-			this.expansionMap.put(type, points);
-			setChanged();
-		}
-		return validated;
-	}
-	
 	public int glyphCap()
 	{
+		CrucibleManager manager = CrucibleManager.instance(getLevel());
 		double cap = 5;
 		BlockPos cruciblePos = getBlockPos();
-		Vec2 crucibleVec = new Vec2(cruciblePos.getX() + 0.5F, cruciblePos.getZ() + 0.5F);
-		Map<Integer, List<BlockPos>> pillarMap = delineatePillars(getValidOfType(PartType.PILLAR), cruciblePos);
+		Map<Integer, List<BlockPos>> pillarMap = CrucibleManager.delineatePartsAround(manager.getPartsOfType(PartType.PILLAR, cruciblePos), cruciblePos);
+		if(pillarMap.isEmpty())
+			return (int)cap;
 		for(int ring : pillarMap.keySet())
 		{
 			List<BlockPos> pillars = pillarMap.get(ring);
-			double idealDist = ring * PILLAR_SPACING;
+			/**
+			 * Distance of this ring from the crucible<br>
+			 * Pillars need to be placed as close to this distance from the crucible as possible for maximum efficiency
+			 */
+			double idealDist = ring * SPACING;
 			
+			/**
+			 * Average distance between pillars in this ring<br>
+			 * Pillars need to be placed as close to this distance apart as possible for maximum efficiency
+			 */
 			double avgDist = 0D;
 			for(int i=0; i<pillars.size(); i++)
 			{
@@ -233,40 +157,28 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 			for(int i=0; i<pillars.size(); i++)
 			{
 				BlockPos pillar = pillars.get(i);
-				
-				BlockState state = getLevel().getBlockState(pillar);
-				ICruciblePart part = (ICruciblePart)state.getBlock();
-				int bonus = part.glyphCapBonus(pillar, state, getLevel(), cruciblePos);
-				
-				// FIXME Reduce distance to whole blocks for fitting
-				Vec2 pillarVec = new Vec2(pillar.getX() + 0.5F, pillar.getZ() + 0.5F);
-				double distToCrucible = Math.sqrt(pillarVec.distanceToSqr(crucibleVec));
-				double spaceEfficiency = 1 - ((distToCrucible <= idealDist ? idealDist - distToCrucible : distToCrucible - idealDist) / idealDist);
-				
 				BlockPos neighbour = pillars.get((i + 1) % pillars.size());
+				Vec2 pillarVec = new Vec2(pillar.getX() + 0.5F, pillar.getZ() + 0.5F);
 				Vec2 neighbourVec = new Vec2(neighbour.getX() + 0.5F, neighbour.getZ() + 0.5F);
-				double distToNeighbour = Math.sqrt(pillarVec.distanceToSqr(neighbourVec));
-				double spacingEfficiency = 1 - ((distToNeighbour <= avgDist ? avgDist - distToNeighbour : distToNeighbour - avgDist) / avgDist);
 				
-				cap += (bonus * (spaceEfficiency * spacingEfficiency));
+				InscribedBlockEntity tile = (InscribedBlockEntity)getLevel().getBlockEntity(pillar);
+				cap += Math.round(tile.getTotalCapBonusFor(Math.sqrt(pillarVec.distanceToSqr(neighbourVec)), avgDist, cruciblePos, idealDist));
 			}
 		}
-		
 		return (int)cap;
 	}
 	
-	
-	
 	public boolean hasSuggestions()
 	{
-		boolean result = false;
-		for(BlockPos pos : getValidOfType(PartType.FAIRY))
+		Level world = getLevel();
+		for(BlockPos pos : CrucibleManager.instance(world).getPartsOfType(PartType.FAIRY, getBlockPos()))
 		{
-			BlockState state = getLevel().getBlockState(pos);
+			BlockState state = world.getBlockState(pos);
 			ICruciblePart part = (ICruciblePart)state.getBlock();
-			result = result || part.canProvideSuggestions(pos, state, getLevel(), getBlockPos());
+			if(part.canProvideSuggestions(pos, state, world, getBlockPos()))
+				return true;
 		}
-		return result;
+		return false;
 	}
 	
 	public void assessAndAddExpansion(BlockPos pos)
@@ -283,30 +195,6 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 				this.expansionMap.put(type, partsOfType);
 				setChanged();
 			}
-		}
-	}
-	
-	public void removeExpansion(BlockPos pos)
-	{
-		boolean found = false;
-		Map<PartType, List<BlockPos>> nextMap = new HashMap<>();
-		for(Entry<PartType, List<BlockPos>> entry : this.expansionMap.entrySet())
-		{
-			PartType type = entry.getKey();
-			List<BlockPos> points = entry.getValue();
-			if(points.contains(pos))
-			{
-				points.remove(pos);
-				found = true;
-			}
-			nextMap.put(type, points);
-		}
-		
-		if(found)
-		{
-			this.expansionMap.clear();
-			this.expansionMap.putAll(nextMap);
-			setChanged();
 		}
 	}
 	
@@ -330,19 +218,18 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 	@Nullable
 	public MagicTreeBlockEntity getFirstClosestItem(Level world)
 	{
-		Map<Integer, List<BlockPos>> boughMap = delineatePillars(getValidOfType(PartType.BOUGH), getBlockPos());
+		Map<Integer, List<BlockPos>> boughMap = CrucibleManager.instance(world).getDelineatedPartsOfType(PartType.BOUGH, getBlockPos());
 		List<Integer> keySet = Lists.newArrayList();
 		keySet.addAll(boughMap.keySet());
 		Collections.sort(keySet);
+		
 		for(Integer ring : keySet)
-		{
 			for(BlockPos bough : boughMap.get(ring))
 			{
 				MagicTreeBlockEntity boughTile = (MagicTreeBlockEntity)world.getBlockEntity(bough);
 				if(!boughTile.isEmpty())
 					return boughTile;
 			}
-		}
 		return null;
 	}
 	

@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:end_stone\"}",
+  "ID": "misc19:creation/end_stone",
+  "Ingredients": [
+    "finis"
+  ],
+  "Type": "misc19:creation_function"
+}

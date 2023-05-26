@@ -22,18 +22,21 @@ public class MenuSandbox extends AbstractContainerMenu
 	
 	private final Slot boughInput;
 	
-	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainerData(1), new SimpleContainer(1), null, 255); }
+	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainerData(1), new SimpleContainer(1), null, -1); }
 	
 	public MenuSandbox(int containerId, Inventory inv, ContainerData dataIn, @Nullable Container treeIn, @Nullable ISpellComponent spellIn, int capIn)
 	{
 		super(M19Menus.SANDBOX_MENU.get(), containerId);
 		this.arrangement = spellIn;
 		
-		this.addSlot(boughInput = new Slot(treeIn, 0, 136, 110) 
-		{
-			public boolean mayPickup(Player player) { return false; }
-//			public boolean isActive() { return false; }
-		});
+		if(treeIn == null)
+			this.addSlot(boughInput = new Slot(new SimpleContainer(1), 0, 136, 110));
+		else
+			this.addSlot(boughInput = new Slot(treeIn, 0, 136, 110) 
+			{
+				public boolean mayPickup(Player player) { return false; }
+				public boolean isActive() { return false; }
+			});
 		
 		this.editorData = dataIn;
 		setCap(capIn);

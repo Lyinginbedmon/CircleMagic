@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 
 import com.lying.misc19.client.ClientSetupEvents;
 import com.lying.misc19.data.M19DataGenerators;
+import com.lying.misc19.init.FunctionRecipes;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.init.M19Entities;
@@ -17,6 +18,7 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -49,6 +51,7 @@ public class Misc19
         M19Items.ITEMS.register(EVENT_BUS);
         M19Menus.MENUS.register(EVENT_BUS);
         
+        FunctionRecipes.REGISTRY.register(EVENT_BUS);
         SpellComponents.COMPONENTS.register(EVENT_BUS);
         SpellVariables.VARIABLES.register(EVENT_BUS);
         EVENT_BUS.addListener(SpellComponents::reportInit);
@@ -66,5 +69,11 @@ public class Misc19
     public void onServerStarting(ServerStartingEvent event)
     {
     	
+    }
+    
+    @SubscribeEvent
+    public void onReloadListenersEvent(AddReloadListenerEvent event)
+    {
+    	event.addListener(FunctionRecipes.getInstance());
     }
 }

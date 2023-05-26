@@ -1,5 +1,6 @@
 package com.lying.misc19.blocks.entity;
 
+import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.InscribedBlock;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 public class InscribedBlockEntity extends BlockEntity
@@ -90,6 +92,20 @@ public class InscribedBlockEntity extends BlockEntity
 				else if(state.getBlock() == Blocks.RED_SAND)
 					world.setBlockAndUpdate(offset, M19Blocks.TILLED_RED_SAND.get().defaultBlockState());
 			}
+	}
+	
+	/** Calculates the efficiency of this pillar for the given crucible based on its distance to the crucible and its next neighbour around it */
+	public double getTotalCapBonusFor(double distToNeighbour, double idealDistToNeighbour, BlockPos cruciblePos, double idealDistToCrucible)
+	{
+		Vec2 pillarVec = new Vec2(getBlockPos().getX() + 0.5F, getBlockPos().getZ() + 0.5F);
+		Vec2 crucibleVec = new Vec2(cruciblePos.getX() + 0.5F, cruciblePos.getZ() + 0.5F);
+		double distToCrucible = Math.sqrt(pillarVec.distanceToSqr(crucibleVec));
+		double spaceEfficiency = 1 - ((distToCrucible <= idealDistToCrucible ? idealDistToCrucible - distToCrucible : distToCrucible - idealDistToCrucible) / idealDistToCrucible);
+		
+		double spacingEfficiency = 1 - ((distToNeighbour <= idealDistToNeighbour ? idealDistToNeighbour - distToNeighbour : distToNeighbour - idealDistToNeighbour) / idealDistToNeighbour);
+		
+		int baseBonus = ((ICruciblePart)getBlockState().getBlock()).glyphCapBonus(getBlockPos(), getBlockState(), getLevel(), cruciblePos);
+		return baseBonus * (spaceEfficiency * spacingEfficiency);
 	}
 	
 	public float renderTicks() { return ticksActive; }

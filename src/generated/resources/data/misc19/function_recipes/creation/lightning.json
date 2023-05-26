@@ -1,0 +1,10 @@
+{
+  "EntityType": "minecraft:lightning_bolt",
+  "ID": "misc19:creation/lightning",
+  "Ingredients": [
+    "mundus",
+    "ardere",
+    "finis"
+  ],
+  "Type": "misc19:creation_function"
+}

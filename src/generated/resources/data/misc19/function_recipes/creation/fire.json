@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:fire\",Properties:{age:\"0\",east:\"false\",north:\"false\",south:\"false\",up:\"false\",west:\"false\"}}",
+  "ID": "misc19:creation/fire",
+  "Ingredients": [
+    "ardere"
+  ],
+  "Type": "misc19:creation_function"
+}

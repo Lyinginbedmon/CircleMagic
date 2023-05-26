@@ -28,10 +28,10 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.nbt.CompoundTag;
@@ -45,7 +45,7 @@ import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 
-public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implements MenuAccess<MenuSandbox>
+public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 {
 	public static final ResourceLocation HIGHLIGHT_TEXTURE = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/gui/sandbox_highlight.png");
 	private final MenuSandbox menu;
@@ -76,7 +76,7 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 	
 	public ScreenSandbox(MenuSandbox menuIn, Inventory inv, Component title)
 	{
-		super(menuIn, inv, title);
+		super(Component.empty());
 		this.menu = menuIn;
 		this.playerInv = inv;
 		menuIn.addSlotListener(new ContainerListener()
@@ -142,7 +142,7 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 		}, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_paste"), this));
 	}
 	
-	public void containerTick()
+	public void tick()
 	{
 		this.ticksOpen++;
 		
@@ -157,7 +157,7 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 	
 	public boolean isOverCap()
 	{
-		return getCurrentParts() > menu.getCap();
+		return menu.getCap() > 0 && getCurrentParts() > menu.getCap();
 	}
 	
 	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
@@ -167,8 +167,11 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 		if(clickTicks > 0)
 			clickTicks--;
 		
-		Component cap = Component.literal(getCurrentParts()+" / "+menu.getCap());
-		this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5, 5, -1);
+		if(menu.getCap() > 0)
+		{
+			Component cap = Component.literal(getCurrentParts()+" / "+menu.getCap());
+			this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5, 5, -1);
+		}
 		
 		if(menu.arrangement() != null)
 		{
@@ -287,7 +290,7 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 	@Nullable
 	public ISpellComponent getComponentAt(int mouseX, int mouseY)
 	{
-		if(this.glyphList.isMouseOver(mouseX, mouseY))
+		if(!isOverArrangement(mouseX, mouseY))
 			return null;
 		
 		Vec2 pos = new Vec2(mouseX, mouseY);
@@ -390,7 +393,7 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 				return true;
 			}
 		}
-		else if(mouseKey == 0 && !super.mouseClicked(x, y, mouseKey) && !this.glyphList.isMouseOver(x, y))
+		else if(mouseKey == 0 && !super.mouseClicked(x, y, mouseKey) && isOverArrangement(x, y))
 		{
 			if(hoveredPart == null)
 			{
@@ -401,6 +404,18 @@ public class ScreenSandbox extends AbstractContainerScreen<MenuSandbox> implemen
 			return true;
 		}
 		return false;
+	}
+	
+	public boolean isOverArrangement(double mouseX, double mouseY)
+	{
+		if(this.glyphList.isMouseOver(mouseX, mouseY))
+			return false;
+		else 
+			for(AbstractWidget widget : new AbstractWidget[] {this.nextCatButton, this.prevCatButton, this.printButton, this.copyButton, this.pasteButton})
+				if(widget.isMouseOver(mouseX, mouseY))
+					return false;
+		
+		return true;
 	}
 	
 	public boolean mouseReleased(double x, double y, int mouseKey)

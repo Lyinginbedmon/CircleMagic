@@ -3,8 +3,6 @@ package com.lying.misc19.utility.bus;
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.TilledSand;
 import com.lying.misc19.blocks.TilledSand.Shape;
-import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
-import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.CrucibleManager;
@@ -15,9 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.TickEvent;
@@ -56,56 +52,38 @@ public class ServerBus
 	}
 	
 	/**
-	 * When block is placed, if block is crucible expansion, then notify nearby crucibles
+	 * When block is placed, if block is crucible expansion, then notify manager
 	 */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onBlockPlaced(EntityPlaceEvent event)
 	{
 		if(!event.isCanceled())
+		{
+			Level world = (Level)event.getLevel();
+			CrucibleManager manager = CrucibleManager.instance(world);
 			if(event.getPlacedBlock().getBlock() instanceof ICruciblePart)
-			{
-				LevelAccessor world = event.getLevel();
-				
-				CrucibleManager manager = CrucibleManager.instance((Level)world);
-				for(BlockPos crucible : manager.getCruciblesWithin(event.getPos(), 64D))
-				{
-					BlockEntity entity = world.getBlockEntity(crucible);
-					if(entity == null || entity.getType() != M19BlockEntities.CRUCIBLE.get())
-						continue;
-					
-					CrucibleBlockEntity crucibleEntity = (CrucibleBlockEntity)entity;
-					crucibleEntity.assessAndAddExpansion(event.getPos());
-				}
-			}
-			else if(event.getState().is(M19Blocks.CRUCIBLE.get()))
-				CrucibleManager.instance((Level)event.getLevel()).addCrucibleAt(event.getPos());
+				manager.addExpansionAt(event.getPos(), ((ICruciblePart)event.getPlacedBlock().getBlock()).partType(event.getPos(), event.getPlacedBlock(), world));
+			if(event.getState().is(M19Blocks.CRUCIBLE.get()))
+				manager.addCrucibleAt(event.getPos());
+		}
 	}
 	
 	/**
-	 * Notifies crucibles to remove destroyed expansion blocks
+	 * Notifies managers to remove destroyed crucible expansion blocks
 	 * @param event
 	 */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onBlockBroken(BreakEvent event)
 	{
 		if(!event.isCanceled())
+		{
+			Level world = (Level)event.getLevel();
+			CrucibleManager manager = CrucibleManager.instance(world);
 			if(event.getState().getBlock() instanceof ICruciblePart)
-			{
-				LevelAccessor world = event.getLevel();
-				
-				CrucibleManager manager = CrucibleManager.instance((Level)world);
-				for(BlockPos crucible : manager.getCruciblesWithin(event.getPos(), 16D))
-				{
-					BlockEntity entity = world.getBlockEntity(crucible);
-					if(entity == null || entity.getType() != M19BlockEntities.CRUCIBLE.get())
-						continue;
-					
-					CrucibleBlockEntity crucibleEntity = (CrucibleBlockEntity)entity;
-					crucibleEntity.removeExpansion(event.getPos());
-				}
-			}
-			else if(event.getState().is(M19Blocks.CRUCIBLE.get()))
-				CrucibleManager.instance((Level)event.getLevel()).removeCrucibleAt(event.getPos());
+				manager.removeExpansionAt(event.getPos());
+			if(event.getState().is(M19Blocks.CRUCIBLE.get()))
+				manager.removeCrucibleAt(event.getPos());
+		}
 	}
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)

@@ -15,6 +15,7 @@ import com.lying.misc19.magic.variable.VarVec;
 import com.lying.misc19.magic.variable.VariableSet;
 import com.lying.misc19.magic.variable.VariableSet.Slot;
 import com.lying.misc19.magic.variable.VariableSet.VariableType;
+import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellData;
 import com.lying.misc19.utility.SpellManager;
 
@@ -49,6 +50,31 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 	public abstract Entity positionAndOrientSpell(Entity spellEntity, LivingEntity caster);
 	
 	public void updatePositionAndOrient(Entity spellEntity, LivingEntity caster) { positionAndOrientSpell(spellEntity, caster); }
+	
+	public void organise()
+	{
+		Vec2 core = core().add(position().negated());
+		
+		float spin = 180F / inputGlyphs.size();
+		Vec2 offset = M19Utils.rotate(left().scale(separations().getLeft()), spin / 2);
+		for(ISpellComponent input : inputGlyphs)
+		{
+			input.setParent(this);
+			input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
+
+			offset = M19Utils.rotate(offset, spin);
+		}
+		
+		spin = 360F / outputGlyphs.size();
+		offset = M19Utils.rotate(up().scale(separations().getRight()), spin / 2);
+		for(ISpellComponent output : outputGlyphs)
+		{
+			output.setParent(this);
+			output.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
+			
+			offset = M19Utils.rotate(offset, spin);
+		}
+	}
 	
 	public int tickRate()
 	{

@@ -1,5 +1,7 @@
 package com.lying.misc19.magic;
 
+import javax.annotation.Nullable;
+
 import com.lying.misc19.init.SpellComponents;
 
 import net.minecraft.resources.ResourceLocation;
@@ -17,4 +19,13 @@ public enum Element implements StringRepresentable
 	public String getSerializedName() { return name().toLowerCase(); }
 	
 	public ResourceLocation glyph() { return SpellComponents.make(getSerializedName()+"_element"); }
+	
+	@Nullable
+	public static Element fromString(String nameIn)
+	{
+		for(Element element : values())
+			if(element.getSerializedName().equalsIgnoreCase(nameIn))
+				return element;
+		return null;
+	}
 }

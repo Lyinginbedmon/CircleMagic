@@ -1,5 +1,6 @@
 package com.lying.misc19.init;
 
+import com.lying.misc19.item.CurruidDustItem;
 import com.lying.misc19.item.Pendulum;
 import com.lying.misc19.item.ScrollItem;
 import com.lying.misc19.reference.Reference;
@@ -23,6 +24,9 @@ public class M19Items
     public static final RegistryObject<Item> PENDULUM = ITEMS.register("pendulum", () -> new Pendulum(new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> PENDULUM_WEIGHT = ITEMS.register("pendulum_weight", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> MAGIC_SCROLL = ITEMS.register("magic_scroll", () -> new ScrollItem(new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> CURRUID_DUST = ITEMS.register("curruid_dust", () -> new CurruidDustItem(new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> CURRUID_BLOCK = ITEMS.register("curruid_block", () -> new BlockItem(M19Blocks.CURRUID_BLOCK.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> CURRUID_GEM = ITEMS.register("curruid_gem", () -> new Item(new Item.Properties().tab(TAB)));
     
     // Block items
     public static final RegistryObject<Item> SANDBOX_ITEM = ITEMS.register("sandbox", () -> new BlockItem(M19Blocks.SANDBOX.get(), new Item.Properties().tab(TAB)));
@@ -52,9 +56,6 @@ public class M19Items
     public static final RegistryObject<Item> INSCRIBED_CRIMSON_ITEM = ITEMS.register("inscribed_crimson", () -> new BlockItem(M19Blocks.INSCRIBED_CRIMSON.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> INSCRIBED_WARPED_ITEM = ITEMS.register("inscribed_warped", () -> new BlockItem(M19Blocks.INSCRIBED_WARPED.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> INSCRIBED_MANGROVE_ITEM = ITEMS.register("inscribed_mangrove", () -> new BlockItem(M19Blocks.INSCRIBED_MANGROVE.get(), new Item.Properties().tab(TAB)));
-    
-    public static final RegistryObject<Item> TILLED_SAND_ITEM = ITEMS.register("tilled_sand", () -> new BlockItem(M19Blocks.TILLED_SAND.get(), new Item.Properties().tab(TAB)));
-    public static final RegistryObject<Item> TILLED_RED_SAND_ITEM = ITEMS.register("tilled_red_sand", () -> new BlockItem(M19Blocks.TILLED_RED_SAND.get(), new Item.Properties().tab(TAB)));
     
 	public static Item register(String nameIn, Item itemIn)
 	{

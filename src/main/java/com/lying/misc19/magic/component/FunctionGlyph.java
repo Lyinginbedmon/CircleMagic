@@ -1,34 +1,39 @@
 package com.lying.misc19.magic.component;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.compress.utils.Lists;
 
+import com.google.common.base.Predicate;
 import com.lying.misc19.Misc19;
+import com.lying.misc19.data.recipe.CreationRecipe;
+import com.lying.misc19.data.recipe.StatusEffectRecipe;
+import com.lying.misc19.init.FunctionRecipes;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.magic.Element;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.IVariable;
 import com.lying.misc19.magic.variable.VarElement;
-import com.lying.misc19.magic.variable.VarEntity;
 import com.lying.misc19.magic.variable.VarLevel;
 import com.lying.misc19.magic.variable.VarStack;
 import com.lying.misc19.magic.variable.VariableSet;
 import com.lying.misc19.magic.variable.VariableSet.Slot;
 import com.lying.misc19.magic.variable.VariableSet.VariableType;
 import com.lying.misc19.reference.Reference;
+import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellData;
 import com.lying.misc19.utility.SpellManager;
 
+import net.minecraft.commands.CommandFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -36,36 +41,26 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 /** A glyph that performs an actual function based on its inputs and does not have any outputs */
 public abstract class FunctionGlyph extends ComponentBase
 {
-	private final Map<EnumSet<Element>, BiConsumer<VariableSet, List<ISpellComponent>>> AUGMENTATIONS = new HashMap<>();
-	private final BiConsumer<VariableSet, List<ISpellComponent>> defaultBehaviour;
-	
 	protected static final Param POS = Param.of("pos", VariableType.VECTOR);
 	protected static final Param ENTITY = Param.of("entity", VariableType.ENTITY);
 	private final int cost;
 	
-	protected FunctionGlyph(int costIn, BiConsumer<VariableSet, List<ISpellComponent>> defaultAction)
+	protected FunctionGlyph(int costIn)
 	{
 		this.cost = costIn;
-		this.defaultBehaviour = defaultAction;
-	}
-	
-	protected void addAugmentation(BiConsumer<VariableSet, List<ISpellComponent>> func, Element... elementArray)
-	{
-		EnumSet<Element> elements = EnumSet.noneOf(Element.class);
-		for(Element element : elementArray)
-			if(!elements.contains(element))
-				elements.add(element);
-		AUGMENTATIONS.put(elements, func);
 	}
 	
 	public Category category() { return Category.FUNCTION; }
@@ -78,62 +73,120 @@ public abstract class FunctionGlyph extends ComponentBase
 	
 	public boolean isValidOutput(ISpellComponent componentIn) { return false; }
 	
+	public void organise()
+	{
+		Vec2 core = core().add(position().negated());
+		
+		float spin = 360F / inputGlyphs.size();
+		Vec2 offset = M19Utils.rotate(down().scale(20), spin / 2);
+		for(ISpellComponent input : inputGlyphs)
+			{
+				input.setParent(this);
+				input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
+				
+				offset = M19Utils.rotate(offset, spin);
+			}
+	}
+	
 	public VariableSet execute(VariableSet variablesIn)
 	{
-		if(inputsMet(variablesIn))
-		{
-			EnumSet<Element> elements = EnumSet.noneOf(Element.class);
-			List<ISpellComponent> inputs = Lists.newArrayList();
-			for(ISpellComponent input : inputs())
-			{
-				IVariable var = getVariable(input, variablesIn);
-				if(var.type() == VariableType.ELEMENT)
-				{
-					variablesIn.glyphExecuted(input.castingCost());
-					Element ele = ((VarElement)var).get();
-					if(!elements.contains(ele))
-						elements.add(ele);
-				}
-				else if(var.type() == VariableType.STACK && ((VarStack)var).stackType() == VariableType.ELEMENT)
-					for(IVariable variable : var.asStack().entries())
-					{
-						Element ele = ((VarElement)variable).get();
-						if(!elements.contains(ele))
-							elements.add(ele);
-					}
-				else
-					inputs.add(input);
-			}
-			
-			if(elements.isEmpty())
-				this.defaultBehaviour.accept(variablesIn, inputs);
-			else
-				AUGMENTATIONS.getOrDefault(elements, defaultBehaviour).accept(variablesIn, inputs);
-		}
+		performFunction(getElements(variablesIn), filterInputs(variablesIn), variablesIn, ((VarLevel)variablesIn.get(Slot.WORLD)).get());
 		return variablesIn;
+	}
+	
+	protected abstract void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world);
+	
+	/** Returns an EnumSet of all element input variables */
+	protected EnumSet<Element> getElements(VariableSet variablesIn)
+	{
+		EnumSet<Element> elements = EnumSet.noneOf(Element.class);
+		for(ISpellComponent input : inputs())
+		{
+			IVariable var = getVariable(input, variablesIn);
+			if(!isElementVariable(var))
+				continue;
+			
+			switch(var.type())
+			{
+				case ELEMENT:
+					variablesIn.glyphExecuted(input.castingCost());
+					elements.add(((VarElement)var).get());
+					break;
+				case STACK:
+					var.asStack().entries().forEach((entry) -> elements.add(((VarElement)entry).get()));
+					variablesIn.glyphExecuted(input.castingCost() * (int)var.asStack().asDouble());
+					break;
+				default:
+					break;
+			}
+		}
+		return elements;
+	}
+	
+	/** Returns all non-element input variables */
+	protected List<IVariable> filterInputs(VariableSet variablesIn)
+	{
+		List<IVariable> vars = Lists.newArrayList();
+		for(ISpellComponent input : inputs())
+		{
+			IVariable var = getVariable(input, variablesIn);
+			if(!isElementVariable(var))
+				vars.add(var);
+		}
+		return vars;
+	}
+	
+	@Nullable
+	protected static IVariable getFirstOfType(List<IVariable> variables, VariableType type)
+	{
+		return getFirstOfType(variables, (var) -> var.type() == type);
+	}
+	
+	@Nullable
+	protected static IVariable getFirstOfType(List<IVariable> variables, Predicate<IVariable> predicate)
+	{
+		for(IVariable var : variables)
+			if(predicate.apply(var))
+				return var;
+		return null;
+	}
+	
+	/** Returns true if the variable is an element or a stack of elements */
+	private static boolean isElementVariable(IVariable var)
+	{
+		return var.type() == VariableType.ELEMENT || var.type() == VariableType.STACK && ((VarStack)var).stackType() == VariableType.ELEMENT;
+	}
+	
+	protected static void runCommandOn(Entity target, Level world, CommandFunction.CacheableFunction func)
+	{
+		if(world.isClientSide() || func == null || func == CommandFunction.CacheableFunction.NONE)
+			return;
+		
+		MinecraftServer server = ((ServerLevel)world).getServer();
+		func.get(server.getFunctions()).ifPresent((exec) -> server.getFunctions().execute(exec, target.createCommandSourceStack().withSuppressedOutput().withPermission(2)));
 	}
 	
 	public static class Debug extends FunctionGlyph
 	{
-		public Debug() { super(0, Debug::doDebug); }
+		public Debug() { super(0); }
 		
 		public boolean isValidInput(ISpellComponent part) { return false; }
 		
-		protected static void doDebug(VariableSet variablesIn, List<ISpellComponent> inputs)
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
 			List<Component> messages = Lists.newArrayList();
 			messages.add(Component.literal("# Debug Glyph #"));
-			messages.add(Component.literal("# Glyphs executed: "+variablesIn.totalGlyphs()+" of "+VariableSet.EXECUTION_LIMIT));
-			messages.add(Component.literal("# Casting cost: "+variablesIn.totalCastingCost()));
+			messages.add(Component.literal("# Glyphs executed: "+totalVariables.totalGlyphs()+" of "+VariableSet.EXECUTION_LIMIT));
+			messages.add(Component.literal("# Casting cost: "+totalVariables.totalCastingCost()));
 			messages.add(Component.literal("# Register contents:"));
 			for(Slot slot : VariableSet.Slot.values())
-				if(variablesIn.isUsing(slot))
-					messages.add(Component.literal("# * "+slot.name()+": ").append(variablesIn.get(slot).translate()));
+				if(totalVariables.isUsing(slot))
+					messages.add(Component.literal("# * "+slot.name()+": ").append(totalVariables.get(slot).translate()));
 			messages.add(Component.literal("# Debug End #"));
 			
-			if(variablesIn.isUsing(Slot.CASTER))
+			if(totalVariables.isUsing(Slot.CASTER))
 			{
-				Entity caster = variablesIn.get(Slot.CASTER).asEntity();
+				Entity caster = totalVariables.get(Slot.CASTER).asEntity();
 				if(caster.getType() == EntityType.PLAYER)
 				{
 					Player player = (Player)caster;
@@ -149,9 +202,14 @@ public abstract class FunctionGlyph extends ComponentBase
 	{
 		public AddMotion()
 		{
-			super(15, AddMotion::doMove);
+			super(15);
 			
-			addAugmentation(AddMotion::doTP, Element.FINIS);
+//			addAugmentation(AddMotion::doTP, Element.FINIS);
+		}
+		
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
+		{
+			// FIXME Implement motion recipes
 		}
 		
 		protected static void doMove(VariableSet variablesIn, List<ISpellComponent> inputs)
@@ -234,62 +292,41 @@ public abstract class FunctionGlyph extends ComponentBase
 	{
 		public Create()
 		{
-			super(15, (variables, inputs) -> 
+			super(15);
+		}
+		
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
+		{
+			CreationRecipe recipe = (CreationRecipe)FunctionRecipes.getInstance().getMatchingRecipe(inputElements, FunctionRecipes.CREATION);
+			if(recipe == null)
+				placeBlock(inputVariables, world, M19Blocks.PHANTOM_CUBE.get().defaultBlockState());
+			else
 			{
-				placeEffect(variables, inputs, M19Blocks.PHANTOM_CUBE.get().defaultBlockState());
-			});
+				BlockState state = recipe.getState();
+				if(state != null)
+					placeBlock(inputVariables, world, state);
+				
+				if(recipe.hasEntity())
+					spawnEntity(inputVariables, world, recipe, totalVariables.get(Slot.CASTER).asEntity());
+				
+				CommandFunction.CacheableFunction func = recipe.getFunction();
+				if(func != null && func != CommandFunction.CacheableFunction.NONE)
+					runCommandOn(getFirstOfType(inputVariables, VariableType.ENTITY).asEntity(), world, func);
+			}
+		}
+		
+		protected static void placeBlock(List<IVariable> inputVariables, Level world, BlockState state)
+		{
+			if(inputVariables.isEmpty() || world.isClientSide())
+				return;
 			
-			addAugmentation((variables, inputs) -> 
+			if(state.getBlock() instanceof FireBlock && inputVariables.get(0).type() == VariableType.ENTITY)
 			{
-				placeEffect(variables, inputs, Blocks.STONE.defaultBlockState());
-			}, Element.MUNDUS);
-			addAugmentation((variables, inputs) -> 
-			{
-				IVariable var = ComponentBase.getVariable(inputs.get(0), variables);
-				if(var.type() == VariableType.VECTOR)
-					placeEffect(variables, inputs, Blocks.FIRE.defaultBlockState());
-				else if(var.type() == VariableType.ENTITY)
-					var.asEntity().setSecondsOnFire(8);
-			}, Element.ARDERE);
-			addAugmentation((variables,inputs) -> 
-			{
-				placeEffect(variables, inputs, Blocks.WATER.defaultBlockState());
-			}, Element.MARE);
-			addAugmentation((variables,inputs) -> 
-			{
-				placeEffect(variables, inputs, Blocks.SCULK.defaultBlockState());
-			}, Element.SCULK);
-			addAugmentation((variables,inputs) -> 
-			{
-				placeEffect(variables, inputs, Blocks.GRASS_BLOCK.defaultBlockState());
-			}, Element.ORIGO);
-			addAugmentation((variables,inputs) -> 
-			{
-				placeEffect(variables, inputs, Blocks.END_STONE.defaultBlockState());
-			}, Element.FINIS);
-			addAugmentation((variables,inputs) -> 
-			{
-				Level world = ((VarLevel)variables.get(Slot.WORLD)).get();
-				Entity caster = ((VarEntity)variables.get(Slot.CASTER)).asEntity();
-				
-				LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(world);
-				if(caster.getType() == EntityType.PLAYER)
-					bolt.setCause((ServerPlayer)caster);
-				
-				Map<String, IVariable> params = ComponentBase.collectParams(variables, inputs, POS);
-				bolt.setPos(POS.get(params).asVec());
-				world.addFreshEntity(bolt);
-			}, Element.FINIS, Element.ARDERE, Element.MUNDUS);
-		}
-		
-		protected static void placeEffect(VariableSet variablesIn, List<ISpellComponent> inputs, BlockState state)
-		{
-			Map<String, IVariable> params = ComponentBase.collectParams(variablesIn, inputs, POS);
-			placeBlock(POS.get(params).asVec(), ((VarLevel)variablesIn.get(Slot.WORLD)).get(), state);
-		}
-		
-		protected static void placeBlock(Vec3 pos, Level world, BlockState state)
-		{
+				inputVariables.get(0).asEntity().setSecondsOnFire(8);
+				return;
+			}
+			
+			Vec3 pos = inputVariables.get(0).asVec();
 			BlockPos blockPos = new BlockPos(pos.x, pos.y, pos.z);
 			if(blockPos.getY() < -64)
 				return;
@@ -300,45 +337,62 @@ public abstract class FunctionGlyph extends ComponentBase
 				world.setBlockAndUpdate(blockPos, state);
 			}
 		}
+		
+		protected static void spawnEntity(List<IVariable> inputVariables, Level world, CreationRecipe recipe, Entity caster)
+		{
+			if(inputVariables.isEmpty() || world.isClientSide())
+				return;
+			
+			Vec3 position = inputVariables.get(0).asVec();
+			
+			Entity spawnedEntity = recipe.createEntityAt(world, position);
+			if(spawnedEntity == null || !spawnedEntity.isAlive())
+				return;
+			
+			if(spawnedEntity.getType() == EntityType.LIGHTNING_BOLT)
+				((LightningBolt)spawnedEntity).setCause((ServerPlayer)caster);
+			else if(spawnedEntity instanceof TamableAnimal)
+			{
+				TamableAnimal animal = (TamableAnimal)spawnedEntity;
+				animal.setTame(true);
+				animal.setOwnerUUID(caster.getUUID());
+			}
+			
+			world.addFreshEntity(spawnedEntity);
+		}
 	}
 	
 	public static class StatusEffect extends FunctionGlyph
 	{
 		public StatusEffect()
 		{
-			super(20, (variables, inputs) -> addEffect(variables, inputs, MobEffects.NIGHT_VISION));
-			
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.FIRE_RESISTANCE), Element.ARDERE, Element.MARE);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.DIG_SPEED), Element.ARDERE, Element.FINIS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.INVISIBILITY), Element.ARDERE, Element.SCULK);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.DAMAGE_BOOST), Element.ARDERE, Element.MUNDUS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.JUMP), Element.MUNDUS, Element.FINIS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.MOVEMENT_SLOWDOWN), Element.SCULK, Element.FINIS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.WEAKNESS), Element.SCULK, Element.MUNDUS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.DAMAGE_RESISTANCE), Element.MUNDUS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.MOVEMENT_SPEED), Element.FINIS);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.WATER_BREATHING), Element.MARE);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.REGENERATION), Element.ORIGO);
-			addAugmentation((variables, inputs) -> addEffect(variables, inputs, MobEffects.WITHER), Element.SCULK, Element.ORIGO);
+			super(20);
 		}
 		
-		private static void addEffect(VariableSet variables, List<ISpellComponent> inputs, MobEffect effect)
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
-			if(inputs.isEmpty())
+			if(inputVariables.isEmpty())
 				return;
 			
-			Entity caster = variables.get(Slot.CASTER).asEntity();
-			IVariable var = getVariable(inputs.get(0), variables);
-			if(var.type() == VariableType.ENTITY)
-				addStatusEffect(var.asEntity(), effect, caster);
+			Entity caster = totalVariables.get(Slot.CASTER).asEntity();
+			StatusEffectRecipe recipe = (StatusEffectRecipe)FunctionRecipes.getInstance().getMatchingRecipe(inputElements, FunctionRecipes.STATUS_EFFECT);
+			if(recipe == null)
+				addEffectToEntity(inputVariables, new MobEffectInstance(MobEffects.NIGHT_VISION, Reference.Values.TICKS_PER_SECOND * 30, 0, false, false), caster);
+			else
+			{
+				recipe.getEffects().forEach((effect) -> addEffectToEntity(inputVariables, effect, caster));
+				
+				CommandFunction.CacheableFunction func = recipe.getFunction();
+				if(func != null && func != CommandFunction.CacheableFunction.NONE)
+					runCommandOn(getFirstOfType(inputVariables, VariableType.ENTITY).asEntity(), world, func);
+			}
 		}
 		
-		private static void addStatusEffect(Entity ent, MobEffect effect, Entity caster)
+		protected static void addEffectToEntity(List<IVariable> inputVariables, MobEffectInstance effect, Entity caster)
 		{
-			if(!(ent instanceof LivingEntity))
-				return;
-			
-			((LivingEntity)ent).addEffect(new MobEffectInstance(effect, Reference.Values.TICKS_PER_SECOND * 30, 0, false, false), caster);
+			Entity target = getFirstOfType(inputVariables, (var) -> var.type() == VariableType.ENTITY && var.asEntity() instanceof LivingEntity).asEntity();
+			if(target != null)
+				((LivingEntity)target).addEffect(effect, caster);
 		}
 	}
 	
@@ -348,19 +402,20 @@ public abstract class FunctionGlyph extends ComponentBase
 		
 		public Dispel()
 		{
-			super(32, Dispel::doDispel);
+			super(32);
 		}
 		
-		protected static void doDispel(VariableSet variablesIn, List<ISpellComponent> inputs)
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
-			Map<String, IVariable> params = ComponentBase.collectParams(variablesIn, inputs, POS, RAD);
-			Level world = ((VarLevel)variablesIn.get(Slot.WORLD)).get();
-			Vec3 pos = POS.get(params).asVec();
-			double radius = RAD.get(params).asDouble();
+			Vec3 pos = getFirstOfType(inputVariables, VariableType.VECTOR).asVec();
+			double radius = getFirstOfType(inputVariables, VariableType.DOUBLE).asDouble();
+			
+			IVariable uuidMost = totalVariables.get(Slot.UUID1);
+			IVariable uuidLeast = totalVariables.get(Slot.UUID2);
 			
 			AABB bounds = new AABB(-radius, -radius, -radius, radius, radius, radius).move(pos);
 			for(SpellData spell : SpellManager.getSpellsWithin(world, bounds))
-				if(spell.getVariable(Slot.UUID1) != variablesIn.get(Slot.UUID1) && spell.getVariable(Slot.UUID2) != variablesIn.get(Slot.UUID2))
+				if(spell.getVariable(Slot.UUID1) != uuidMost && spell.getVariable(Slot.UUID2) != uuidLeast)
 					spell.kill();
 		}
 	}

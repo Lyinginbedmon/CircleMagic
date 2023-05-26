@@ -67,7 +67,7 @@ public class Sandbox extends Block implements MenuProvider
 		ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
 		if(stack.getItem() instanceof ISpellContainer)
 			spell = ((ISpellContainer)stack.getItem()).getSpell(stack.getTag());
-		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), null, spell, 255);
+		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), null, spell, -1);
 	}
 	
 	public Component getDisplayName()

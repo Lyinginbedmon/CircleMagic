@@ -1,6 +1,7 @@
 package com.lying.misc19.init;
 
 import com.lying.misc19.blocks.Crucible;
+import com.lying.misc19.blocks.CurruidDust;
 import com.lying.misc19.blocks.FairyJar;
 import com.lying.misc19.blocks.ImbuedBlock;
 import com.lying.misc19.blocks.InscribedBlock;
@@ -28,6 +29,8 @@ public class M19Blocks
     
     public static final RegistryObject<Block> SANDBOX = BLOCKS.register("sandbox", () -> new Sandbox(BlockBehaviour.Properties.of(Material.WOOD).noOcclusion()));
     public static final RegistryObject<Block> PHANTOM_CUBE = BLOCKS.register("phantom_cube", () -> new PhantomBlock(BlockBehaviour.Properties.of(Material.GLASS).noOcclusion().strength(-1.0F, 3600000.0F).noLootTable()));
+    public static final RegistryObject<Block> CURRUID_DUST = BLOCKS.register("curruid_dust", () -> new CurruidDust(BlockBehaviour.Properties.of(Material.AMETHYST, MaterialColor.COLOR_CYAN).sound(SoundType.AMETHYST).instabreak()));
+    public static final RegistryObject<Block> CURRUID_BLOCK = BLOCKS.register("curruid_block", () -> new Block(BlockBehaviour.Properties.of(Material.METAL, MaterialColor.COLOR_BLUE).sound(SoundType.AMETHYST)));
     
     /**
      * KEY QUESTIONS:
