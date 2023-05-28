@@ -28,7 +28,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
@@ -357,7 +356,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	{
 		if(this.glyphList.isMouseOver(x, y))
 			return this.glyphList.mouseClicked(x, y, mouseKey);
-		else
+		else if(isOverArrangement(x, y))
 		{
 			// Double click to centre clicked point
 			Vec2 clickPos = new Vec2((float)x, (float)y);
@@ -408,14 +407,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	public boolean isOverArrangement(double mouseX, double mouseY)
 	{
-		if(this.glyphList.isMouseOver(mouseX, mouseY))
-			return false;
-		else 
-			for(AbstractWidget widget : new AbstractWidget[] {this.nextCatButton, this.prevCatButton, this.printButton, this.copyButton, this.pasteButton})
-				if(widget.isMouseOver(mouseX, mouseY))
-					return false;
-		
-		return true;
+		return mouseX > this.glyphList.getWidth();
 	}
 	
 	public boolean mouseReleased(double x, double y, int mouseKey)
