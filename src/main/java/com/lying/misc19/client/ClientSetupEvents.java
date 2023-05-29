@@ -44,6 +44,7 @@ public class ClientSetupEvents
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.PHANTOM_CUBE.get(), RenderType.translucent());
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.FAIRY_JAR.get(), RenderType.cutout());
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.MAGIC_SAPLING.get(), RenderType.cutout());
+			ItemBlockRenderTypes.setRenderLayer(M19Blocks.MAGIC_TREE.get(), RenderType.cutout());
 			
 //        	MinecraftForge.EVENT_BUS.register(ClientBus.class);
 			
@@ -60,6 +61,7 @@ public class ClientSetupEvents
     public static void registerColorHandlersBlock(final RegisterColorHandlersEvent.Block event)
     {
     	event.register((blockState, tintGetter, pos, layer) -> { return tintGetter != null && pos != null ? BiomeColors.getAverageWaterColor(tintGetter, pos) : -1; }, M19Blocks.CRUCIBLE.get());
+    	event.register((blockState, tintGetter, pos, layer) -> { return tintGetter != null && pos != null ? BiomeColors.getAverageGrassColor(tintGetter, pos) : -1; }, M19Blocks.MAGIC_TREE.get());
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })

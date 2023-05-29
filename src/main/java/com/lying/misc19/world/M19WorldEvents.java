@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.ImmutableList;
+import com.lying.misc19.blocks.MagicSapling;
 import com.lying.misc19.blocks.MagicTree;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.data.worldgen.features.FeatureUtils;
 import net.minecraft.util.RandomSource;
@@ -40,8 +42,10 @@ public class M19WorldEvents
 						
 						public List<FoliageAttachment> placeTrunk(LevelSimulatedReader world, BiConsumer<BlockPos, BlockState> consumer, RandomSource random, int p_226160_, BlockPos pos, TreeConfiguration config)
 						{
-							consumer.accept(pos, M19Blocks.MAGIC_TREE.get().defaultBlockState());
-							consumer.accept(pos.above(), M19Blocks.MAGIC_TREE.get().defaultBlockState().setValue(MagicTree.HALF, DoubleBlockHalf.UPPER));
+							Direction facing = MagicSapling.getLatestFacing();
+							BlockState state = M19Blocks.MAGIC_TREE.get().defaultBlockState().setValue(MagicTree.FACING, facing);
+							consumer.accept(pos, state.setValue(MagicTree.HALF, DoubleBlockHalf.LOWER));
+							consumer.accept(pos.above(), state.setValue(MagicTree.HALF, DoubleBlockHalf.UPPER));
 							return ImmutableList.of();
 						}
 					}, 

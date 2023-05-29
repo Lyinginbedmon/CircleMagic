@@ -2,6 +2,7 @@ package com.lying.misc19.client.renderer.blockentity;
 
 import com.lying.misc19.blocks.entity.MagicTreeBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -21,18 +22,19 @@ public class MagicTreeBlockEntityRenderer implements BlockEntityRenderer<MagicTr
 		this.itemRenderer = Minecraft.getInstance().getItemRenderer();
 	}
 	
-	public void render(MagicTreeBlockEntity treeTile, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int p_112311_, int p_112312_)
+	public void render(MagicTreeBlockEntity treeTile, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay)
 	{
 		if(treeTile.isEmpty())
 			return;
 		
 		ItemStack stack = treeTile.getItem(0);
 		matrixStack.pushPose();
-			matrixStack.translate(0.5D, 1.5D, 0.5D);
+			matrixStack.translate(0.5D, 1.35D, 0.5D);
 			matrixStack.pushPose();
-				float scale = 0.5F;
+				matrixStack.mulPose(Vector3f.YP.rotationDegrees(((float)treeTile.renderTicks() + partialTicks) * 3F));
+				float scale = 0.4F;
 				matrixStack.scale(scale, scale, scale);
-				this.itemRenderer.renderStatic(stack, TransformType.FIXED, p_112311_, OverlayTexture.NO_OVERLAY, matrixStack, bufferSource, 0);
+				this.itemRenderer.renderStatic(stack, TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStack, bufferSource, 0);
 			matrixStack.popPose();
 		matrixStack.popPose();
 	}

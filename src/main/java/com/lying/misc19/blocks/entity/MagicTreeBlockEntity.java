@@ -3,10 +3,8 @@ package com.lying.misc19.blocks.entity;
 import com.lying.misc19.init.M19BlockEntities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -39,11 +37,7 @@ public class MagicTreeBlockEntity extends BlockEntity implements Container
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, MagicTreeBlockEntity tile)
 	{
-		RandomSource randomsource = world.getRandom();
-		double d0 = (double)pos.getX() + randomsource.nextDouble();
-		double d1 = (double)pos.getY() + randomsource.nextDouble() * 2D;
-		double d2 = (double)pos.getZ() + randomsource.nextDouble();
-		world.addParticle(ParticleTypes.WITCH, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+		tile.ticksActive++;
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, MagicTreeBlockEntity tile)
