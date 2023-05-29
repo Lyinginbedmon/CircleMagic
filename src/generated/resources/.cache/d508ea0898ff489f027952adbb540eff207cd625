@@ -1,4 +1,4 @@
-// 1.19	2023-05-20T01:19:37.0662659	Circle Magic block loot tables
+// 1.19	2023-05-29T03:10:38.5059397	Circle Magic block loot tables
 27e5d1947011b8bc85c7d7dfa68212becc17ed4d data/misc19/loot_tables/blocks/crucible.json
 b2b9a3d5751c30224e82bad1d664d63edc40f68c data/misc19/loot_tables/blocks/fairy_jar.json
 79a29df35c8265ca933a85b601f41ebc1f88e73c data/misc19/loot_tables/blocks/imbued_acacia.json
@@ -22,7 +22,7 @@ cba7b6b892df21459449da15ee38aeb34a125c8a data/misc19/loot_tables/blocks/inscribe
 ef5f1d66252b094aff55690dc76f843ac29032e7 data/misc19/loot_tables/blocks/inscribed_stone.json
 57eea331f50ea9546185be28e7cf33ff3db1c6de data/misc19/loot_tables/blocks/inscribed_warped.json
 4208524146b1a036b9881bf7b7651dfda521a18a data/misc19/loot_tables/blocks/magic_sapling.json
-4208524146b1a036b9881bf7b7651dfda521a18a data/misc19/loot_tables/blocks/magic_tree.json
+54ecd49df4911cdacf127c7dc4c8508920968594 data/misc19/loot_tables/blocks/magic_tree.json
 25ca2aac62e52aa89a89764342d8daffe012b154 data/misc19/loot_tables/blocks/sandbox.json
 c23da537dac0b5a254737e1915065f21cf4ca55a data/misc19/loot_tables/blocks/tilled_red_sand.json
 feca366c8c8b9d1dd9e7dd9a95d2fe94795c9288 data/misc19/loot_tables/blocks/tilled_sand.json

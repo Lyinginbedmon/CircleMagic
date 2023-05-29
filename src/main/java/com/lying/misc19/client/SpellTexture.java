@@ -16,6 +16,7 @@ import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.PixelProvider;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
+import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -160,26 +161,54 @@ public class SpellTexture
 				};
 	}
 	
-	public static PixelProvider addLine(Vec2 a, Vec2 b)
+	public static PixelProvider addLine(Vec2 a, Vec2 b, float thickness)
 	{
 		return new PixelProvider()
 				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawLine(a, b, conflictors); }
+					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawLine(a, b, thickness, conflictors); }
 				};
 	}
 	
-	public static PixelProvider addPolygon(Vec2... points)
+	public static PixelProvider addPolygon(float thickness, Vec2... points)
 	{
 		return new PixelProvider()
 				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors)
-					{
-						for(int i=0; i<points.length; i++)
-						{
-							texture.drawLine(points[i], points[(i+1)%points.length], conflictors);
-						}
-					}
+					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawPolygon(conflictors, thickness, points); }
 				};
+	}
+	
+	public static PixelProvider addRegularPolygon(int points, float radius, Vec2 core, Vec2 up, float thickness)
+	{
+		Vec2[] pointSet = new Vec2[points];
+		Vec2 offset = up.normalized().scale(radius);
+		float turn = 360F / points;
+		double rads = Math.toRadians(turn);
+		double cos = Math.cos(rads);
+		double sin = Math.sin(rads);
+		for(int i=0; i<points; i++)
+			pointSet[i] = core.add(offset = M19Utils.rotate(offset, cos, sin));
+		
+		return new PixelProvider()
+				{
+					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawPolygon(conflictors, thickness, pointSet); }
+				};
+	}
+	
+	public static PixelProvider addDiamond(float thickness, Vec2 core, Vec2 up, float radius)
+	{
+		return addDiamond(thickness, core, up, radius, radius);
+	}
+	
+	public static PixelProvider addDiamond(float thickness, Vec2 core, Vec2 up, float radiusX, float radiusY)
+	{
+		Vec2 right = M19Utils.rotate(up, 90D);
+		
+		Vec2 top = core.add(up.scale(radiusY));
+		Vec2 rig = core.add(right.scale(radiusX)); 
+		Vec2 bot = core.add(up.scale(-radiusY));
+		Vec2 lef = core.add(right.scale(-radiusX));
+		
+		return addPolygon(thickness, top, rig, bot, lef);
 	}
 	
 	private void addToTexture(ISpellComponent comp, BiConsumer<PixelProvider,Integer> func)
@@ -285,146 +314,74 @@ public class SpellTexture
 			}
 	}
 	
-	public void drawLine(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
+	public void drawLine(Vec2 a, Vec2 b, float thickness, List<PixelProvider> conflictors)
 	{
-		drawLineBetween(a.scale(resolution), b.scale(resolution), conflictors);
+		a = this.centre.add(a.add(this.centre.negated()).scale(resolution));
+		b = this.centre.add(b.add(this.centre.negated()).scale(resolution));
+		
+		Vec2 dir = M19Utils.rotate(b.add(a.negated()).normalized(), 90F).scale((thickness * this.resolution) / 2);
+		Vec2 topLeft = a.add(dir);
+		Vec2 topRight = a.add(dir.negated());
+		Vec2 botRight = b.add(dir.negated());
+		Vec2 botLeft = b.add(dir);
+		
+		fillPolygon(conflictors, topLeft, topRight, botRight, botLeft);
 	}
 	
-	private void drawLineBetween(Vec2 a, Vec2 b, List<PixelProvider> conflictors)
+	public void drawPolygon(List<PixelProvider> conflictors, float thickness, Vec2... polygon)
 	{
-		Vec2 dir = b.add(a.negated());
-		double len = dir.length();
-		dir = dir.normalized();
+		thickness *= resolution;
+		for(int i=0; i<polygon.length; i++)
+			polygon[i] = centre.add(centre.add(polygon[i].negated()).scale(resolution));
 		
-		for(float i=0; i<len; i+=0.5F)
+		int prevIndex = polygon.length - 1;
+		for(int i=0; i<polygon.length; i++)
 		{
-			Vec2 pos = a.add(dir.scale(i));
-			setPixel((int)pos.x, (int)pos.y, conflictors);
-		}
-	}
-	
-	private void drawSquare(int minX, int minY, int maxX, int maxY, List<PixelProvider> conflictors)
-	{
-		Vec2 xy = new Vec2(minX, minY);
-		Vec2 Xy = new Vec2(maxX, minY);
-		Vec2 XY = new Vec2(maxX, maxY);
-		Vec2 xY = new Vec2(minX, maxY);
-		
-		drawLine(xy, Xy, conflictors);
-		drawLine(Xy, XY, conflictors);
-		drawLine(XY, xY, conflictors);
-		drawLine(xY, xy, conflictors);
-	}
-	
-	private static final Vec2[] scanDirections = new Vec2[] 
-			{
-				new Vec2(+1, 0),
-				new Vec2(-1, 0),
-				new Vec2(0, +1),
-				new Vec2(0, -1)
-			};
-	
-	// FIXME Correct inside-polygon confirmation for shape fill
-	/** Performs a simple flood fill on all points inside the given polygon */
-	private void fillPolygon(List<PixelProvider> conflictors, Vec2... points)
-	{
-		if(points.length == 2)
-		{
-			drawLine(points[0], points[1], conflictors);
-			return;
-		}
-		else if(points.length < 2)
-			return;
-		
-		System.out.println("Starting to fill "+points.length+"-pointed polygon");
-		List<Vec2> filled = Lists.newArrayList();
-		List<Vec2> toBeFilled = Lists.newArrayList();
-		Vec2 firstPoint = getFirstPointInside(points);
-		if(firstPoint == null)
-			return;
-		
-		toBeFilled.add(firstPoint);
-		while(!toBeFilled.isEmpty())
-		{
-			System.out.println(" # "+toBeFilled.size()+" points to fill");
-			List<Vec2> nextSet = Lists.newArrayList();
+			Vec2 a = polygon[i];
+			Vec2 prev = polygon[prevIndex % polygon.length];
+			Vec2 next = polygon[(i + 1) % polygon.length];
 			
-			for(Vec2 point : toBeFilled)
-			{
-				setPixel((int)point.x, (int)point.y, conflictors);
-				filled.add(point);
-				
-				for(Vec2 dir : scanDirections)
-				{
-					Vec2 offset = point.add(dir);
-					if(nextSet.contains(offset) || filled.contains(offset))
-						continue;
-					
-					if(isInsidePolygon(offset, points))
-						nextSet.add(offset);
-				}
-			}
+			Vec2 toNext = next.add(a.negated()).normalized();
+			Vec2 toPrev = prev.add(a.negated()).normalized();
 			
-			nextSet.removeAll(toBeFilled);
-			toBeFilled.clear();
-			toBeFilled.addAll(nextSet);
+			Vec2 aNorm = toNext.add(toPrev).scale(0.5F * thickness);
+			Vec2 topRight = a.add(aNorm);
+			Vec2 topLeft = a.add(aNorm.negated());
+			
+			Vec2 b = next;
+			prev = a;
+			next = polygon[(i + 2) % polygon.length];
+			toNext = next.add(b.negated()).normalized();
+			toPrev = prev.add(b.negated()).normalized();
+			
+			Vec2 bNorm = toNext.add(toPrev).normalized().scale(0.5F * thickness);
+			Vec2 botRight = b.add(bNorm);
+			Vec2 botLeft = b.add(bNorm.negated());
+			
+			fillPolygon(conflictors, topLeft, topRight, botRight, botLeft);
+			prevIndex = ++prevIndex % polygon.length;
 		}
-		System.out.println(" # Complete, "+filled.size()+" points filled");
 	}
 	
-	private static Vec2 getFirstPointInside(Vec2... points)
+	private void fillPolygon(List<PixelProvider> conflictors, Vec2... polygon)
 	{
-		float minX = Float.MAX_VALUE;
-		float minY = Float.MAX_VALUE;
-		float maxX = Float.MIN_VALUE;
-		float maxY = Float.MIN_VALUE;
-		for(Vec2 point : points)
-		{
-			if(point.x < minX)
-				minX = point.x;
-			if(point.x > maxX)
-				maxX = point.x;
-			if(point.y < minY)
-				minY = point.y;
-			if(point.y > maxY)
-				maxY = point.y;
-		}
+	    double minX = Double.MAX_VALUE;
+	    double maxX = Double.MIN_VALUE;
+	    double minY = Double.MAX_VALUE;
+	    double maxY = Double.MIN_VALUE;
+	    for (int i = 0; i < polygon.length; i++)
+	    {
+	    	Vec2 q = polygon[i];
+	        minX = Math.min(q.x, minX);
+	        maxX = Math.max(q.x, maxX);
+	        minY = Math.min(q.y, minY);
+	        maxY = Math.max(q.y, maxY);
+	    }
 		
-		for(float x=minX; x<maxX; x++)
-			for(float y=minY; y<maxY; y++)
-				if(isInsidePolygon(new Vec2(x, y), points))
-					return new Vec2(x, y);
-		
-		return null;
-	}
-	
-	private static boolean isInsidePolygon(Vec2 point, Vec2... points)
-	{
-		if(points.length < 3)
-			return false;
-		
-		double totalAngle = 0D;
-		for(int i=0; i<points.length; i++)
-		{
-			Vec2 a = points[i];
-			Vec2 b = points[(i+1)%points.length];
-			totalAngle += angle(a.x - point.x, a.y - point.y, b.x - point.x, b.y - point.y);
-		}
-		return Math.abs(totalAngle) >= Math.PI;
-	}
-	
-	private static double angle(double x1, double y1, double x2, double y2)
-	{
-		double theta1 = Math.atan2(y1,x1);
-		double theta2 = Math.atan2(y2,x2);
-		
-		double dtheta = theta2 - theta1;
-		while (dtheta > Math.PI)
-			dtheta -= Math.PI * 2;
-		while (dtheta < -Math.PI)
-			dtheta += Math.PI * 2;
-		
-		return dtheta;
+		for(double x = minX; x < maxX; x++)
+			for(double y = minY; y < maxY; y++)
+				if(M19Utils.isInsidePolygonIgnoreBounds(new Vec2((float)x, (float)y), polygon))
+					setPixel((int)x, (int)y, conflictors);
 	}
 	
 	public boolean setPixel(int x, int y, List<PixelProvider> conflictors)

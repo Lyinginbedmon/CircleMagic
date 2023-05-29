@@ -34,4 +34,37 @@ public class M19Utils
 	{
 		return new Vec2((float)(vec.x * cos - vec.y * sin), (float)(vec.y * cos + vec.x * sin));
 	}
+	
+	/** Returns true if the given point is inside the given polygon.<br>Does not perform a boundary check. */
+	public static boolean isInsidePolygonIgnoreBounds(Vec2 p, Vec2... polygon)
+	{
+	    boolean inside = false;
+	    for(int i = 0, j = polygon.length - 1; i < polygon.length; j = i++)
+	        if((polygon[i].y > p.y) != (polygon[j].y > p.y) && p.x < (polygon[j].x - polygon[i].x) * (p.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x)
+	            inside = !inside;
+	    
+	    return inside;
+	}
+	
+	/** Returns true if the given point is inside the given polygon.<br>Performs a boundary check. */
+	public static boolean isInsidePolygon(Vec2 p, Vec2... polygon)
+	{
+	    double minX = Double.MAX_VALUE;
+	    double maxX = Double.MIN_VALUE;
+	    double minY = Double.MAX_VALUE;
+	    double maxY = Double.MIN_VALUE;
+	    for (int i = 0; i < polygon.length; i++)
+	    {
+	    	Vec2 q = polygon[i];
+	        minX = Math.min(q.x, minX);
+	        maxX = Math.max(q.x, maxX);
+	        minY = Math.min(q.y, minY);
+	        maxY = Math.max(q.y, maxY);
+	    }
+	    
+	    if(p.x < minX || p.x > maxX || p.y < minY || p.y > maxY)
+	        return false;
+	    
+	    return isInsidePolygonIgnoreBounds(p, polygon);
+	}
 }

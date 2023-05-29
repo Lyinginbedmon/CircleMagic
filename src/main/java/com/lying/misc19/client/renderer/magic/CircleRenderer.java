@@ -20,6 +20,6 @@ public class CircleRenderer extends ComponentRenderer
 		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 10, 1.25F, false), Canvas.DECORATIONS);
 		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 55, 1.25F, false), Canvas.DECORATIONS);
 		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 65, 1.25F, false), Canvas.DECORATIONS);
-		func.accept(SpellTexture.addLine(pos.add(up.scale(-10F)), core.add(up.scale(10F))), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addLine(pos.add(up.scale(-10F)), core.add(up.scale(10F)), 1.25F), Canvas.DECORATIONS);
 	}
 }

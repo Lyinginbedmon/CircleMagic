@@ -8,16 +8,24 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
+import com.lying.misc19.blocks.MagicTree;
+import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.init.M19Items;
 import com.lying.misc19.reference.Reference;
 import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.LootTables;
@@ -25,6 +33,7 @@ import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSet;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
@@ -55,7 +64,7 @@ public class M19BlockLootProvider extends LootTableProvider
         addBlockLootTable("blocks/fairy_jar", dropSelf(M19Items.FAIRY_JAR_ITEM.get()));
         
         addBlockLootTable("blocks/magic_sapling", dropSelf(M19Items.MAGIC_SAPLING_ITEM.get()));
-        addBlockLootTable("blocks/magic_tree", dropSelf(M19Items.MAGIC_SAPLING_ITEM.get()));
+        addBlockLootTable("blocks/magic_tree", whenPropertyDropItem(M19Blocks.MAGIC_TREE.get(), MagicTree.HALF, DoubleBlockHalf.LOWER, M19Items.MAGIC_SAPLING_ITEM.get()));
         
         addBlockLootTable("blocks/inscribed_stone", dropSelf(M19Items.INSCRIBED_STONE_ITEM.get()));
         addBlockLootTable("blocks/imbued_stone", dropSelf(M19Items.IMBUED_STONE_ITEM.get()));
@@ -114,4 +123,13 @@ public class M19BlockLootProvider extends LootTableProvider
     {
         map.forEach((loc, table) -> LootTables.validate(validationtracker, loc, table));
     }
+    
+    public static <T extends Comparable<T> & StringRepresentable> LootTable.Builder whenPropertyDropItem(Block block, Property<T> property, T value, Item item)
+    {
+    	return LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(item).when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block).setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(property, value)))));
+    }
+    
+    protected static <T extends Comparable<T> & StringRepresentable> LootTable.Builder createSinglePropConditionTable(Block block, Property<T> property, T value) {
+        return LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(block).when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block).setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(property, value)))));
+     }
 }
