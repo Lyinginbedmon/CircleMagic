@@ -2,7 +2,6 @@ package com.lying.misc19.client.renderer.blockentity;
 
 import java.util.Random;
 
-import com.lying.misc19.blocks.Crucible;
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.ICruciblePart.PartType;
 import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
@@ -37,9 +36,6 @@ public class CrucibleBlockEntityRenderer implements BlockEntityRenderer<Crucible
 	
 	public void render(CrucibleBlockEntity crucibleTile, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int p_112311_, int p_112312_)
 	{
-		if(!crucibleTile.getBlockState().getValue(Crucible.HAS_WATER))
-			return;
-		
 		// Render contained arrangement
 		if(crucibleTile.arrangement() != null)
 		{

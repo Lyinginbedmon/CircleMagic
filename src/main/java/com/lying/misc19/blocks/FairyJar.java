@@ -4,8 +4,12 @@ import javax.annotation.Nullable;
 
 import com.lying.misc19.blocks.entity.FairyJarBlockEntity;
 import com.lying.misc19.init.M19BlockEntities;
+import com.lying.misc19.init.M19Items;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -32,6 +36,32 @@ public class FairyJar extends Block implements ICruciblePart, EntityBlock
 	public PartType partType(BlockPos pos, BlockState state, Level world) { return PartType.FAIRY; }
 	
 	public boolean canProvideSuggestions(BlockPos pos, BlockState state, Level world, BlockPos cruciblePos) { return true; }
+	
+	@SuppressWarnings("deprecation")
+	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state)
+	{
+		ItemStack stack = super.getCloneItemStack(world, pos, state);
+		world.getBlockEntity(pos, M19BlockEntities.FAIRY_JAR.get()).ifPresent((fairy) -> fairy.saveToItem(stack));
+		return stack;
+	}
+	
+	public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player)
+	{
+		BlockEntity tile = world.getBlockEntity(pos);
+		if(tile.getType() == M19BlockEntities.FAIRY_JAR.get())
+		{
+			if(!world.isClientSide() && !player.isCreative())
+			{
+				ItemStack stack = new ItemStack(M19Items.FAIRY_JAR_ITEM.get());
+				tile.saveToItem(stack);
+				ItemEntity itemEntity = new ItemEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, stack);
+				itemEntity.setDefaultPickUpDelay();
+				world.addFreshEntity(itemEntity);
+			}
+		}
+		
+		super.playerWillDestroy(world, pos, state, player);
+	}
 	
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{

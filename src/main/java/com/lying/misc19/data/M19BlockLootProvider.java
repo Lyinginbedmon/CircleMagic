@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
+import com.lying.misc19.blocks.Crucible;
 import com.lying.misc19.blocks.MagicTree;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.init.M19Items;
@@ -60,8 +61,7 @@ public class M19BlockLootProvider extends LootTableProvider
         tables.clear();
         
         addBlockLootTable("blocks/sandbox", dropSelf(M19Items.SANDBOX_ITEM.get()));
-        addBlockLootTable("blocks/crucible", dropSelf(M19Items.CRUCIBLE_ITEM.get()));
-        addBlockLootTable("blocks/fairy_jar", dropSelf(M19Items.FAIRY_JAR_ITEM.get()));
+        addBlockLootTable("blocks/crucible", whenPropertyDropItem(M19Blocks.CRUCIBLE.get(), Crucible.HALF, DoubleBlockHalf.LOWER, M19Items.CRUCIBLE_ITEM.get()));
         
         addBlockLootTable("blocks/magic_sapling", dropSelf(M19Items.MAGIC_SAPLING_ITEM.get()));
         addBlockLootTable("blocks/magic_tree", whenPropertyDropItem(M19Blocks.MAGIC_TREE.get(), MagicTree.HALF, DoubleBlockHalf.LOWER, M19Items.MAGIC_SAPLING_ITEM.get()));

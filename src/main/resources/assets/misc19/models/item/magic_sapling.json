@@ -2,6 +2,6 @@
     "parent": "item/generated",
     "textures":
     {
-    	"layer0": "misc19:items/magic_sapling"
+    	"layer0": "misc19:block/magic_sapling"
     }
 }

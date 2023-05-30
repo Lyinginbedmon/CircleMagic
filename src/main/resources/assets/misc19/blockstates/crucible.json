@@ -1,12 +1,5 @@
 {
-	"multipart":
-	[
-		{
-			"apply": { "model": "misc19:block/crucible" }
-		},
-		{
-			"when": { "has_water": "true" },
-			"apply": { "model": "misc19:block/crucible_water" }
-		}
-	]
+	"variants": {
+    "": { "model": "misc19:block/crucible" }
+  }
 }

@@ -62,7 +62,7 @@ public class M19Blocks
     	 * Resembles a cauldron<br>
     	 * Can only inscribe scrolls with 5 or fewer components by default
     	 */
-    public static final RegistryObject<Block> CRUCIBLE = BLOCKS.register("crucible", () -> new Crucible(BlockBehaviour.Properties.of(Material.METAL).noOcclusion()));
+    public static final RegistryObject<Block> CRUCIBLE = BLOCKS.register("crucible", () -> new Crucible(BlockBehaviour.Properties.of(Material.METAL).lightLevel((state) -> 1).noOcclusion()));
     
     // Magecrafted Bough
     	/**

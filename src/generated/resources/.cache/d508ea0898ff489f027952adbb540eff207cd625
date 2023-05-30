@@ -1,6 +1,5 @@
-// 1.19	2023-05-29T03:10:38.5059397	Circle Magic block loot tables
-27e5d1947011b8bc85c7d7dfa68212becc17ed4d data/misc19/loot_tables/blocks/crucible.json
-b2b9a3d5751c30224e82bad1d664d63edc40f68c data/misc19/loot_tables/blocks/fairy_jar.json
+// 1.19	2023-05-30T23:34:14.6925835	Circle Magic block loot tables
+2ba78a1e6032e8a66977f3882f1a7b89344ce2fc data/misc19/loot_tables/blocks/crucible.json
 79a29df35c8265ca933a85b601f41ebc1f88e73c data/misc19/loot_tables/blocks/imbued_acacia.json
 785c729fa2475e7fc3db7b075e89f7aae536b990 data/misc19/loot_tables/blocks/imbued_birch.json
 abf88a2054f5d6dd699c307e2d6bc79962d88f6a data/misc19/loot_tables/blocks/imbued_crimson.json

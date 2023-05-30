@@ -26,8 +26,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -41,7 +43,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
+public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, ArrangementHolder
 {
 	public static final double RANGE = 16D;
 	public static final int SPACING = 5;
@@ -76,11 +78,15 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 	protected void saveAdditional(CompoundTag compound)
 	{
 		super.saveAdditional(compound);
+		CompoundTag spellData = new CompoundTag();
+		arrangement.serialiseNBT(spellData);
+		compound.put("Spell", spellData);
 	}
 	
 	public void load(CompoundTag compound)
 	{
 		super.load(compound);
+		this.arrangement = SpellComponents.readFromNBT(compound.getCompound("Spell"));
 	}
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
@@ -106,6 +112,7 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 	{
 		this.arrangement = spellIn;
 		this.needsRedrawing = true;
+		this.setChanged();
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -235,12 +242,18 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider
 	
 	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
 	{
-		ISpellComponent spell = null;
-		ItemStack heldStack = player.getItemInHand(InteractionHand.MAIN_HAND);
-		if(heldStack.getItem() instanceof ISpellContainer)
-			spell = ((ISpellContainer)heldStack.getItem()).getSpell(heldStack.getTag());
+		if(!hasArrangement())
+		{
+			ItemStack heldStack = player.getItemInHand(InteractionHand.MAIN_HAND);
+			if(heldStack.getItem() instanceof ISpellContainer)
+				setArrangement(((ISpellContainer)heldStack.getItem()).getSpell(heldStack.getTag()));
+		}
 		
-		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), getFirstClosestItem(player.getLevel()), spell, glyphCap());
+		Container tree = getFirstClosestItem(player.getLevel());
+		if(tree == null)
+			tree = new SimpleContainer(2);
+		
+		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), tree, arrangement(), glyphCap());
 	}
 	
 	public Component getDisplayName() { return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".crucible"); }

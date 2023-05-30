@@ -1,7 +1,7 @@
 package com.lying.misc19.blocks;
 
+import com.lying.misc19.blocks.entity.ArrangementHolder;
 import com.lying.misc19.client.gui.menu.MenuSandbox;
-import com.lying.misc19.item.ISpellContainer;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.reference.Reference;
 
@@ -14,8 +14,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.SimpleContainerData;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -28,7 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class Sandbox extends Block implements MenuProvider
+public class Sandbox extends Block implements MenuProvider, ArrangementHolder
 {
 	private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 6, 16);
 	
@@ -63,15 +61,17 @@ public class Sandbox extends Block implements MenuProvider
 	
 	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
 	{
-		ISpellComponent spell = null;
-		ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-		if(stack.getItem() instanceof ISpellContainer)
-			spell = ((ISpellContainer)stack.getItem()).getSpell(stack.getTag());
-		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), null, spell, -1);
+		return new MenuSandbox(containerId, inventory);
 	}
 	
 	public Component getDisplayName()
 	{
 		return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox");
 	}
+	
+	public ISpellComponent arrangement() { return null; }
+	
+	public void setArrangement(ISpellComponent spell) { }
+	
+	public int glyphCap() { return -1; }
 }

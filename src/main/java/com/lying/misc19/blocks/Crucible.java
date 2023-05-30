@@ -4,104 +4,75 @@ import javax.annotation.Nullable;
 
 import com.lying.misc19.blocks.entity.CrucibleBlockEntity;
 import com.lying.misc19.init.M19BlockEntities;
-import com.lying.misc19.init.M19Blocks;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.stats.Stats;
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemUtils;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class Crucible extends Block implements EntityBlock
+public class Crucible extends SimpleDoubleBlock implements EntityBlock, SimpleWaterloggedBlock
 {
-	public static final BooleanProperty HAS_WATER = BooleanProperty.create("has_water");
+	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+	protected static final VoxelShape SHAPE_LOWER = Shapes.or(Block.box(0, 0, 0, 16, 6, 16), Block.box(2, 6, 2, 14, 16, 14));
+	protected static final VoxelShape SHAPE_UPPER = Shapes.or(Block.box(2, 0, 2, 14, 9, 14), Block.box(4, 9, 4, 12, 16, 12));
 	
-	public Crucible(Properties p_49795_)
+	public Crucible(Properties propertiesIn)
 	{
-		super(p_49795_);
-		this.registerDefaultState(this.defaultBlockState().setValue(HAS_WATER, false));
+		super(propertiesIn);
+		registerDefaultState(defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)));
 	}
 	
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> stateHolder)
 	{
-		stateHolder.add(HAS_WATER);
+		stateHolder.add(HALF, WATERLOGGED);
 	}
+	
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) { return isMainHalf(state) ? SHAPE_LOWER : SHAPE_UPPER; }
 	
 	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult)
 	{
-		ItemStack heldStack = player.getItemInHand(hand);
-		if(state.getValue(HAS_WATER))
-		{
-			if(heldStack.is(Items.BUCKET))
-				return fillBucket(world, pos, player, heldStack, hand);
-			else if(!world.isClientSide())
-			{
-				BlockEntity blockEntity = world.getBlockEntity(pos);
-				if(blockEntity.getType() == M19BlockEntities.CRUCIBLE.get())
-					((CrucibleBlockEntity)blockEntity).openEditorFor(player);
-				
-				return InteractionResult.CONSUME;
-			}
-		}
-		else if(heldStack.is(Items.WATER_BUCKET))
-			return emptyBucket(world, pos, player, heldStack, hand);
+		BlockEntity blockEntity = world.getBlockEntity(isMainHalf(state) ? pos : pos.below());
+		if(blockEntity.getType() == M19BlockEntities.CRUCIBLE.get())
+			((CrucibleBlockEntity)blockEntity).openEditorFor(player);
 		
-		return InteractionResult.PASS;
+		return InteractionResult.CONSUME;
 	}
 	
-	private static InteractionResult fillBucket(Level world, BlockPos pos, Player player, ItemStack heldStack, InteractionHand hand)
-	{
-		if(!world.isClientSide())
-		{
-			Item item = heldStack.getItem();
-			player.setItemInHand(hand, ItemUtils.createFilledResult(heldStack, player, new ItemStack(Items.WATER_BUCKET)));
-			player.awardStat(Stats.USE_CAULDRON);
-			player.awardStat(Stats.ITEM_USED.get(item));
-			world.setBlockAndUpdate(pos, M19Blocks.CRUCIBLE.get().defaultBlockState());
-			world.playSound((Player)null, pos, SoundEvents.BUCKET_FILL, SoundSource.BLOCKS, 1F, 1F);
-			world.gameEvent((Entity)null, GameEvent.FLUID_PICKUP, pos);
-		}
-		
-		return InteractionResult.sidedSuccess(world.isClientSide());
-	}
+	@SuppressWarnings("deprecation")
+	public FluidState getFluidState(BlockState state) { return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state); }
 	
-	private static InteractionResult emptyBucket(Level world, BlockPos pos, Player player, ItemStack heldStack, InteractionHand hand)
+
+	public BlockState updateShape(BlockState state, Direction direction, BlockState neighbour, LevelAccessor world, BlockPos pos, BlockPos neighbourPos)
 	{
-		if(!world.isClientSide())
-		{
-			Item item = heldStack.getItem();
-			player.setItemInHand(hand, ItemUtils.createFilledResult(heldStack, player, new ItemStack(Items.BUCKET)));
-			player.awardStat(Stats.FILL_CAULDRON);
-			player.awardStat(Stats.ITEM_USED.get(item));
-			world.setBlockAndUpdate(pos, M19Blocks.CRUCIBLE.get().defaultBlockState().setValue(HAS_WATER, true));
-			world.playSound((Player)null, pos, SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1F, 1F);
-			world.gameEvent((Entity)null, GameEvent.FLUID_PLACE, pos);
-		}
+		if(state.getValue(WATERLOGGED))
+			world.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
 		
-		return InteractionResult.sidedSuccess(world.isClientSide());
+		return super.updateShape(state, direction, neighbour, world, pos, neighbourPos);
 	}
 	
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
-		return new CrucibleBlockEntity(pos, state);
+		return isMainHalf(state) ? new CrucibleBlockEntity(pos, state) : null;
 	}
 	
 	@Nullable

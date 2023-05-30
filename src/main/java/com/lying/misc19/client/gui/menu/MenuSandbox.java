@@ -56,4 +56,10 @@ public class MenuSandbox extends AbstractContainerMenu
 	public int getCap() { return this.editorData.get(0); }
 	
 	public void setCap(int capIn) { this.editorData.set(0, capIn); }
+	
+	public void removed(Player player)
+	{
+		super.removed(player);
+		
+	}
 }
