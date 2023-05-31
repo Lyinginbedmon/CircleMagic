@@ -43,7 +43,7 @@ public abstract class OperationGlyph extends ComponentBase
 		Vec2 offset = M19Utils.rotate(right().scale(20), spin / 2);
 		for(ISpellComponent input : inputGlyphs)
 		{
-			input.setParent(this);
+			input.setParent(this, ComponentState.INPUT);
 			input.setPositionAndOrganise(offset.x, offset.y);
 			offset = M19Utils.rotate(offset, spin);
 		}

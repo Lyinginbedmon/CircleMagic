@@ -1,7 +1,6 @@
 package com.lying.misc19.blocks.entity;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +32,6 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -49,7 +47,6 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 	public static final int SPACING = 5;
 	private static final AABB RENDER_AABB = new AABB(-RANGE, -1, -RANGE, RANGE, 1, RANGE);
 	
-	private Map<PartType, List<BlockPos>> expansionMap = new HashMap<>();
 	private boolean hasNotifiedManager = false;
 	
 	@OnlyIn(Dist.CLIENT)
@@ -79,14 +76,17 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 	{
 		super.saveAdditional(compound);
 		CompoundTag spellData = new CompoundTag();
-		arrangement.serialiseNBT(spellData);
+		if(arrangement != null)
+			arrangement.serialiseNBT(spellData);
 		compound.put("Spell", spellData);
 	}
 	
 	public void load(CompoundTag compound)
 	{
 		super.load(compound);
-		this.arrangement = SpellComponents.readFromNBT(compound.getCompound("Spell"));
+		
+		CompoundTag spellData = compound.getCompound("Spell");
+		this.arrangement = spellData.isEmpty() ? null : SpellComponents.readFromNBT(compound.getCompound("Spell"));
 	}
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, CrucibleBlockEntity tile)
@@ -103,16 +103,14 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		}
 	}
 	
-	public ISpellComponent arrangement()
-	{
-		return this.arrangement;
-	}
+	public ISpellComponent arrangement() { return this.arrangement; }
 	
 	public void setArrangement(ISpellComponent spellIn)
 	{
 		this.arrangement = spellIn;
 		this.needsRedrawing = true;
-		this.setChanged();
+		markDirty();
+		System.out.println("Crucible updated "+(getLevel().isClientSide() ? "CLIENT" : "SERVER"));
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -188,23 +186,6 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		return false;
 	}
 	
-	public void assessAndAddExpansion(BlockPos pos)
-	{
-		BlockState state = getLevel().getBlockState(pos);
-		if(state.getBlock() instanceof ICruciblePart)
-		{
-			ICruciblePart part = (ICruciblePart)state.getBlock();
-			PartType type = part.partType(pos, state, getLevel());
-			List<BlockPos> partsOfType = this.expansionMap.getOrDefault(type, Lists.newArrayList());
-			if(!partsOfType.contains(pos))
-			{
-				partsOfType.add(pos);
-				this.expansionMap.put(type, partsOfType);
-				setChanged();
-			}
-		}
-	}
-	
 	public ClientboundBlockEntityDataPacket getUpdatePacket()
 	{
 		return ClientboundBlockEntityDataPacket.create(this);
@@ -215,6 +196,12 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		CompoundTag compound = new CompoundTag();
 		this.saveAdditional(compound);
 		return compound;
+	}
+	
+	public void markDirty()
+	{
+		if(getLevel() != null)
+			setChanged();
 	}
 	
 	public void openEditorFor(Player player)
@@ -253,7 +240,7 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		if(tree == null)
 			tree = new SimpleContainer(2);
 		
-		return new MenuSandbox(containerId, inventory, new SimpleContainerData(1), tree, arrangement(), glyphCap());
+		return new MenuSandbox(containerId, inventory, tree, arrangement(), glyphCap(), getBlockPos());
 	}
 	
 	public Component getDisplayName() { return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".crucible"); }

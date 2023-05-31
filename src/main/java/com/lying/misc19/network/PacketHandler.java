@@ -31,6 +31,7 @@ public class PacketHandler
 	{
 		int id = 0;
 		HANDLER.registerMessage(id++, PacketSyncSpellManager.class, PacketSyncSpellManager::encode, PacketSyncSpellManager::decode, PacketSyncSpellManager::handle);
+		HANDLER.registerMessage(id++, PacketSyncArrangement.class, PacketSyncArrangement::encode, PacketSyncArrangement::decode, PacketSyncArrangement::handle);
 	}
 	
 	/**

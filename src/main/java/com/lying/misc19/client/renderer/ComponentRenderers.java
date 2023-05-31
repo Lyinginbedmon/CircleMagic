@@ -8,8 +8,10 @@ import com.lying.misc19.client.renderer.magic.CircleRenderer;
 import com.lying.misc19.client.renderer.magic.ComponentRenderer;
 import com.lying.misc19.client.renderer.magic.HertzRenderer;
 import com.lying.misc19.client.renderer.magic.RootRenderer;
+import com.lying.misc19.client.renderer.magic.LesserSigilRenderer;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
+import com.lying.misc19.magic.variable.VariableSet.Slot;
 import com.lying.misc19.utility.SpellTextureManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -25,6 +27,10 @@ public class ComponentRenderers
 		register(new RootRenderer(), SpellComponents.ROOT_CASTER, SpellComponents.ROOT_DUMMY, SpellComponents.ROOT_POSITION, SpellComponents.ROOT_TARGET);
 		register(new HertzRenderer(), SpellComponents.HERTZ_MINUTE, SpellComponents.HERTZ_SECOND);
 		register(new CircleRenderer(), SpellComponents.CIRCLE_BASIC, SpellComponents.CIRCLE_STEP);
+		register(new LesserSigilRenderer(), 
+				Slot.AMUN.glyph(), Slot.ANUBIS.glyph(), Slot.APEP.glyph(), Slot.BAST.glyph(), Slot.BES.glyph(), Slot.HATHOR.glyph(), Slot.HORUS.glyph(), Slot.ISIS.glyph(),
+				Slot.NEPTHYS.glyph(), Slot.OSIRIS.glyph(), Slot.PTAH.glyph(), Slot.RA.glyph(), Slot.SOBEK.glyph(), Slot.SUTEKH.glyph(), Slot.TAWARET.glyph(), Slot.THOTH.glyph(),
+				Slot.AGE.glyph(), Slot.CASTER.glyph(), Slot.CONTINUE.glyph(), Slot.INDEX.glyph(), Slot.LOOK.glyph(), Slot.POSITION.glyph(), Slot.TARGET.glyph());
 	}
 	
 	public static void register(ComponentRenderer renderer, ResourceLocation... names)

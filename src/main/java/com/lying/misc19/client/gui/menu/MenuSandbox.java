@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import com.lying.misc19.init.M19Menus;
 import com.lying.misc19.magic.ISpellComponent;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -22,9 +23,9 @@ public class MenuSandbox extends AbstractContainerMenu
 	
 	private final Slot boughInput;
 	
-	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainerData(1), new SimpleContainer(1), null, -1); }
+	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainer(1), null, -1, BlockPos.ZERO); }
 	
-	public MenuSandbox(int containerId, Inventory inv, ContainerData dataIn, @Nullable Container treeIn, @Nullable ISpellComponent spellIn, int capIn)
+	public MenuSandbox(int containerId, Inventory inv, @Nullable Container treeIn, @Nullable ISpellComponent spellIn, int capIn, BlockPos tilePos)
 	{
 		super(M19Menus.SANDBOX_MENU.get(), containerId);
 		this.arrangement = spellIn;
@@ -38,10 +39,12 @@ public class MenuSandbox extends AbstractContainerMenu
 				public boolean isActive() { return false; }
 			});
 		
-		this.editorData = dataIn;
+		this.editorData = new SimpleContainerData(4);
 		setCap(capIn);
-		
-		this.addDataSlots(dataIn);
+		this.editorData.set(0, tilePos.getX());
+		this.editorData.set(1, tilePos.getY());
+		this.editorData.set(2, tilePos.getZ());
+		this.addDataSlots(this.editorData);
 		
 	}
 	
@@ -49,17 +52,21 @@ public class MenuSandbox extends AbstractContainerMenu
 	
 	public boolean stillValid(Player player) { return true; }
 	
+	public BlockPos tilePos()
+	{
+		return new BlockPos(this.editorData.get(0), this.editorData.get(1), this.editorData.get(2));
+	}
+	
 	public ISpellComponent arrangement() { return this.arrangement; }
 	
 	public void setArrangement(ISpellComponent spellIn) { this.arrangement = spellIn; }
 	
-	public int getCap() { return this.editorData.get(0); }
+	public int getCap() { return this.editorData.get(3); }
 	
-	public void setCap(int capIn) { this.editorData.set(0, capIn); }
+	public void setCap(int capIn) { this.editorData.set(3, capIn); }
 	
 	public void removed(Player player)
 	{
 		super.removed(player);
-		
 	}
 }

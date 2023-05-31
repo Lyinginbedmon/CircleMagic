@@ -33,9 +33,6 @@ public class FairyJarBlockEntity extends BlockEntity
 	private double ticksActive = 0;
 	private UUID ownerUUID;
 	
-	/**
-	 * Personality profile
-	 */
 	private final PersonalityModel personality;
 	
 	public FairyJarBlockEntity(BlockPos pos, BlockState state)
@@ -166,7 +163,7 @@ public class FairyJarBlockEntity extends BlockEntity
 				float value = this.emotionMap.get(emote);
 				if(value > 0)
 				{
-					this.emotionMap.put(emote, Math.max(0F, this.emotionMap.get(emote) - 1F));
+					this.emotionMap.put(emote, Math.max(0F, this.emotionMap.get(emote) - 0.05F));
 					changed.add(emote);
 				}
 			}

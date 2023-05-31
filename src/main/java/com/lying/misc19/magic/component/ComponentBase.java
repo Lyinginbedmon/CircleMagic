@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec2;
 public abstract class ComponentBase implements ISpellComponent
 {
 	private ISpellComponent parent = null;
+	private ComponentState state = ComponentState.NORMAL;
 	
 	private final Param[] inputNeeds;
 	protected final List<ISpellComponent> inputGlyphs = Lists.newArrayList();
@@ -30,8 +31,15 @@ public abstract class ComponentBase implements ISpellComponent
 	protected ComponentBase(Param... parameters) { this.inputNeeds = parameters; }
 	
 	public void setParent(ISpellComponent parentIn) { this.parent = parentIn; }
+	public void setParent(ISpellComponent parentIn, ComponentState stateIn)
+	{
+		this.parent = parentIn;
+		this.state = stateIn;
+	}
 	
 	public ISpellComponent parent() { return this.parent; }
+	
+	public ComponentState state() { return this.state; }
 	
 	public void setPosition(float x, float y)
 	{
@@ -57,7 +65,7 @@ public abstract class ComponentBase implements ISpellComponent
 		Vec2 offset = M19Utils.rotate(left().scale(20), spin / 2);
 		for(ISpellComponent input : inputGlyphs)
 		{
-			input.setParent(this);
+			input.setParent(this, ComponentState.INPUT);
 			input.setPositionAndOrganise(offset.x, offset.y);
 			offset = M19Utils.rotate(offset, spin);
 		}
@@ -66,7 +74,7 @@ public abstract class ComponentBase implements ISpellComponent
 		offset = M19Utils.rotate(right().scale(20), spin / 2);
 		for(ISpellComponent output : outputGlyphs)
 		{
-			output.setParent(this);
+			output.setParent(this, ComponentState.OUTPUT);
 			output.setPositionAndOrganise(offset.x, offset.y);
 			offset = M19Utils.rotate(offset, spin);
 		}

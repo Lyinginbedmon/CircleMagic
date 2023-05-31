@@ -48,7 +48,7 @@ public abstract class ComponentCircle extends ComponentBase
 		if(inputGlyphs.size() == 1)
 		{
 			ISpellComponent input = inputGlyphs.get(0);
-			input.setParent(this);
+			input.setParent(this, ComponentState.INPUT);
 			
 			Vec2 pos = core.add(up().scale(5));
 			input.setPositionAndOrganise(pos.x, pos.y);
@@ -56,7 +56,7 @@ public abstract class ComponentCircle extends ComponentBase
 		else
 			for(ISpellComponent input : inputGlyphs)
 			{
-				input.setParent(this);
+				input.setParent(this, ComponentState.INPUT);
 				input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
 				
 				offset = M19Utils.rotate(offset, spin);
@@ -66,7 +66,7 @@ public abstract class ComponentCircle extends ComponentBase
 		offset = M19Utils.rotate(up().scale(separations().getRight()), spin / 2);
 		for(ISpellComponent output : outputGlyphs)
 		{
-			output.setParent(this);
+			output.setParent(this, ComponentState.OUTPUT);
 			output.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
 			
 			offset = M19Utils.rotate(offset, spin);

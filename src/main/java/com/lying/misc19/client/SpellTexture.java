@@ -177,7 +177,7 @@ public class SpellTexture
 				};
 	}
 	
-	public static PixelProvider addRegularPolygon(int points, float radius, Vec2 core, Vec2 up, float thickness)
+	public static PixelProvider addRegularPolygon(int points, float radius, Vec2 core, Vec2 up, float thickness, boolean isConflictor)
 	{
 		Vec2[] pointSet = new Vec2[points];
 		Vec2 offset = up.normalized().scale(radius);
@@ -191,6 +191,25 @@ public class SpellTexture
 		return new PixelProvider()
 				{
 					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawPolygon(conflictors, thickness, pointSet); }
+					
+					public boolean shouldExclude(int x, int y, int width, int height, int resolution)
+					{
+						if(!isConflictor)
+							return false;
+						
+						// Real position of the given pixel
+						Vec2 point = new Vec2(x, y);
+						
+						// Centre of image
+						Vec2 centre = new Vec2(width / 2, height / 2);
+						
+						// Adjust all points in set by resolution
+						Vec2[] scaledPointSet = new Vec2[points];
+						for(int i=0; i<points; i++)
+							scaledPointSet[i] = centre.add(centre.add(pointSet[i].negated()).scale(resolution));
+						
+						return M19Utils.isInsidePolygon(point, scaledPointSet);
+					}
 				};
 	}
 	
@@ -294,6 +313,9 @@ public class SpellTexture
 	
 	public void drawCircle(int x, int y, int radius, float thickness, List<PixelProvider> conflictors)
 	{
+		if(thickness <= 0F)
+			return;
+		
 		x = (int)(centre.x + (x - centre.x) * resolution);
 		y = (int)(centre.y + (y - centre.y) * resolution);
 		radius *= resolution;
@@ -330,9 +352,10 @@ public class SpellTexture
 	
 	public void drawPolygon(List<PixelProvider> conflictors, float thickness, Vec2... polygon)
 	{
+		// Adjust incoming points for resolution
 		thickness *= resolution;
 		for(int i=0; i<polygon.length; i++)
-			polygon[i] = centre.add(centre.add(polygon[i].negated()).scale(resolution));
+			polygon[i] = centre.add(polygon[i].add(centre.negated()).scale(resolution));
 		
 		int prevIndex = polygon.length - 1;
 		for(int i=0; i<polygon.length; i++)

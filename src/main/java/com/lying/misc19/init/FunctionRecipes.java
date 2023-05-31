@@ -113,7 +113,7 @@ public class FunctionRecipes extends SimpleJsonResourceReloadListener
 			for(Entry<ResourceLocation, Map<ResourceLocation, FunctionRecipe<?>>> entry : getInstance().recipeMap.entrySet())
 			{
 				Misc19.LOG.info(" # For recipe type "+entry.getKey().getPath()+":");
-				entry.getValue().values().forEach((recipe) -> Misc19.LOG.info(" #   "+recipe.getId().getPath()));
+				entry.getValue().values().forEach((recipe) -> Misc19.LOG.info(" # * "+recipe.getId().getPath()));
 			}
 	}
 	

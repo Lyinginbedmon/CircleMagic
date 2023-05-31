@@ -59,6 +59,7 @@ public class FairyBus
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private static void addToAllFairies(Level world, EmotiveEvent event)
 	{
 		addToAllFairies(world, (fairy) -> event);

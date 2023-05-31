@@ -28,7 +28,9 @@ public interface ISpellComponent
 	
 	public default ResourceLocation spriteLocation() { return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/magic/"+category().getSerializedName()+"/"+getRegistryName().getPath()+".png"); }
 	
-	public void setParent(ISpellComponent parentIn);
+	public void setParent(ISpellComponent parentIn, ComponentState stateIn);
+	
+	public ComponentState state();
 	
 	/** Component this component is associated with */
 	public ISpellComponent parent();
@@ -83,7 +85,7 @@ public interface ISpellComponent
 	{
 		for(int i=0; i<components.length; i++)
 		{
-			components[i].setParent(this);
+			components[i].setParent(this, ComponentState.INPUT);
 			addInput(components[i]);
 		}
 		
@@ -104,7 +106,7 @@ public interface ISpellComponent
 	{
 		for(int i=0; i<components.length; i++)
 		{
-			components[i].setParent(this);
+			components[i].setParent(this, ComponentState.OUTPUT);
 			addOutput(components[i]);
 		}
 		return this;
@@ -161,6 +163,13 @@ public interface ISpellComponent
 	public default void serialiseNBT(CompoundTag nbt) { }
 	
 	public default void deserialiseNBT(CompoundTag nbt) { }
+	
+	public static enum ComponentState
+	{
+		NORMAL,
+		INPUT,
+		OUTPUT;
+	}
 	
 	public static enum Category
 	{

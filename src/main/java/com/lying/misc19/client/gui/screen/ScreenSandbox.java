@@ -18,6 +18,8 @@ import com.lying.misc19.item.ScrollItem;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.ISpellComponent.Category;
 import com.lying.misc19.magic.ISpellComponent.Type;
+import com.lying.misc19.network.PacketHandler;
+import com.lying.misc19.network.PacketSyncArrangement;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellTextureManager;
@@ -129,6 +131,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 						if(menu.arrangement() == null && comp.type() == Type.ROOT)
 						{
 							menu.setArrangement(comp);
+							syncToServer();
 							this.glyphList.setCategory(Category.CIRCLE);
 							this.position = Vec2.ZERO;
 						}
@@ -139,6 +142,15 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			}
 			catch(Exception e) { }
 		}, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_paste"), this));
+	}
+	
+	public void syncToServer()
+	{
+		CompoundTag spellNBT = new CompoundTag();
+		if(menu.arrangement() != null)
+			menu.arrangement().serialiseNBT(spellNBT);
+		PacketHandler.sendToServer(new PacketSyncArrangement(menu.tilePos(), spellNBT));
+		System.out.println("Packet sent from editor screen");
 	}
 	
 	public void tick()
@@ -325,6 +337,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				menu.setArrangement(input);
 				menu.arrangement().organise();
 				updateCanvas(menu.arrangement());
+				syncToServer();
 				this.glyphList.incCategory(menu.arrangement());
 				return true;
 			}
@@ -496,6 +509,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private void clearArrangement()
 	{
 		menu.setArrangement(null);
+		syncToServer();
 		this.glyphList.setCategory(Category.ROOT);
 	}
 	

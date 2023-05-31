@@ -59,9 +59,9 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 		Vec2 offset = M19Utils.rotate(left().scale(separations().getLeft()), spin / 2);
 		for(ISpellComponent input : inputGlyphs)
 		{
-			input.setParent(this);
+			input.setParent(this, ComponentState.INPUT);
 			input.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
-
+			
 			offset = M19Utils.rotate(offset, spin);
 		}
 		
@@ -69,7 +69,7 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 		offset = M19Utils.rotate(up().scale(separations().getRight()), spin / 2);
 		for(ISpellComponent output : outputGlyphs)
 		{
-			output.setParent(this);
+			output.setParent(this, ComponentState.OUTPUT);
 			output.setPositionAndOrganise(core.x + offset.x, core.y + offset.y);
 			
 			offset = M19Utils.rotate(offset, spin);
