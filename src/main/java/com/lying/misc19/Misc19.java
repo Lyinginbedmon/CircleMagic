@@ -62,7 +62,7 @@ public class Misc19
     @SubscribeEvent
     public void commonSetup(final FMLCommonSetupEvent event)
     {
-    	PacketHandler.init();
+    	event.enqueueWork(() -> PacketHandler.init());
     }
     
     @SubscribeEvent
