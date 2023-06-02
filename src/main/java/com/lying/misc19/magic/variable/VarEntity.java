@@ -153,6 +153,8 @@ public class VarEntity extends VariableBase
 			}
 	}
 	
+	public UUID uniqueID() { return this.uniqueID; }
+	
 	@Nonnull
 	public static Entity makeFakeEntity()
 	{

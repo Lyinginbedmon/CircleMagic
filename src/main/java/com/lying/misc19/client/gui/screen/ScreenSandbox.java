@@ -10,16 +10,14 @@ import org.lwjgl.glfw.GLFW;
 
 import com.lying.misc19.client.Canvas;
 import com.lying.misc19.client.gui.menu.MenuSandbox;
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
 import com.lying.misc19.init.M19Items;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.item.ScrollItem;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.ISpellComponent.Category;
 import com.lying.misc19.magic.ISpellComponent.Type;
-import com.lying.misc19.network.PacketHandler;
-import com.lying.misc19.network.PacketSyncArrangement;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellTextureManager;
@@ -130,8 +128,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 					{
 						if(menu.arrangement() == null && comp.type() == Type.ROOT)
 						{
-							menu.setArrangement(comp);
-							syncToServer();
+							menu.setArrangement(comp, true);
 							this.glyphList.setCategory(Category.CIRCLE);
 							this.position = Vec2.ZERO;
 						}
@@ -142,15 +139,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			}
 			catch(Exception e) { }
 		}, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_paste"), this));
-	}
-	
-	public void syncToServer()
-	{
-		CompoundTag spellNBT = new CompoundTag();
-		if(menu.arrangement() != null)
-			menu.arrangement().serialiseNBT(spellNBT);
-		PacketHandler.sendToServer(new PacketSyncArrangement(menu.tilePos(), spellNBT));
-		System.out.println("Packet sent from editor screen");
 	}
 	
 	public void tick()
@@ -200,7 +188,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			
 			arrangement.setPosition((width / 2) + (int)scrollX, (height / 2) + (int)scrollY);
 			
-			// TODO Only update canvas element positions, do not redraw texture
 			Vec2 currentPos = new Vec2(scrollX, scrollY);
 			if(currentPos != lastPosition)
 				updateCanvas(arrangement);
@@ -334,10 +321,8 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		{
 			if(input.category() == Category.ROOT)
 			{
-				menu.setArrangement(input);
-				menu.arrangement().organise();
+				menu.setArrangement(input, true);
 				updateCanvas(menu.arrangement());
-				syncToServer();
 				this.glyphList.incCategory(menu.arrangement());
 				return true;
 			}
@@ -355,9 +340,11 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				recipient.addOutput(input);
 				result = true;
 			}
+			
 			if(result)
 			{
 				recipient.organise();
+				menu.setArrangement(menu.arrangement(), true);
 				updateCanvas(menu.arrangement());
 			}
 			return result;
@@ -508,8 +495,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private void clearArrangement()
 	{
-		menu.setArrangement(null);
-		syncToServer();
+		menu.setArrangement(null, true);
 		this.glyphList.setCategory(Category.ROOT);
 	}
 	

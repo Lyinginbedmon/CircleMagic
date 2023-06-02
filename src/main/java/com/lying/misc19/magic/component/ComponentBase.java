@@ -11,10 +11,16 @@ import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.IVariable;
 import com.lying.misc19.magic.variable.VariableSet;
 import com.lying.misc19.magic.variable.VariableSet.VariableType;
+import com.lying.misc19.network.PacketAddComponentEffect;
+import com.lying.misc19.network.PacketHandler;
 import com.lying.misc19.utility.M19Utils;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 public abstract class ComponentBase implements ISpellComponent
 {
@@ -29,6 +35,19 @@ public abstract class ComponentBase implements ISpellComponent
 	private float posX = 0F, posY = 0F;
 	
 	protected ComponentBase(Param... parameters) { this.inputNeeds = parameters; }
+	
+	public static void notifySpellEffect(Level world, String nameIn, Vec3 pos, CompoundTag dataIn, int ticks)
+	{
+		if(world.isClientSide())
+			return;
+		
+		PacketAddComponentEffect pkt = new PacketAddComponentEffect(nameIn, pos, dataIn, ticks);
+		world.players().forEach((player) -> 
+		{
+			if(player.distanceToSqr(pos) < (64D * 64D))
+				PacketHandler.sendTo((ServerPlayer)player, pkt);
+		});
+	}
 	
 	public void setParent(ISpellComponent parentIn) { this.parent = parentIn; }
 	public void setParent(ISpellComponent parentIn, ComponentState stateIn)

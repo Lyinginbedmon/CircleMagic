@@ -16,7 +16,8 @@ import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.item.ISpellContainer;
 import com.lying.misc19.magic.ISpellComponent;
-import com.lying.misc19.magic.variable.VariableSet.Slot;
+import com.lying.misc19.network.PacketHandler;
+import com.lying.misc19.network.PacketSyncArrangementClient;
 import com.lying.misc19.reference.Reference;
 import com.lying.misc19.utility.CrucibleManager;
 import com.lying.misc19.utility.SpellTextureManager;
@@ -25,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
@@ -53,17 +55,7 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 	private Canvas canvas = new Canvas(SpellTextureManager.getNewTexture(), 8);
 	private boolean needsRedrawing = true;
 	
-	private ISpellComponent arrangement = SpellComponents.create(SpellComponents.ROOT_DUMMY).addOutputs(
-			SpellComponents.create(SpellComponents.CIRCLE_BASIC).addInputs(SpellComponents.create(SpellComponents.GLYPH_NAND).addInputs(SpellComponents.create(Slot.AGE.glyph()))).addOutputs(
-				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.BAST.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_TRUE)).addOutputs(SpellComponents.create(Slot.THOTH.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_SET).addInputs(SpellComponents.create(SpellComponents.SIGIL_FALSE)).addOutputs(SpellComponents.create(Slot.SUTEKH.glyph()))),
-			SpellComponents.create(SpellComponents.CIRCLE_BASIC).addOutputs(
-				SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ANUBIS.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.HORUS.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_AND).addInputs(SpellComponents.create(Slot.BAST.glyph()), SpellComponents.create(Slot.THOTH.glyph())).addOutputs(SpellComponents.create(Slot.ISIS.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_OR).addInputs(SpellComponents.create(Slot.HORUS.glyph()), SpellComponents.create(Slot.ISIS.glyph())).addOutputs(SpellComponents.create(Slot.RA.glyph())),
-				SpellComponents.create(SpellComponents.GLYPH_XOR).addInputs(SpellComponents.create(Slot.ANUBIS.glyph()), SpellComponents.create(Slot.SUTEKH.glyph())).addOutputs(SpellComponents.create(Slot.OSIRIS.glyph()))));
+	private ISpellComponent arrangement = null;
 	
 	public CrucibleBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -75,10 +67,7 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 	protected void saveAdditional(CompoundTag compound)
 	{
 		super.saveAdditional(compound);
-		CompoundTag spellData = new CompoundTag();
-		if(arrangement != null)
-			arrangement.serialiseNBT(spellData);
-		compound.put("Spell", spellData);
+		compound.put("Spell", arrangement == null ? new CompoundTag() : ISpellComponent.saveToNBT(arrangement));
 	}
 	
 	public void load(CompoundTag compound)
@@ -110,7 +99,6 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		this.arrangement = spellIn;
 		this.needsRedrawing = true;
 		markDirty();
-		System.out.println("Crucible updated "+(getLevel().isClientSide() ? "CLIENT" : "SERVER"));
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -201,12 +189,19 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 	public void markDirty()
 	{
 		if(getLevel() != null)
+		{
+			BlockState state = getBlockState();
+			getLevel().sendBlockUpdated(getBlockPos(), state, state, 3);
 			setChanged();
+		}
 	}
 	
 	public void openEditorFor(Player player)
 	{
 		player.openMenu(this);
+		
+		if(!player.getLevel().isClientSide())
+			PacketHandler.sendTo((ServerPlayer)player, new PacketSyncArrangementClient(ISpellComponent.saveToNBT(this.arrangement)));
 	}
 	
 	@Nullable

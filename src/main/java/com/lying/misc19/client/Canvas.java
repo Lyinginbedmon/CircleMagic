@@ -8,9 +8,9 @@ import java.util.Map.Entry;
 
 import org.apache.commons.compress.utils.Lists;
 
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
-import com.lying.misc19.client.renderer.magic.ComponentRenderer;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
+import com.lying.misc19.client.renderer.magic.components.ComponentRenderer;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.utility.M19Utils;
 import com.lying.misc19.utility.SpellTextureManager;

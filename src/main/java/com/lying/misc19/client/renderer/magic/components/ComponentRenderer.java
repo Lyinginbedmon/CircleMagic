@@ -1,12 +1,12 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.function.BiConsumer;
 
 import com.lying.misc19.client.Canvas;
 import com.lying.misc19.client.Canvas.ExclusionCircle;
 import com.lying.misc19.client.Canvas.Sprite;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
 import com.lying.misc19.client.SpellTexture;
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.magic.ISpellComponent;
 
 import net.minecraft.world.phys.Vec2;
@@ -39,7 +39,6 @@ public class ComponentRenderer
 	
 	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
 	{
-		Vec2 pos = component.position();
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
+		func.accept(SpellTexture.addCircle(component.position(), spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
 	}
 }

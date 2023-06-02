@@ -1,4 +1,4 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.function.BiConsumer;
 
@@ -19,15 +19,15 @@ public class LesserSigilRenderer extends ComponentRenderer
 		switch(component.state())
 		{		
 			case OUTPUT:
-				func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
-				func.accept(SpellTexture.addRegularPolygon(3, scale, pos, up.negated(), 1.25F, true), Canvas.GLYPHS + 1);
+				func.accept(SpellTexture.addCircle(pos, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
+				func.accept(PixelPolygon.regularPolygon(3, scale, pos, up.negated(), 1.25F, true), Canvas.GLYPHS + 1);
 				break;
 			case NORMAL:
-				func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
+				func.accept(SpellTexture.addCircle(pos, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS);
 				break;
 			case INPUT:
 			default:
-				func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 0F, true), Canvas.GLYPHS + 1);
+				func.accept(SpellTexture.addCircle(pos, spriteScale() - 6, 0F, true), Canvas.GLYPHS + 1);
 				break;
 		}
 	}

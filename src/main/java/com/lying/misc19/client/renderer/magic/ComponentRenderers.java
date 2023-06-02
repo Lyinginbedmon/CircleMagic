@@ -1,14 +1,14 @@
-package com.lying.misc19.client.renderer;
+package com.lying.misc19.client.renderer.magic;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.lying.misc19.client.Canvas;
-import com.lying.misc19.client.renderer.magic.CircleRenderer;
-import com.lying.misc19.client.renderer.magic.ComponentRenderer;
-import com.lying.misc19.client.renderer.magic.HertzRenderer;
-import com.lying.misc19.client.renderer.magic.RootRenderer;
-import com.lying.misc19.client.renderer.magic.LesserSigilRenderer;
+import com.lying.misc19.client.renderer.magic.components.CircleRenderer;
+import com.lying.misc19.client.renderer.magic.components.ComponentRenderer;
+import com.lying.misc19.client.renderer.magic.components.HertzRenderer;
+import com.lying.misc19.client.renderer.magic.components.LesserSigilRenderer;
+import com.lying.misc19.client.renderer.magic.components.RootRenderer;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.VariableSet.Slot;

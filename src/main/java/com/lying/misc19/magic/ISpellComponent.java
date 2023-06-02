@@ -127,6 +127,7 @@ public interface ISpellComponent
 		return parts;
 	}
 	
+	/** Stores the entire given component in a format that can be reloaded later by SpellComponents.readFromNBT */
 	public static CompoundTag saveToNBT(ISpellComponent component)
 	{
 		CompoundTag nbt = saveAtomically(component);

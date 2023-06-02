@@ -1,4 +1,4 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.function.BiConsumer;
 
@@ -17,9 +17,9 @@ public class CircleRenderer extends ComponentRenderer
 		Vec2 pos = component.position();
 		Vec2 core = component.core();
 		Vec2 up = component.up();
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 10, 1.25F, false), Canvas.DECORATIONS + 20);
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 55, 1.25F, false), Canvas.DECORATIONS + 20);
-		func.accept(SpellTexture.addCircle((int)core.x, (int)core.y, 65, 1.25F, false), Canvas.DECORATIONS + 20);
+		func.accept(SpellTexture.addCircle(core, 10, 1.25F, false), Canvas.DECORATIONS + 20);
+		func.accept(SpellTexture.addCircle(core, 55, 1.25F, false), Canvas.DECORATIONS + 20);
+		func.accept(SpellTexture.addCircle(core, 65, 1.25F, false), Canvas.DECORATIONS + 20);
 		func.accept(SpellTexture.addLine(pos.add(up.scale(-10F)), core.add(up.scale(10F)), 1.25F), Canvas.DECORATIONS + 20);
 	}
 }

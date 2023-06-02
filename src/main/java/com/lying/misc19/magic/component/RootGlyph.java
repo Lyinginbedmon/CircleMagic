@@ -10,6 +10,7 @@ import com.lying.misc19.init.M19Entities;
 import com.lying.misc19.magic.ComponentCircle;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.IVariable;
+import com.lying.misc19.magic.variable.VarBool;
 import com.lying.misc19.magic.variable.VarEntity;
 import com.lying.misc19.magic.variable.VarVec;
 import com.lying.misc19.magic.variable.VariableSet;
@@ -95,12 +96,14 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 		
 		updateCoreVariables(world, caster, variablesIn);
 		execute(variablesIn);
-		payManaCost(caster, variablesIn.totalCastingCost());
+		if(!payManaCost(caster, variablesIn.totalCastingCost()))
+			variablesIn.set(Slot.CONTINUE, VarBool.FALSE);
 	}
 	
-	public static void payManaCost(@Nonnull LivingEntity caster, int cost)
+	public static boolean payManaCost(@Nonnull LivingEntity caster, int cost)
 	{
 		// TODO Subtract variables mana from caster and damage if necessary
+		return true;
 	}
 	
 	public abstract VariableSet populateCoreVariables(Level world, LivingEntity caster, VariableSet variablesIn);

@@ -58,20 +58,6 @@ public class RenderUtils
 		drawBlockColorSquare(matrixStack, bufferSource, topLeft, topRight, botLeft, botRight, r, g, b, a);
 	}
 	
-	public static void drawOutlineColorSquare(Vec2 centre, float width, float height, float thickness, int r, int g, int b, int a)
-	{
-		// TODO Revise to quad approach for clean pointed corners
-//		float minX = centre.x - width / 2;
-//		float maxX = centre.x + width / 2;
-//		float minY = centre.y - height / 2;
-//		float maxY = centre.y + height / 2;
-		
-//		RenderUtils.drawColorLine(new Vec2(minX, minY), new Vec2(minX, maxY), thickness, r, g, b, a);
-//		RenderUtils.drawColorLine(new Vec2(maxX, minY), new Vec2(maxX, maxY), thickness, r, g, b, a);
-//		RenderUtils.drawColorLine(new Vec2(minX, minY), new Vec2(maxX, minY), thickness, r, g, b, a);
-//		RenderUtils.drawColorLine(new Vec2(minX, maxY), new Vec2(maxX, maxY), thickness, r, g, b, a);
-	}
-	
 	public static void drawBlockColorSquare(Vec2 posA, Vec2 posB, int r, int g, int b, int a, List<Quad> exclusions)
 	{
 		Vec2 topLeft = new Vec2(posA.x, posB.y);

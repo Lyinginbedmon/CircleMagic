@@ -1,4 +1,4 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.function.BiConsumer;
 
@@ -19,7 +19,6 @@ public class HertzRenderer extends ComponentRenderer
 	
 	public void addToTexture(ISpellComponent component, BiConsumer<PixelProvider,Integer> func)
 	{
-		Vec2 pos = component.position();
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, spriteScale() - 6, 1.25F, true), Canvas.GLYPHS - 1);
+		func.accept(SpellTexture.addCircle(component.position(), spriteScale() - 6, 1.25F, true), Canvas.GLYPHS - 1);
 	}
 }

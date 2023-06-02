@@ -10,10 +10,11 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.compress.utils.Lists;
 
-import com.lying.misc19.client.renderer.ComponentRenderers;
 import com.lying.misc19.client.renderer.RenderUtils;
-import com.lying.misc19.client.renderer.magic.ComponentRenderer;
-import com.lying.misc19.client.renderer.magic.PixelProvider;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
+import com.lying.misc19.client.renderer.magic.components.ComponentRenderer;
+import com.lying.misc19.client.renderer.magic.components.PixelPolygon;
+import com.lying.misc19.client.renderer.magic.components.PixelProvider;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.utility.M19Utils;
@@ -131,13 +132,13 @@ public class SpellTexture
 		layerMap.put(layer, set);
 	}
 	
-	public static PixelProvider addCircle(int xIn, int yIn, int radius, float thickness, boolean isConflictor)
+	public static PixelProvider addCircle(Vec2 core, int radius, float thickness, boolean isConflictor)
 	{
 		return new PixelProvider()
 				{
 					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors)
 					{
-						texture.drawCircle(xIn, yIn, radius, thickness, conflictors);
+						texture.drawCircle(core, radius, thickness, conflictors);
 					}
 					
 					public boolean shouldExclude(int x, int y, int width, int height, int resolution)
@@ -152,11 +153,11 @@ public class SpellTexture
 						Vec2 centre = new Vec2(width / 2, height / 2);
 						
 						// Centre of the circle modified by resolution
-						Vec2 core = new Vec2(centre.x + (xIn - centre.x) * resolution, centre.y + (yIn - centre.y) * resolution);
+						Vec2 coreScaled = centre.add(core.add(centre.negated()).scale(resolution));
 						
 						// Radius of the circle modified by resolution
 						int size = radius * resolution;
-						return point.distanceToSqr(core) < (size * size);
+						return point.distanceToSqr(coreScaled) < (size * size);
 					}
 				};
 	}
@@ -171,63 +172,7 @@ public class SpellTexture
 	
 	public static PixelProvider addPolygon(float thickness, Vec2... points)
 	{
-		return new PixelProvider()
-				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawPolygon(conflictors, thickness, points); }
-				};
-	}
-	
-	public static PixelProvider addRegularPolygon(int points, float radius, Vec2 core, Vec2 up, float thickness, boolean isConflictor)
-	{
-		Vec2[] pointSet = new Vec2[points];
-		Vec2 offset = up.normalized().scale(radius);
-		float turn = 360F / points;
-		double rads = Math.toRadians(turn);
-		double cos = Math.cos(rads);
-		double sin = Math.sin(rads);
-		for(int i=0; i<points; i++)
-			pointSet[i] = core.add(offset = M19Utils.rotate(offset, cos, sin));
-		
-		return new PixelProvider()
-				{
-					public void applyTo(SpellTexture texture, List<PixelProvider> conflictors) { texture.drawPolygon(conflictors, thickness, pointSet); }
-					
-					public boolean shouldExclude(int x, int y, int width, int height, int resolution)
-					{
-						if(!isConflictor)
-							return false;
-						
-						// Real position of the given pixel
-						Vec2 point = new Vec2(x, y);
-						
-						// Centre of image
-						Vec2 centre = new Vec2(width / 2, height / 2);
-						
-						// Adjust all points in set by resolution
-						Vec2[] scaledPointSet = new Vec2[points];
-						for(int i=0; i<points; i++)
-							scaledPointSet[i] = centre.add(centre.add(pointSet[i].negated()).scale(resolution));
-						
-						return M19Utils.isInsidePolygon(point, scaledPointSet);
-					}
-				};
-	}
-	
-	public static PixelProvider addDiamond(float thickness, Vec2 core, Vec2 up, float radius)
-	{
-		return addDiamond(thickness, core, up, radius, radius);
-	}
-	
-	public static PixelProvider addDiamond(float thickness, Vec2 core, Vec2 up, float radiusX, float radiusY)
-	{
-		Vec2 right = M19Utils.rotate(up, 90D);
-		
-		Vec2 top = core.add(up.scale(radiusY));
-		Vec2 rig = core.add(right.scale(radiusX)); 
-		Vec2 bot = core.add(up.scale(-radiusY));
-		Vec2 lef = core.add(right.scale(-radiusX));
-		
-		return addPolygon(thickness, top, rig, bot, lef);
+		return new PixelPolygon(thickness, points);
 	}
 	
 	private void addToTexture(ISpellComponent comp, BiConsumer<PixelProvider,Integer> func)
@@ -311,26 +256,25 @@ public class SpellTexture
 		}
 	}
 	
-	public void drawCircle(int x, int y, int radius, float thickness, List<PixelProvider> conflictors)
+	public void drawCircle(Vec2 core, int radius, float thickness, List<PixelProvider> conflictors)
 	{
 		if(thickness <= 0F)
 			return;
 		
-		x = (int)(centre.x + (x - centre.x) * resolution);
-		y = (int)(centre.y + (y - centre.y) * resolution);
+		core = centre.add(core.add(centre.negated()).scale(resolution));
 		radius *= resolution;
 		thickness *= resolution;
 		
 		double outerRadius = radius + (thickness / 2);
 		double innerRadius = radius - (thickness / 2);
 		int diameter = (int)(outerRadius * 2);
-		float minX = (float) (x - outerRadius);
-		float minY = (float) (y - outerRadius);
+		float minX = (float) (core.x - outerRadius);
+		float minY = (float) (core.y - outerRadius);
 		for(int i=0; i<diameter; i++)
 			for(int j=0; j<diameter; j++)
 			{
 				Vec2 point = new Vec2(i + minX, j + minY);
-				double dist = Math.sqrt(point.distanceToSqr(new Vec2(x, y)));
+				double dist = Math.sqrt(point.distanceToSqr(core));
 				if(dist <= outerRadius && dist >= innerRadius)
 					setPixel((int)point.x, (int)point.y, conflictors);
 			}

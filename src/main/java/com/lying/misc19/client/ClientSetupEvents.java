@@ -25,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
@@ -46,7 +47,7 @@ public class ClientSetupEvents
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.MAGIC_SAPLING.get(), RenderType.cutout());
 			ItemBlockRenderTypes.setRenderLayer(M19Blocks.MAGIC_TREE.get(), RenderType.cutout());
 			
-//        	MinecraftForge.EVENT_BUS.register(ClientBus.class);
+        	MinecraftForge.EVENT_BUS.register(ClientBus.class);
 			
 			ItemProperties.register(M19Items.PENDULUM.get(), new ResourceLocation(Reference.ModInfo.MOD_ID, "cast"), (stack, world, entity, slot) ->
 			{

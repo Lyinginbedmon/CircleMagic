@@ -1,4 +1,4 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.List;
 

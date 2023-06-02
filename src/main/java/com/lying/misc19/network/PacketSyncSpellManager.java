@@ -37,8 +37,10 @@ public class PacketSyncSpellManager
 	{
 		NetworkEvent.Context context = cxt.get();
 		context.setPacketHandled(true);
-		
-		if(!context.getDirection().getReceptionSide().isServer())
-			ClientSetupEvents.getLocalData().read(msg.dataNBT);
+		context.enqueueWork(() -> 
+		{
+			if(!context.getDirection().getReceptionSide().isServer())
+				ClientSetupEvents.getLocalData().read(msg.dataNBT);
+		});
 	}
 }

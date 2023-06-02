@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.lying.misc19.api.event.SpellEvent;
 import com.lying.misc19.init.SpellComponents;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.component.RootGlyph;
@@ -20,6 +21,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.MinecraftForge;
 
 /** Stores and executes spells */
 public class SpellData
@@ -56,7 +59,7 @@ public class SpellData
 	public void setUUID(UUID uuidIn) { this.spellUUID = uuidIn; }
 	public UUID getUUID() { return this.spellUUID; }
 	
-	public void kill() { this.spellUUID = null; }
+	public void kill(){ this.spellUUID = null; }
 	
 	public IVariable getVariable(Slot name) { return this.variables.get(name); }
 	
@@ -72,7 +75,7 @@ public class SpellData
 		LivingEntity caster = getOwner(world);
 		
 		// If we can't find the caster, we won't know who to bill for the mana
-		if(caster != null)
+		if(caster != null && !this.variables.isUsing(Slot.CASTER))
 			this.variables.set(Slot.CASTER, new VarEntity(caster));
 		else
 			return true;
@@ -88,15 +91,26 @@ public class SpellData
 		{
 			if(ticks++ % root.tickRate() == 0)
 			{
+				Vec3 position = variables.get(Slot.POSITION).asVec();
+				MinecraftForge.EVENT_BUS.post(new SpellEvent.Run(root, world, position, caster.getUUID()));
 				this.variables.set(Slot.CONTINUE, VarBool.FALSE);
 				root.performExecution(world, caster, this.variables);
 				this.variables.set(Slot.AGE, new VarDouble(this.variables.get(Slot.AGE).asDouble() + 1));
 				if(!this.variables.get(Slot.CONTINUE).asBoolean())
+				{
+					MinecraftForge.EVENT_BUS.post(SpellEvent.End.die(root, world, position, caster.getUUID()));
 					kill();
+				}
 			}
 		}
 		else
+		{
+			// Spells cannot be executed without a root component, and the existence of one attempting to do so suggests a significant error
+			Vec3 position = variables.get(Slot.POSITION).asVec();
+			UUID casterID = ((VarEntity)variables.get(Slot.CASTER)).uniqueID();
+			MinecraftForge.EVENT_BUS.post(SpellEvent.End.error(root, world, position, casterID));
 			kill();
+		}
 		
 		return isAlive();
 	}

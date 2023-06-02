@@ -2,7 +2,7 @@ package com.lying.misc19.client.renderer.entity;
 
 import java.util.List;
 
-import com.lying.misc19.client.renderer.ComponentRenderers;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.utility.SpellData;
 import com.lying.misc19.utility.SpellManager;
@@ -32,6 +32,7 @@ public class SpellLayer<T extends LivingEntity, M extends EntityModel<T>> extend
 		if(spells.isEmpty())
 			return;
 		
+		// FIXME Adapt to new spell texture system
 		matrixStack.pushPose();
 			matrixStack.translate(0D, 1.501F, 0D);
 			matrixStack.translate(0D, -livingEntity.getBbHeight() * 0.5D, 0D);

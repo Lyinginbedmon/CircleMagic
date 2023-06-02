@@ -31,7 +31,9 @@ public class PacketHandler
 			PROTOCOL::equals);
 		
 		HANDLER.registerMessage(id(), PacketSyncSpellManager.class, PacketSyncSpellManager::encode, PacketSyncSpellManager::decode, PacketSyncSpellManager::handle);
-		HANDLER.registerMessage(id(), PacketSyncArrangement.class, PacketSyncArrangement::encode, PacketSyncArrangement::decode, PacketSyncArrangement::handle);
+		HANDLER.registerMessage(id(), PacketSyncArrangementServer.class, PacketSyncArrangementServer::encode, PacketSyncArrangementServer::decode, PacketSyncArrangementServer::handle);
+		HANDLER.registerMessage(id(), PacketSyncArrangementClient.class, PacketSyncArrangementClient::encode, PacketSyncArrangementClient::decode, PacketSyncArrangementClient::handle);
+		HANDLER.registerMessage(id(), PacketAddComponentEffect.class, PacketAddComponentEffect::encode, PacketAddComponentEffect::decode, PacketAddComponentEffect::handle);
 	}
 	
 	private static int id() { return id++; }

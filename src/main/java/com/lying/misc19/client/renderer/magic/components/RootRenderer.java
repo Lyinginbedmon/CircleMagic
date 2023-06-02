@@ -1,4 +1,4 @@
-package com.lying.misc19.client.renderer.magic;
+package com.lying.misc19.client.renderer.magic.components;
 
 import java.util.function.BiConsumer;
 
@@ -23,10 +23,10 @@ public class RootRenderer extends ComponentRenderer
 	{
 		Vec2 pos = component.position();
 		Vec2 up = component.up();
-		func.accept(SpellTexture.addDiamond(1.5F, pos, up, spriteScale() + 5), Canvas.GLYPHS);
+		func.accept(PixelPolygon.diamond(pos, up, spriteScale() + 5, 1.5F), Canvas.GLYPHS);
 		
-		func.accept(SpellTexture.addRegularPolygon(6, 50, pos, up, 1.5F, false), Canvas.DECORATIONS);
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 75, 1.25F, false), Canvas.DECORATIONS + 20);
-		func.accept(SpellTexture.addCircle((int)pos.x, (int)pos.y, 85, 1.25F, false), Canvas.DECORATIONS + 20);
+		func.accept(PixelPolygon.regularPolygon(6, 50, pos, up, 1.5F, false), Canvas.DECORATIONS);
+		func.accept(SpellTexture.addCircle(pos, 75, 1.25F, false), Canvas.DECORATIONS + 20);
+		func.accept(SpellTexture.addCircle(pos, 85, 1.25F, false), Canvas.DECORATIONS + 20);
 	}
 }

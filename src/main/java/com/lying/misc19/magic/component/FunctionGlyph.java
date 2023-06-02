@@ -9,14 +9,17 @@ import org.apache.commons.compress.utils.Lists;
 
 import com.google.common.base.Predicate;
 import com.lying.misc19.Misc19;
+import com.lying.misc19.api.event.SpellEvent;
 import com.lying.misc19.data.recipe.CreationRecipe;
 import com.lying.misc19.data.recipe.StatusEffectRecipe;
 import com.lying.misc19.init.FunctionRecipes;
 import com.lying.misc19.init.M19Blocks;
+import com.lying.misc19.init.SpellEffects;
 import com.lying.misc19.magic.Element;
 import com.lying.misc19.magic.ISpellComponent;
 import com.lying.misc19.magic.variable.IVariable;
 import com.lying.misc19.magic.variable.VarElement;
+import com.lying.misc19.magic.variable.VarEntity;
 import com.lying.misc19.magic.variable.VarLevel;
 import com.lying.misc19.magic.variable.VarStack;
 import com.lying.misc19.magic.variable.VariableSet;
@@ -29,6 +32,8 @@ import com.lying.misc19.utility.SpellManager;
 
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -50,6 +55,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.MinecraftForge;
 
 /** A glyph that performs an actual function based on its inputs and does not have any outputs */
 public abstract class FunctionGlyph extends ComponentBase
@@ -298,16 +304,41 @@ public abstract class FunctionGlyph extends ComponentBase
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
 			CreationRecipe recipe = (CreationRecipe)FunctionRecipes.getInstance().getMatchingRecipe(inputElements, FunctionRecipes.CREATION);
+			
+			Vec3 spellPos = totalVariables.get(Slot.POSITION).asVec();
 			if(recipe == null)
+			{
 				placeBlock(inputVariables, world, M19Blocks.PHANTOM_CUBE.get().defaultBlockState());
+				
+				Vec3 pos = inputVariables.get(0).asVec();
+				CompoundTag data = new CompoundTag();
+				data.put("Pos", NbtUtils.writeBlockPos(new BlockPos(pos.x, pos.y, pos.z)));
+				notifySpellEffect(world, SpellEffects.PLACE_BLOCK, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+			}
 			else
 			{
 				BlockState state = recipe.getState();
 				if(state != null)
+				{
 					placeBlock(inputVariables, world, state);
+					
+					Vec3 pos = inputVariables.get(0).asVec();
+					CompoundTag data = new CompoundTag();
+					data.put("Pos", NbtUtils.writeBlockPos(new BlockPos(pos.x, pos.y, pos.z)));
+					notifySpellEffect(world, SpellEffects.PLACE_BLOCK, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+				}
 				
 				if(recipe.hasEntity())
+				{
 					spawnEntity(inputVariables, world, recipe, totalVariables.get(Slot.CASTER).asEntity());
+					
+					Vec3 pos = inputVariables.get(0).asVec();
+					CompoundTag data = new CompoundTag();
+					data.putDouble("PosX", pos.x);
+					data.putDouble("PosY", pos.y);
+					data.putDouble("PosZ", pos.z);
+					notifySpellEffect(world, SpellEffects.SPAWN_ENTITY, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+				}
 				
 				CommandFunction.CacheableFunction func = recipe.getFunction();
 				if(func != null && func != CommandFunction.CacheableFunction.NONE)
@@ -416,7 +447,18 @@ public abstract class FunctionGlyph extends ComponentBase
 			AABB bounds = new AABB(-radius, -radius, -radius, radius, radius, radius).move(pos);
 			for(SpellData spell : SpellManager.getSpellsWithin(world, bounds))
 				if(spell.getVariable(Slot.UUID1) != uuidMost && spell.getVariable(Slot.UUID2) != uuidLeast)
+				{
+					Vec3 targetPos = spell.getVariable(Slot.POSITION).asVec();
+					MinecraftForge.EVENT_BUS.post(SpellEvent.End.dispel(spell.arrangement(), world, targetPos, ((VarEntity)spell.getVariable(Slot.CASTER)).uniqueID()));
+					
+					CompoundTag data = new CompoundTag();
+					data.putDouble("PosX", pos.x);
+					data.putDouble("PosY", pos.y);
+					data.putDouble("PosZ", pos.z);
+					notifySpellEffect(world, SpellEffects.DISPEL, totalVariables.get(Slot.POSITION).asVec(), data, Reference.Values.TICKS_PER_SECOND);
+					
 					spell.kill();
+				}
 		}
 	}
 }
