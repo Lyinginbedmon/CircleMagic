@@ -2,11 +2,13 @@ package com.lying.misc19.blocks.entity;
 
 import com.lying.misc19.blocks.ICruciblePart;
 import com.lying.misc19.blocks.InscribedBlock;
+import com.lying.misc19.client.particle.M19Particles;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.reference.Reference;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -50,6 +52,14 @@ public class InscribedBlockEntity extends BlockEntity
 			tile.ticksActive++;
 		else
 			tile.ticksActive = 0;
+		
+		for(Direction face : Direction.Plane.HORIZONTAL)
+		{
+			if(!world.isEmptyBlock(pos.relative(face)))
+				continue;
+			
+			world.addParticle(M19Particles.SQUARES.get(), pos.getX() + face.getStepX(), pos.getY(), pos.getZ() + face.getStepZ(), face.getStepX(), 0D, face.getStepZ());
+		}
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, InscribedBlockEntity tile)

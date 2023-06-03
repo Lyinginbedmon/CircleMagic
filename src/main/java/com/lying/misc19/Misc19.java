@@ -3,6 +3,7 @@ package com.lying.misc19;
 import org.slf4j.Logger;
 
 import com.lying.misc19.client.ClientSetupEvents;
+import com.lying.misc19.client.particle.M19Particles;
 import com.lying.misc19.client.renderer.magic.ComponentEffectsRegistry;
 import com.lying.misc19.data.M19DataGenerators;
 import com.lying.misc19.init.FunctionRecipes;
@@ -41,6 +42,7 @@ public class Misc19
     	DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
 		{
 			ComponentEffectsRegistry.EFFECTS.register(EVENT_BUS);
+			M19Particles.PARTICLES.register(EVENT_BUS);
 			EVENT_BUS.register(ClientSetupEvents.class);
 		});
     	
