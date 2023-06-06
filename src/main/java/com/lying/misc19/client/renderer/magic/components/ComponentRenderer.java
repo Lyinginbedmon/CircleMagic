@@ -5,8 +5,8 @@ import java.util.function.BiConsumer;
 import com.lying.misc19.client.Canvas;
 import com.lying.misc19.client.Canvas.ExclusionCircle;
 import com.lying.misc19.client.Canvas.Sprite;
-import com.lying.misc19.client.renderer.magic.ComponentRenderers;
 import com.lying.misc19.client.SpellTexture;
+import com.lying.misc19.client.renderer.magic.ComponentRenderers;
 import com.lying.misc19.magic.ISpellComponent;
 
 import net.minecraft.world.phys.Vec2;

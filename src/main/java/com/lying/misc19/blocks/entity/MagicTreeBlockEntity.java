@@ -1,10 +1,12 @@
 package com.lying.misc19.blocks.entity;
 
+import com.lying.misc19.client.particle.M19Particles;
 import com.lying.misc19.init.M19BlockEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -14,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 public class MagicTreeBlockEntity extends BlockEntity implements Container
 {
@@ -41,6 +44,18 @@ public class MagicTreeBlockEntity extends BlockEntity implements Container
 	public static void tickClient(Level world, BlockPos pos, BlockState state, MagicTreeBlockEntity tile)
 	{
 		tile.ticksActive++;
+		
+		RandomSource rand = world.random;
+		if(!tile.stack.isEmpty() && rand.nextInt(5) == 0)
+		{
+			for(int i=0; i<rand.nextInt(4); i++)
+			{
+				float spin = (float)Math.floorDiv((int)Math.toDegrees(rand.nextFloat()), 4) * 4F;
+				Vec3 turn = new Vec3(0, 0, 0.265D).yRot(spin);
+				Vec3 position = new Vec3(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D).add(turn);
+				world.addParticle(M19Particles.SQUARES.get(), position.x, position.y, position.z, 0, 1, 0);
+			}
+		}
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, MagicTreeBlockEntity tile)

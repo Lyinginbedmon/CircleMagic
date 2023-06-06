@@ -9,8 +9,10 @@ import com.lying.misc19.reference.Reference;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -47,19 +49,50 @@ public class InscribedBlockEntity extends BlockEntity
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, InscribedBlockEntity tile)
 	{
-		// TODO Add particles moving away from exposed horizontal faces
 		if(tile.isValid())
+		{
 			tile.ticksActive++;
+			
+			Vec3 tileCore = new Vec3(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+			RandomSource rand = world.random;
+			for(Direction face : Direction.Plane.HORIZONTAL)
+			{
+				if(!world.isEmptyBlock(pos.relative(face)) || rand.nextInt(5) > 0)
+					continue;
+				
+				for(int i=0; i<rand.nextInt(3); i++)
+				{
+					Vec3i offset = face.getNormal();
+					double posX = tileCore.x + offset.getX() * 0.51D;
+					double posY = tileCore.y + offset.getY() * 0.51D;
+					double posZ = tileCore.z + offset.getZ() * 0.51D;
+					
+					Vec3 turn = Vec3.ZERO;
+					float spin = (float)Math.floorDiv((int)Math.toDegrees(rand.nextFloat()), 4) * 4F;
+					switch(face.getAxis())
+					{
+						case X:
+							turn = new Vec3(0, 0, 0.265D).xRot(spin);
+							break;
+						case Y:
+							turn = new Vec3(0, 0, 0.265D).yRot(spin);
+							break;
+						case Z:
+							turn = new Vec3(0.265D, 0, 0).zRot(spin);
+							break;
+					}
+					posX += turn.x;
+					posY += turn.y;
+					posZ += turn.z;
+					
+					world.addParticle(M19Particles.SQUARES.get(), posX, posY, posZ, offset.getX(), offset.getY(), offset.getZ());
+				}
+			}
+			
+		}
 		else
 			tile.ticksActive = 0;
 		
-		for(Direction face : Direction.Plane.HORIZONTAL)
-		{
-			if(!world.isEmptyBlock(pos.relative(face)))
-				continue;
-			
-			world.addParticle(M19Particles.SQUARES.get(), pos.getX() + face.getStepX(), pos.getY(), pos.getZ() + face.getStepZ(), face.getStepX(), 0D, face.getStepZ());
-		}
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, InscribedBlockEntity tile)

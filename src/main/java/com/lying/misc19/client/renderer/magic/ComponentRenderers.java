@@ -6,6 +6,7 @@ import java.util.Map;
 import com.lying.misc19.client.Canvas;
 import com.lying.misc19.client.renderer.magic.components.CircleRenderer;
 import com.lying.misc19.client.renderer.magic.components.ComponentRenderer;
+import com.lying.misc19.client.renderer.magic.components.FunctionRenderer;
 import com.lying.misc19.client.renderer.magic.components.HertzRenderer;
 import com.lying.misc19.client.renderer.magic.components.LesserSigilRenderer;
 import com.lying.misc19.client.renderer.magic.components.RootRenderer;
@@ -31,6 +32,8 @@ public class ComponentRenderers
 				Slot.AMUN.glyph(), Slot.ANUBIS.glyph(), Slot.APEP.glyph(), Slot.BAST.glyph(), Slot.BES.glyph(), Slot.HATHOR.glyph(), Slot.HORUS.glyph(), Slot.ISIS.glyph(),
 				Slot.NEPTHYS.glyph(), Slot.OSIRIS.glyph(), Slot.PTAH.glyph(), Slot.RA.glyph(), Slot.SOBEK.glyph(), Slot.SUTEKH.glyph(), Slot.TAWARET.glyph(), Slot.THOTH.glyph(),
 				Slot.AGE.glyph(), Slot.CASTER.glyph(), Slot.CONTINUE.glyph(), Slot.INDEX.glyph(), Slot.LOOK.glyph(), Slot.POSITION.glyph(), Slot.TARGET.glyph());
+		register(new FunctionRenderer(),
+				SpellComponents.FUNCTION_CREATE, SpellComponents.FUNCTION_DEBUG, SpellComponents.FUNCTION_DISPEL, SpellComponents.FUNCTION_MOVE, SpellComponents.FUNCTION_STATUS);
 	}
 	
 	public static void register(ComponentRenderer renderer, ResourceLocation... names)

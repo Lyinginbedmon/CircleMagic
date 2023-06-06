@@ -14,6 +14,7 @@ import com.lying.misc19.reference.Reference;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -71,6 +72,7 @@ public class M19Blocks
     	 * As part of multiblock: Holds objects for inscribing
     	 */
     public static final RegistryObject<Block> MAGIC_SAPLING = BLOCKS.register("magic_sapling", () -> new MagicSapling(BlockBehaviour.Properties.of(Material.PLANT).noOcclusion().noCollission().randomTicks().instabreak().sound(SoundType.GRASS)));
+    public static final RegistryObject<Block> POTTED_MAGIC_SAPLING = BLOCKS.register("potted_magic_sapling", () -> new FlowerPotBlock(() -> (FlowerPotBlock)Blocks.FLOWER_POT, () -> M19Blocks.MAGIC_SAPLING.get(), BlockBehaviour.Properties.of(Material.DECORATION).instabreak().noOcclusion()));
     public static final RegistryObject<Block> MAGIC_TREE = BLOCKS.register("magic_tree", () -> new MagicTree(BlockBehaviour.Properties.of(Material.WOOD).noOcclusion().sound(SoundType.WOOD)));
     
     // Pillars

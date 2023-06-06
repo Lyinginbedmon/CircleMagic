@@ -42,6 +42,7 @@
 	"gui.misc19.sandbox": "Sandbox",
 	"gui.misc19.sandbox.add_input": "Add as input",
 	"gui.misc19.sandbox.add_output": "Add as output",
+	"gui.misc19.sandbox.add_none": "Cannot receive %s",
 	"gui.misc19.sandbox_copy": "Copy arrangement to clipboard",
 	"gui.misc19.sandbox_paste": "Paste arrangement from clipboard",
 	"gui.misc19.sandbox_print": "Inscribe",

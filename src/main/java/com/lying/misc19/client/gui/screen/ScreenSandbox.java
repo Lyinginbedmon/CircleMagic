@@ -221,7 +221,9 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 				boolean input = getAddState(hoveredPart, mouseX, mouseY, attachPart);
 				boolean valid = input ? hoveredPart.isValidInput(attachPart) : hoveredPart.isValidOutput(attachPart);
 				if(valid)
-					this.renderTooltip(matrixStack, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox.add_"+(input ? "input" : "output")), mouseX, mouseY);
+					renderTooltip(matrixStack, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox.add_"+(input ? "input" : "output")), mouseX, mouseY);
+				else
+					renderTooltip(matrixStack, Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox.add_none", this.attachPart.translatedName()), mouseX, mouseY);
 			}
 		}
 		

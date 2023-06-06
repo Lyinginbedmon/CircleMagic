@@ -18,6 +18,8 @@ import com.lying.misc19.network.PacketHandler;
 import com.lying.misc19.reference.Reference;
 import com.mojang.logging.LogUtils;
 
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -66,7 +68,12 @@ public class Misc19
     @SubscribeEvent
     public void commonSetup(final FMLCommonSetupEvent event)
     {
-    	event.enqueueWork(() -> PacketHandler.init());
+    	event.enqueueWork(() -> 
+    	{
+    		PacketHandler.init();
+    		
+    		((FlowerPotBlock)Blocks.FLOWER_POT).addPlant(M19Blocks.MAGIC_SAPLING.getId(), () -> M19Blocks.POTTED_MAGIC_SAPLING.get());
+    	});
     }
     
     @SubscribeEvent

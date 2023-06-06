@@ -2,7 +2,6 @@ package com.lying.misc19.client.particle;
 
 import com.lying.misc19.reference.Reference;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,11 +19,9 @@ public class M19Particles
 	
 	public static final RegistryObject<SimpleParticleType> SQUARES = PARTICLES.register("squares", () -> new SimpleParticleType(false));
 	
-	@SuppressWarnings("deprecation")
 	@SubscribeEvent
     public static void registerFactories(final RegisterParticleProvidersEvent event)
     {
-		Minecraft mc = Minecraft.getInstance();
-		mc.particleEngine.register(SQUARES.get(), new SquareParticle.Factory());
+		event.register(SQUARES.get(), SquareParticle.Factory::new);
     }
 }
