@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import com.google.common.base.Predicate;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.network.PacketFairyLookAt;
 import com.lying.misc19.network.PacketHandler;
@@ -181,15 +182,18 @@ public class FairyJarBlockEntity extends BlockEntity
 		private static final float FACE_SPEED = 8F;
 		
 		private static final AABB LOOK_RANGE = new AABB(-1, -1, -1, 1, 1, 1).inflate(16D);
+		private static final Predicate<LivingEntity> VALID_LOOK = (entity) -> entity.isAlive() && !entity.isSpectator();
 		
 		private float lookPitch, lookYaw = 0F;
 		
 		private float oldPitch, oldYaw = 0F;
 		
+		/** Ticks until the fairy can look somewhere else */
 		private int lookTicks = 0;
 		private float targetPitch = 0F;
 		private float targetYaw = 0F;
 		
+		/** Current entity look target */
 		private Optional<LivingEntity> lookTarget = Optional.empty();
 		
 		public LookHelper(RandomSource random)
@@ -210,7 +214,14 @@ public class FairyJarBlockEntity extends BlockEntity
 			if(lookTicks > 0)
 			{
 				lookTicks--;
-				this.lookTarget.ifPresent((entity) -> setLookDir(entity.getEyePosition().subtract(orbPos)));
+				
+				this.lookTarget.ifPresent((entity) -> 
+				{
+					if(VALID_LOOK.apply(entity))
+						setLookDir(entity.getEyePosition().subtract(orbPos));
+					else
+						clearLookTarget();
+				});
 			}
 			else if(random.nextInt(50) == 0)
 			{
@@ -218,20 +229,25 @@ public class FairyJarBlockEntity extends BlockEntity
 				lookTarget = Optional.empty();
 				
 				// Look at random nearby mob
-				List<LivingEntity> mobs = world.getEntitiesOfClass(LivingEntity.class, LOOK_RANGE.move(orbPos), (ent) -> ent.isAlive() && !ent.isSpectator());
+				List<LivingEntity> mobs = world.getEntitiesOfClass(LivingEntity.class, LOOK_RANGE.move(orbPos), VALID_LOOK);
 				if(!mobs.isEmpty())
 				{
 					this.lookTarget = Optional.of(mobs.get(random.nextInt(mobs.size())));
-					this.lookTicks = random.nextInt(30) + 30;
+					this.lookTicks = random.nextInt(30) + 60;
 				}
 				
 				// Look at random position
 				if(!lookTarget.isPresent())
 				{
 					setRandomLook(random);
-					this.lookTicks = random.nextInt(30) + 30;
+					this.lookTicks = random.nextInt(20) + 30;
 				}
 			}
+		}
+			
+		private void clearLookTarget()
+		{
+			this.lookTarget = Optional.empty();
 		}
 		
 		private void setRandomLook(RandomSource random)
@@ -241,8 +257,13 @@ public class FairyJarBlockEntity extends BlockEntity
 		
 		private float getLimited(float current, float target, float partialTicks)
 		{
-			float delta = Mth.clamp(target - current, -FACE_SPEED, FACE_SPEED) * partialTicks;
-			return current + delta;
+			float delta = target - current;
+			while(delta < -180F)
+				delta += 360F;
+			while(delta > 180F)
+				delta -= 360F;
+			
+			return current + (Mth.clamp(delta, -FACE_SPEED, FACE_SPEED) * partialTicks);
 		}
 		
 		public float yaw(float partialTicks) { return getLimited(lookYaw, targetYaw, partialTicks); }
@@ -250,15 +271,16 @@ public class FairyJarBlockEntity extends BlockEntity
 		public float pitch(float partialTicks) { return getLimited(lookPitch, targetPitch, partialTicks); }
 		
 		/** Converts a direction vector to corresponding pitch and yaw values */
-		public void setLookDir(Vec3 vecIn)
+		public void setLookDir(@Nullable Vec3 vecIn)
 		{
-			this.targetPitch = (float)Mth.clamp(Math.toDegrees(Math.asin(-vecIn.y)), -90D, 90D);
-			this.targetYaw = (float)Math.toDegrees(Math.atan2(vecIn.x, vecIn.z));
+			if(vecIn == null) return;
+			vecIn = vecIn.normalize();
+			setLookDir((float)Math.toDegrees(Math.asin(-vecIn.y)), (float)Math.toDegrees(Math.atan2(vecIn.x, vecIn.z)));
 		}
 		
 		public void setLookDir(float pitch, float yaw)
 		{
-			this.targetPitch = pitch;
+			this.targetPitch = Mth.clamp(pitch, -30, 80);
 			this.targetYaw = yaw;
 		}
 		
