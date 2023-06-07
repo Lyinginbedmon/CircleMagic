@@ -13,13 +13,18 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.Vec3;
 
 public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJarBlockEntity>
@@ -40,9 +45,29 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		Vec3 jarPos = new Vec3(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(VEC_OFFSET);
 		Vec3 dirToJar = jarPos.subtract(eyePos).normalize();
 		
+		HitResult hitResult = mc.getCameraEntity().pick(20D, 0F, false);
+		if(hitResult.getType() == Type.BLOCK && ((BlockHitResult)hitResult).getBlockPos().equals(fairyTile.getBlockPos()) && Minecraft.renderNames())
+			renderName(fairyTile, dirToJar, matrixStack, bufferSource, p_112312_);
+		
 		renderExpression(fairyTile, dirToJar, matrixStack, bufferSource, partialTicks, p_112312_);
 		
 		renderOrb(fairyTile, matrixStack, bufferSource, dirToJar);
+	}
+	
+	private void renderName(FairyJarBlockEntity fairyTile, Vec3 toEye, PoseStack matrixStack, MultiBufferSource bufferSource, int p_112312_)
+	{
+		Component displayName = fairyTile.displayName();
+		matrixStack.pushPose();
+			matrixStack.translate(0.5D, 1.3D, 0.5D);
+			matrixStack.mulPose(mc.gameRenderer.getMainCamera().rotation());
+			matrixStack.scale(-0.025F, -0.025F, 0.025F);
+			Matrix4f matrix4f = matrixStack.last().pose();
+			float opacity = mc.options.getBackgroundOpacity(0.25F);
+			int j = (int)(opacity * 255.0F) << 24;
+			Font font = mc.font;
+			float width = (float)(-font.width(displayName) / 2);
+			font.drawInBatch(displayName, width, 0F, 553648127, false, matrix4f, bufferSource, false, j, p_112312_);
+		matrixStack.popPose();
 	}
 	
 	private void renderExpression(FairyJarBlockEntity fairyTile, Vec3 dirToJar, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks, int p_112312_)
@@ -51,7 +76,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		
 		matrixStack.pushPose();
 			matrixStack.translate(VEC_OFFSET.x, VEC_OFFSET.y, VEC_OFFSET.z);
-			matrixStack.scale(0.7F, 0.7F, 0.7F);
+			matrixStack.scale(0.45F, 0.45F, 0.45F);
 			matrixStack.mulPose(Vector3f.YP.rotationDegrees(Mth.wrapDegrees(fairyTile.getYaw(partialTicks))));
 			matrixStack.mulPose(Vector3f.XP.rotationDegrees(Mth.wrapDegrees(fairyTile.getPitch(partialTicks))));
 			Matrix4f matrix = matrixStack.last().pose();

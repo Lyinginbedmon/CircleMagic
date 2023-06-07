@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import com.lying.misc19.blocks.ICruciblePart.PartType;
 import com.lying.misc19.blocks.entity.FairyJarBlockEntity;
-import com.lying.misc19.blocks.entity.FairyJarBlockEntity.EmotiveEvent;
+import com.lying.misc19.blocks.entity.FairyPersonalityModel.EmotiveEvent;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Blocks;
 import com.lying.misc19.reference.Reference;

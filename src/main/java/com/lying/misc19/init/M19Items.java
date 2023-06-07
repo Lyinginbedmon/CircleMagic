@@ -1,6 +1,7 @@
 package com.lying.misc19.init;
 
 import com.lying.misc19.item.CurruidDustItem;
+import com.lying.misc19.item.FairyJarItem;
 import com.lying.misc19.item.Pendulum;
 import com.lying.misc19.item.ScrollItem;
 import com.lying.misc19.reference.Reference;
@@ -32,7 +33,7 @@ public class M19Items
     public static final RegistryObject<Item> SANDBOX_ITEM = ITEMS.register("sandbox", () -> new BlockItem(M19Blocks.SANDBOX.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> PHANTOM_CUBE_ITEM = ITEMS.register("phantom_cube", () -> new BlockItem(M19Blocks.PHANTOM_CUBE.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> CRUCIBLE_ITEM = ITEMS.register("crucible", () -> new BlockItem(M19Blocks.CRUCIBLE.get(), new Item.Properties().tab(TAB)));
-    public static final RegistryObject<Item> FAIRY_JAR_ITEM = ITEMS.register("fairy_jar", () -> new BlockItem(M19Blocks.FAIRY_JAR.get(), new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> FAIRY_JAR_ITEM = ITEMS.register("fairy_jar", () -> new FairyJarItem(new Item.Properties().tab(TAB).stacksTo(1)));
     public static final RegistryObject<Item> MAGIC_SAPLING_ITEM = ITEMS.register("magic_sapling", () -> new BlockItem(M19Blocks.MAGIC_SAPLING.get(), new Item.Properties().tab(TAB)));
     
     public static final RegistryObject<Item> IMBUED_STONE_ITEM = ITEMS.register("imbued_stone", () -> new BlockItem(M19Blocks.IMBUED_STONE.get(), new Item.Properties().tab(TAB)));

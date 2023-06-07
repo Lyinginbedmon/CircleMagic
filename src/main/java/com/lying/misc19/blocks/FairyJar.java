@@ -1,15 +1,35 @@
 package com.lying.misc19.blocks;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import com.lying.misc19.blocks.entity.FairyJarBlockEntity;
+import com.lying.misc19.blocks.entity.FairyPersonalityModel;
+import com.lying.misc19.blocks.entity.FairyPersonalityModel.Emotion;
+import com.lying.misc19.blocks.entity.FairyPersonalityModel.EmotiveEvent;
 import com.lying.misc19.init.M19BlockEntities;
 import com.lying.misc19.init.M19Items;
+import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -18,6 +38,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -45,15 +66,29 @@ public class FairyJar extends Block implements ICruciblePart, EntityBlock
 		return stack;
 	}
 	
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult)
+	{
+		ItemStack heldStack = player.getItemInHand(hand);
+		if(heldStack.getItem() == Items.NAME_TAG && heldStack.hasCustomHoverName())
+		{
+			Optional<FairyJarBlockEntity> tile = world.getBlockEntity(pos, M19BlockEntities.FAIRY_JAR.get());
+			tile.ifPresent((fairy) -> fairy.rename((MutableComponent)heldStack.getHoverName()));
+			heldStack.shrink(1);
+			return InteractionResult.CONSUME;
+		}
+		
+		return InteractionResult.PASS;
+	}
+	
 	public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player)
 	{
-		BlockEntity tile = world.getBlockEntity(pos);
-		if(tile.getType() == M19BlockEntities.FAIRY_JAR.get())
+		Optional<FairyJarBlockEntity> tile = world.getBlockEntity(pos, M19BlockEntities.FAIRY_JAR.get());
+		if(tile.isPresent())
 		{
 			if(!world.isClientSide() && !player.isCreative())
 			{
 				ItemStack stack = new ItemStack(M19Items.FAIRY_JAR_ITEM.get());
-				tile.saveToItem(stack);
+				tile.get().saveToItem(stack);
 				ItemEntity itemEntity = new ItemEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, stack);
 				itemEntity.setDefaultPickUpDelay();
 				world.addFreshEntity(itemEntity);
@@ -61,6 +96,36 @@ public class FairyJar extends Block implements ICruciblePart, EntityBlock
 		}
 		
 		super.playerWillDestroy(world, pos, state, player);
+	}
+	
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag flags)
+	{
+		CompoundTag blockData = BlockItem.getBlockEntityData(stack);
+		if(blockData == null || blockData.isEmpty() || !blockData.contains("Personality", Tag.TAG_COMPOUND))
+			return;
+		
+		FairyPersonalityModel personality = new FairyPersonalityModel(RandomSource.create());
+		personality.readFromNbt(blockData.getCompound("Personality"));
+		
+		tooltip.add(personality.name().withStyle(ChatFormatting.GRAY));
+		
+		if(flags.isAdvanced())
+		{
+			tooltip.add(Component.empty());
+			if(blockData.contains("LastPlaced", Tag.TAG_COMPOUND))
+			{
+				BlockPos pos = NbtUtils.readBlockPos(blockData.getCompound("LastPlaced"));
+				tooltip.add(Component.literal("Last Placed: "+pos.toShortString()).withStyle(ChatFormatting.GRAY));
+			}
+			
+			tooltip.add(Component.literal("Personality:"));
+			Map<EmotiveEvent, Pair<Emotion, Float>> model = personality.getModel();
+			for(EmotiveEvent event : EmotiveEvent.values())
+			{
+				Pair<Emotion, Float> entry = model.getOrDefault(event, Pair.of(Emotion.NEUTRAL, 0F));
+				tooltip.add(Component.literal(" * "+event.getSerializedName()+": "+entry.getFirst().getSerializedName()+" +"+entry.getSecond()).withStyle(ChatFormatting.GRAY));
+			}
+		}
 	}
 	
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
