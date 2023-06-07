@@ -73,7 +73,8 @@ public class FairyJar extends Block implements ICruciblePart, EntityBlock
 		{
 			Optional<FairyJarBlockEntity> tile = world.getBlockEntity(pos, M19BlockEntities.FAIRY_JAR.get());
 			tile.ifPresent((fairy) -> fairy.rename((MutableComponent)heldStack.getHoverName()));
-			heldStack.shrink(1);
+			if(!player.getAbilities().instabuild)
+				heldStack.shrink(1);
 			return InteractionResult.CONSUME;
 		}
 		

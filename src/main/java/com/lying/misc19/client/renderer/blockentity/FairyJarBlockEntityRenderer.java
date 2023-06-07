@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.BlockHitResult;
@@ -38,42 +38,41 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 	
 	public FairyJarBlockEntityRenderer(BlockEntityRendererProvider.Context context) { }
 	
-	public void render(FairyJarBlockEntity fairyTile, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int p_112311_, int p_112312_)
+	public void render(FairyJarBlockEntity fairyTile, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int combinedLightIn, int combinedOverlayIn)
 	{
+		HitResult hitResult = mc.getCameraEntity().pick(8D, 0F, false);
+		if(hitResult.getType() == Type.BLOCK && ((BlockHitResult)hitResult).getBlockPos().equals(fairyTile.getBlockPos()) && Minecraft.renderNames())
+			renderName(fairyTile, matrixStack, bufferSource, combinedLightIn);
+		
 		Vec3 eyePos = mc.gameRenderer.getMainCamera().getPosition();
 		BlockPos tilePos = fairyTile.getBlockPos();
 		Vec3 jarPos = new Vec3(tilePos.getX(), tilePos.getY(), tilePos.getZ()).add(VEC_OFFSET);
 		Vec3 dirToJar = jarPos.subtract(eyePos).normalize();
 		
-		HitResult hitResult = mc.getCameraEntity().pick(20D, 0F, false);
-		if(hitResult.getType() == Type.BLOCK && ((BlockHitResult)hitResult).getBlockPos().equals(fairyTile.getBlockPos()) && Minecraft.renderNames())
-			renderName(fairyTile, dirToJar, matrixStack, bufferSource, p_112312_);
-		
-		renderExpression(fairyTile, dirToJar, matrixStack, bufferSource, partialTicks, p_112312_);
-		
 		renderOrb(fairyTile, matrixStack, bufferSource, dirToJar);
+		renderExpression(fairyTile, matrixStack, bufferSource, partialTicks);
 	}
 	
-	private void renderName(FairyJarBlockEntity fairyTile, Vec3 toEye, PoseStack matrixStack, MultiBufferSource bufferSource, int p_112312_)
+	private void renderName(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, int combinedLightIn)
 	{
-		Component displayName = fairyTile.displayName();
-		matrixStack.pushPose();
-			matrixStack.translate(0.5D, 1.3D, 0.5D);
+		MutableComponent displayName = fairyTile.displayName();
+        matrixStack.pushPose();
+	        matrixStack.translate(FairyJarBlockEntity.ORB_OFFSET.x, FairyJarBlockEntity.ORB_OFFSET.y + 1D, FairyJarBlockEntity.ORB_OFFSET.z);
 			matrixStack.mulPose(mc.gameRenderer.getMainCamera().rotation());
-			matrixStack.scale(-0.025F, -0.025F, 0.025F);
+	        matrixStack.scale(-0.025F, -0.025F, 0.025F);
 			Matrix4f matrix4f = matrixStack.last().pose();
 			float opacity = mc.options.getBackgroundOpacity(0.25F);
 			int j = (int)(opacity * 255.0F) << 24;
 			Font font = mc.font;
-			float width = (float)(-font.width(displayName) / 2);
-			font.drawInBatch(displayName, width, 0F, 553648127, false, matrix4f, bufferSource, false, j, p_112312_);
-		matrixStack.popPose();
+	        float width = (float)(-font.width(displayName) / 2);
+	        font.drawInBatch(displayName, width, 0F, 553648127, false, matrix4f, bufferSource, true, j, combinedLightIn);
+	        font.drawInBatch(displayName, width, 0F, -1, false, matrix4f, bufferSource, false, 0, combinedLightIn);
+        matrixStack.popPose();
 	}
 	
-	private void renderExpression(FairyJarBlockEntity fairyTile, Vec3 dirToJar, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks, int p_112312_)
+	private void renderExpression(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks)
 	{
 		ResourceLocation expressionTex = fairyTile.isBlinking() ? BLINK_TEX : fairyTile.getExpression().getTexture();
-		
 		matrixStack.pushPose();
 			matrixStack.translate(VEC_OFFSET.x, VEC_OFFSET.y, VEC_OFFSET.z);
 			matrixStack.scale(0.45F, 0.45F, 0.45F);

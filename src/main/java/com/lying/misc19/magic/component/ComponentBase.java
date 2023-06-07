@@ -213,4 +213,14 @@ public abstract class ComponentBase implements ISpellComponent
 		
 		public IVariable get(Map<String, IVariable> paramsIn) { return paramsIn.getOrDefault(name, VariableSet.DEFAULT); }
 	}
+	
+	public static enum ComponentStatus
+	{
+		NEED_INPUT,
+		NEED_OUTPUT,
+		EMPTY,
+		FINE;
+		
+		public boolean isError() { return this != FINE; }
+	}
 }

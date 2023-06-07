@@ -25,6 +25,7 @@ import net.minecraft.util.StringRepresentable;
 public class FairyPersonalityModel
 {
 	private static final List<MutableComponent> RANDOM_NAMES = Lists.newArrayList();
+	private static final List<MutableComponent> RANDOM_OWNER_NAMES = Lists.newArrayList();
 	private int emotionCool = Reference.Values.TICKS_PER_SECOND;
 	private Emotion currentExpression = Emotion.NEUTRAL;
 	
@@ -35,14 +36,17 @@ public class FairyPersonalityModel
 	private boolean isDirty = true;
 	
 	/*
-	 * Randomised creator epithet
 	 * Randomised speech style
 	 */
 	private MutableComponent name;
+	private MutableComponent ownerName;
+	private SpeechStyle speech;
 	
 	public FairyPersonalityModel(RandomSource rand)
 	{
 		name = RANDOM_NAMES.get(rand.nextInt(RANDOM_NAMES.size()));
+		ownerName = RANDOM_OWNER_NAMES.get(rand.nextInt(RANDOM_OWNER_NAMES.size()));
+		speech = SpeechStyle.values()[rand.nextInt(SpeechStyle.values().length)];
 		for(EmotiveEvent event : EmotiveEvent.values())
 		{
 			Emotion emote = Emotion.ACTIVE_EMOTIONS[rand.nextInt(Emotion.ACTIVE_EMOTIONS.length)];
@@ -130,6 +134,8 @@ public class FairyPersonalityModel
 	public CompoundTag saveToNbt(CompoundTag nbt)
 	{
 		nbt.putString("Name", Component.Serializer.toJson(this.name));
+		nbt.putString("OwnerName", Component.Serializer.toJson(this.ownerName));
+		nbt.putString("Speech", this.speech.getSerializedName());
 		nbt.putString("Expression", this.currentExpression.getSerializedName());
 		nbt.putInt("ChangeCool", this.emotionCool);
 		ListTag impulses = new ListTag();
@@ -166,6 +172,13 @@ public class FairyPersonalityModel
 			}
 			catch(Exception e) { }
 		
+		if(nbt.contains("OwnerName", Tag.TAG_STRING))
+			try
+			{
+				this.ownerName = Component.Serializer.fromJson(nbt.getString("OwnerName"));
+			}
+			catch(Exception e) { }
+		this.speech = SpeechStyle.fromName(nbt.getString("Speech"));
 		this.currentExpression = Emotion.fromName(nbt.getString("Expression"));
 		this.emotionCool = nbt.getInt("ChangeCool");
 		
@@ -208,6 +221,7 @@ public class FairyPersonalityModel
 	}
 	
 	private static void addRandomName(String literal) { RANDOM_NAMES.add(Component.literal(literal)); }
+	private static void addRandomOwnerName(String literal) { RANDOM_OWNER_NAMES.add(Component.translatable("fairy."+Reference.ModInfo.MOD_ID+".owner_"+literal)); }
 	
 	static
 	{
@@ -246,6 +260,43 @@ public class FairyPersonalityModel
 		addRandomName("Diarmuid Ua Duibhne");
 		addRandomName("Epona");
 		addRandomName("Ogma");
+		
+		addRandomOwnerName("creator");
+		addRandomOwnerName("maker");
+		addRandomOwnerName("newbie");
+		addRandomOwnerName("master");
+		addRandomOwnerName("cubic");
+		addRandomOwnerName("student");
+		addRandomOwnerName("player");
+		addRandomOwnerName("friend");
+		addRandomOwnerName("magician");
+		addRandomOwnerName("acolyte");
+		addRandomOwnerName("awakener");
+		addRandomOwnerName("scribe");
+		addRandomOwnerName("child");
+	}
+	
+	public static enum SpeechStyle implements StringRepresentable
+	{
+		FLAT,	// That doesn't go there
+		FORMAL,	// This would appear to be in error, sir
+		FOLKSY,	// Ain't never thought a' doin' it like that
+		AGGRO,	// What are you thinking doing it like that?
+		PACIFIST,	// Hey whatever's fine by you, man
+		PESSIMIST,	// Might as well do it that way, it'll break anyway
+		OPTIMIST,	// I'm sure it won't be as bad as it looks!
+		SNARKY;	// Oh is that your big idea? Psh, alright then
+		
+		public String getSerializedName() { return this.name().toLowerCase(); }
+		
+		@Nullable
+		public static SpeechStyle fromName(String nameIn)
+		{
+			for(SpeechStyle emote : values())
+				if(emote.getSerializedName().equalsIgnoreCase(nameIn))
+					return emote;
+			return FLAT;
+		}
 	}
 	
 	public static enum EmotiveEvent implements StringRepresentable
