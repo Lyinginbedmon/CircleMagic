@@ -55,7 +55,7 @@ public class M19Blocks
     	 * Unlocks recipe for multiblock<br>
     	 * As part of multiblock: Gives suggestions and hints in editor
     	 */
-    public static final RegistryObject<Block> FAIRY_JAR = BLOCKS.register("fairy_jar", () -> new FairyJar(BlockBehaviour.Properties.of(Material.GLASS).sound(SoundType.GLASS).noOcclusion()));
+    public static final RegistryObject<Block> FAIRY_JAR = BLOCKS.register("fairy_jar", () -> new FairyJar(BlockBehaviour.Properties.of(Material.GLASS).sound(SoundType.GLASS).strength(0.3F).noOcclusion()));
     
     // Crucible of Inscription
     	/**

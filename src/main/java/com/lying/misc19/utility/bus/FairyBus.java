@@ -16,6 +16,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
 import net.minecraftforge.event.level.BlockEvent;
@@ -33,7 +34,8 @@ public class FairyBus
 		if(!world.isClientSide() && world.getBlockState(event.getPos()).getBlock() == M19Blocks.FAIRY_JAR.get())
 		{
 			BlockPos pos = event.getPos();
-			addToAllFairies(world, (fairy) -> pos.equals(fairy.getBlockPos()) ? EmotiveEvent.SHAKE_JAR_OWN : EmotiveEvent.SHAKE_JAR_OTHER);
+			Vec3 position = event.getEntity().getEyePosition();
+			addToAllFairies(world, position, (fairy) -> pos.equals(fairy.getBlockPos()) ? EmotiveEvent.SHAKE_JAR_OWN : EmotiveEvent.SHAKE_JAR_OTHER);
 		}
 	}
 	
@@ -42,7 +44,7 @@ public class FairyBus
 	{
 		LivingEntity mob = event.getEntity();
 		if(!mob.getLevel().isClientSide())
-			addToAllFairies(mob.getLevel(), (fairy) -> mob.getType() == EntityType.PLAYER ? (fairy.isOwner(mob) ? EmotiveEvent.OWNER_HURT : EmotiveEvent.PLAYER_HURT) : EmotiveEvent.MOB_HURT);
+			addToAllFairies(mob.getLevel(), event.getEntity().position().add(0D, event.getEntity().getBbHeight() / 2, 0D), (fairy) -> mob.getType() == EntityType.PLAYER ? (fairy.isOwner(mob) ? EmotiveEvent.OWNER_HURT : EmotiveEvent.PLAYER_HURT) : EmotiveEvent.MOB_HURT);
 	}
 	
 	@SubscribeEvent
@@ -60,19 +62,19 @@ public class FairyBus
 	}
 	
 	@SuppressWarnings("unused")
-	private static void addToAllFairies(Level world, EmotiveEvent event)
+	private static void addToAllFairies(Level world, Vec3 position, EmotiveEvent event)
 	{
-		addToAllFairies(world, (fairy) -> event);
+		addToAllFairies(world, position, (fairy) -> event);
 	}
 	
-	private static void addToAllFairies(Level world, Function<FairyJarBlockEntity,EmotiveEvent> event)
+	private static void addToAllFairies(Level world, Vec3 position, Function<FairyJarBlockEntity,EmotiveEvent> event)
 	{
 		CrucibleManager manager = CrucibleManager.instance(world);
 		for(BlockPos fairy : manager.getExpansions(PartType.FAIRY))
 		{
 			Optional<FairyJarBlockEntity> fairyJar = world.getBlockEntity(fairy, M19BlockEntities.FAIRY_JAR.get());
 			if(fairyJar.isPresent())
-				fairyJar.get().addEmotiveEvent(event.apply(fairyJar.get()));
+				fairyJar.get().addEmotiveEvent(event.apply(fairyJar.get()), position);
 		}
 	}
 }

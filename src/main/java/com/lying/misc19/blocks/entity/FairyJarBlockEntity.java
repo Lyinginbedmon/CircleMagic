@@ -2,7 +2,9 @@ package com.lying.misc19.blocks.entity;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -11,6 +13,8 @@ import javax.annotation.Nullable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import com.lying.misc19.init.M19BlockEntities;
+import com.lying.misc19.network.PacketFairyLookAt;
+import com.lying.misc19.network.PacketHandler;
 import com.lying.misc19.reference.Reference;
 import com.mojang.datafixers.util.Pair;
 
@@ -21,19 +25,31 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class FairyJarBlockEntity extends BlockEntity
 {
+	public static final double ORB_RADIUS = 0.2D;
+	public static final Vec3 ORB_OFFSET = new Vec3(0.5D, ORB_RADIUS, 0.5D);
+	
 	private BlockPos lastPlaced = BlockPos.ZERO;
 	private double ticksActive = 0;
 	private UUID ownerUUID;
 	
 	private final PersonalityModel personality;
+	private int blinkTicks = 0;
+	
+	private Optional<LookHelper> lookHelper = Optional.empty();
 	
 	public FairyJarBlockEntity(BlockPos pos, BlockState state)
 	{
@@ -41,6 +57,12 @@ public class FairyJarBlockEntity extends BlockEntity
 		
 		Random random = new Random(pos.getX() * pos.getX() - pos.getY() * pos.getY() + pos.getZ() * pos.getZ());
 		this.personality = new PersonalityModel(random);
+	}
+	
+	public void setLevel(Level world)
+	{
+		super.setLevel(world);
+		lookHelper = Optional.of(new LookHelper(world.random));
 	}
 	
 	protected void saveAdditional(CompoundTag compound)
@@ -59,7 +81,7 @@ public class FairyJarBlockEntity extends BlockEntity
 	
 	public static void tickClient(Level world, BlockPos pos, BlockState state, FairyJarBlockEntity tile)
 	{
-		tile.ticksActive++;
+		tile.clientUpdate();
 	}
 	
 	public static void tickServer(Level world, BlockPos pos, BlockState state, FairyJarBlockEntity tile)
@@ -71,17 +93,63 @@ public class FairyJarBlockEntity extends BlockEntity
 			tile.markDirty();
 	}
 	
+	private void clientUpdate()
+	{
+		ticksActive++;
+		
+		Level world = getLevel();
+		if(world == null)
+			return;
+		
+		RandomSource random = world.random;
+		if(!isBlinking() && random.nextInt(50) == 0)
+			blinkTicks = 3;
+		else
+			blinkTicks--;
+		
+		lookHelper.ifPresent((look) -> look.tick(orbPos(), world, random));
+	}
+	
 	public void addEmotiveEvent(EmotiveEvent event)
+	{
+		Level world = getLevel();
+		Vec3 dir = new Vec3(0, 0, 1);
+		if(world != null)
+		{
+			RandomSource rand = world.random;
+			dir = new Vec3(rand.nextDouble() - 0.5D, 0, rand.nextDouble() - 0.5D);
+		}
+		addEmotiveEvent(event, orbPos().add(dir));
+	}
+	
+	public void addEmotiveEvent(EmotiveEvent event, Vec3 origin)
 	{
 		Pair<Emotion, Float> impulse = this.personality.getImpulseFor(event);
 		this.personality.addImpulse(impulse.getFirst(), impulse.getSecond());
+		PacketHandler.sendToAll((ServerLevel)getLevel(), new PacketFairyLookAt(getBlockPos(), origin));
 	}
+	
+	public float getYaw(float partialTicks) { return lookHelper.isPresent() ? lookHelper.get().yaw(partialTicks) : 0F; }
+	
+	public float getPitch(float partialTicks) { return lookHelper.isPresent() ? lookHelper.get().pitch(partialTicks) : 0F; }
 	
 	public BlockPos lastPlaced() { return this.lastPlaced; }
 	
 	public double renderTicks() { return ticksActive; }
 	
+	public boolean isBlinking() { return this.blinkTicks > 0; }
+	
 	public Emotion getExpression() { return this.personality.currentExpression(); }
+	
+	private Vec3 orbPos()
+	{
+		return new Vec3(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()).add(ORB_OFFSET);
+	}
+	
+	public void lookAt(Vec3 vecIn)
+	{
+		this.lookHelper.ifPresent((look) -> look.forceLookAt(vecIn.subtract(orbPos())));
+	}
 	
 	public ClientboundBlockEntityDataPacket getUpdatePacket()
 	{
@@ -106,6 +174,102 @@ public class FairyJarBlockEntity extends BlockEntity
 	}
 	
 	public boolean isOwner(Entity ent) { return ownerUUID != null && ent.getUUID().equals(ownerUUID); }
+	
+	public static class LookHelper
+	{
+		/** How quickly the fairy turns to look at something */
+		private static final float FACE_SPEED = 8F;
+		
+		private static final AABB LOOK_RANGE = new AABB(-1, -1, -1, 1, 1, 1).inflate(16D);
+		
+		private float lookPitch, lookYaw = 0F;
+		
+		private float oldPitch, oldYaw = 0F;
+		
+		private int lookTicks = 0;
+		private float targetPitch = 0F;
+		private float targetYaw = 0F;
+		
+		private Optional<LivingEntity> lookTarget = Optional.empty();
+		
+		public LookHelper(RandomSource random)
+		{
+			setRandomLook(random);
+			lookPitch = oldPitch = targetPitch;
+			lookYaw = oldYaw = targetYaw;
+		}
+		
+		public void tick(Vec3 orbPos, Level world, RandomSource random)
+		{
+			oldPitch = lookPitch;
+			oldYaw = lookYaw;
+			
+			lookPitch = getLimited(oldPitch, targetPitch, 1F);
+			lookYaw = getLimited(oldYaw, targetYaw, 1F);
+			
+			if(lookTicks > 0)
+			{
+				lookTicks--;
+				this.lookTarget.ifPresent((entity) -> setLookDir(entity.getEyePosition().subtract(orbPos)));
+			}
+			else if(random.nextInt(50) == 0)
+			{
+				// Set a random look target
+				lookTarget = Optional.empty();
+				
+				// Look at random nearby mob
+				List<LivingEntity> mobs = world.getEntitiesOfClass(LivingEntity.class, LOOK_RANGE.move(orbPos), (ent) -> ent.isAlive() && !ent.isSpectator());
+				if(!mobs.isEmpty())
+				{
+					this.lookTarget = Optional.of(mobs.get(random.nextInt(mobs.size())));
+					this.lookTicks = random.nextInt(30) + 30;
+				}
+				
+				// Look at random position
+				if(!lookTarget.isPresent())
+				{
+					setRandomLook(random);
+					this.lookTicks = random.nextInt(30) + 30;
+				}
+			}
+		}
+		
+		private void setRandomLook(RandomSource random)
+		{
+			setLookDir((random.nextFloat() - 0.5F) * 60F, random.nextFloat() * 360F);
+		}
+		
+		private float getLimited(float current, float target, float partialTicks)
+		{
+			float delta = Mth.clamp(target - current, -FACE_SPEED, FACE_SPEED) * partialTicks;
+			return current + delta;
+		}
+		
+		public float yaw(float partialTicks) { return getLimited(lookYaw, targetYaw, partialTicks); }
+		
+		public float pitch(float partialTicks) { return getLimited(lookPitch, targetPitch, partialTicks); }
+		
+		/** Converts a direction vector to corresponding pitch and yaw values */
+		public void setLookDir(Vec3 vecIn)
+		{
+			this.targetPitch = (float)Mth.clamp(Math.toDegrees(Math.asin(-vecIn.y)), -90D, 90D);
+			this.targetYaw = (float)Math.toDegrees(Math.atan2(vecIn.x, vecIn.z));
+		}
+		
+		public void setLookDir(float pitch, float yaw)
+		{
+			this.targetPitch = pitch;
+			this.targetYaw = yaw;
+		}
+		
+		/** Forces the fairy to look in the given direction for 4 seconds */
+		public void forceLookAt(Vec3 direction)
+		{
+			setLookDir(direction);
+			this.lookTicks = 80;
+			this.lookTarget = Optional.empty();
+		}
+	}
 	
 	public static class PersonalityModel
 	{
@@ -259,6 +423,7 @@ public class FairyJarBlockEntity extends BlockEntity
 			}
 		}
 	}
+
 	
 	public static enum EmotiveEvent implements StringRepresentable
 	{
@@ -295,7 +460,7 @@ public class FairyJarBlockEntity extends BlockEntity
 		
 		public String getSerializedName() { return this.name().toLowerCase(); }
 		
-		public ResourceLocation getTexture() { return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/block/fairy/"+getSerializedName()+".png"); }
+		public ResourceLocation getTexture() { return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/fairy_jar/"+getSerializedName()+".png"); }
 		
 		public boolean canMoveInto(Emotion emote) { return getMoveOptions().contains(emote); }
 		

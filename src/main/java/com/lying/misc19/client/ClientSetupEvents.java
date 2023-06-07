@@ -13,6 +13,7 @@ import com.lying.misc19.utility.bus.ClientBus;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -94,4 +95,6 @@ public class ClientSetupEvents
 			LOCAL_DATA = new SpellManager(MC.player.getLevel());
 		return LOCAL_DATA;
 	}
+	
+	public static ClientLevel getLevel() { return MC.level; }
 }
