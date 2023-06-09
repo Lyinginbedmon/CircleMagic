@@ -1,8 +1,0 @@
-{
-  "Block": "{Name:\"minecraft:water\",Properties:{level:\"0\"}}",
-  "ID": "misc19:creation/water",
-  "Ingredients": [
-    "mare"
-  ],
-  "Type": "misc19:creation_function"
-}

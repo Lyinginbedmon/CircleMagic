@@ -1,0 +1,7 @@
+{
+	"parent": "minecraft:block/cube_all",
+	"textures": {
+		"all": "circles:block/curruid_block",
+		"particle": "#all"
+	}
+}

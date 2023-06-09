@@ -1,0 +1,11 @@
+{
+  "Effects": [
+    "{Ambient:0b,Amplifier:0b,CurativeItems:[{Count:1b,id:\"minecraft:milk_bucket\"}],Duration:600,Id:18,ShowIcon:0b,ShowParticles:0b,\"forge:id\":\"minecraft:weakness\"}"
+  ],
+  "ID": "circles:status_effect/weakness",
+  "Ingredients": [
+    "mundus",
+    "sculk"
+  ],
+  "Type": "circles:status_effect_function"
+}

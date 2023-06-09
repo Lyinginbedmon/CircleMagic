@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:grass_block\",Properties:{snowy:\"false\"}}",
+  "ID": "circles:creation/grass",
+  "Ingredients": [
+    "origo"
+  ],
+  "Type": "circles:creation_function"
+}

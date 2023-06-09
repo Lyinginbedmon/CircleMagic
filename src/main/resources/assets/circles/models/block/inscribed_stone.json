@@ -1,0 +1,7 @@
+{
+    "parent": "block/cube_column",
+    "textures": {
+        "end": "circles:block/imbued_stone",
+        "side": "circles:block/inscribed_stone"
+    }
+}

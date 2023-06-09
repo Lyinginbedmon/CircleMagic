@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:water\",Properties:{level:\"0\"}}",
+  "ID": "circles:creation/water",
+  "Ingredients": [
+    "mare"
+  ],
+  "Type": "circles:creation_function"
+}

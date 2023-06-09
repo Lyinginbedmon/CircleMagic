@@ -1,0 +1,7 @@
+{
+    "parent": "item/generated",
+    "textures":
+    {
+    	"layer0": "circles:items/pendulum_weight"
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "position=none": { "model": "circles:block/imbued_stone" },
+    "position=top": { "model": "circles:block/imbued_stone_cap" },
+    "position=bottom": { "model": "circles:block/imbued_stone_cap", "x":180 }
+  }
+}

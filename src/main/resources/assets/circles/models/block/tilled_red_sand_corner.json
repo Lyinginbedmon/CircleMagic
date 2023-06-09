@@ -1,0 +1,6 @@
+{
+    "parent": "circles:block/tilled_red_sand",
+    "textures": {
+        "top": "circles:block/tilled_red_sand_corner"
+    }
+}

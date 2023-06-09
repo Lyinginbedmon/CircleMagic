@@ -1,8 +1,0 @@
-{
-  "Block": "{Name:\"minecraft:stone\"}",
-  "ID": "misc19:creation/stone",
-  "Ingredients": [
-    "mundus"
-  ],
-  "Type": "misc19:creation_function"
-}

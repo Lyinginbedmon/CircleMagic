@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "circles:block/imbued_dark_oak",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "circles:block/imbued_dark_oak"
+    },
+    "axis=z": {
+      "model": "circles:block/imbued_dark_oak",
+      "x": 90
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:fire\",Properties:{age:\"0\",east:\"false\",north:\"false\",south:\"false\",up:\"false\",west:\"false\"}}",
+  "ID": "circles:creation/fire",
+  "Ingredients": [
+    "ardere"
+  ],
+  "Type": "circles:creation_function"
+}

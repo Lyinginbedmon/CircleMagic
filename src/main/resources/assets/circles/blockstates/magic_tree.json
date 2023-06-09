@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": [{ "model": "circles:block/magic_tree" }, { "model": "circles:block/magic_tree", "y":180 }],
+    "facing=south": [{ "model": "circles:block/magic_tree" }, { "model": "circles:block/magic_tree", "y":180 }],
+    "facing=east": [{ "model": "circles:block/magic_tree", "y":90 }, { "model": "circles:block/magic_tree", "y":270 }],
+    "facing=west": [{ "model": "circles:block/magic_tree", "y":90 }, { "model": "circles:block/magic_tree", "y":270 }]
+  }
+}

@@ -1,0 +1,7 @@
+{
+    "parent": "circles:block/tilled_sand",
+    "textures": {
+    	"top": "circles:block/tilled_red_sand",
+    	"sand": "minecraft:block/red_sand"
+    }
+}

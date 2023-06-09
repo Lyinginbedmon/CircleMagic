@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": [{ "model": "misc19:block/magic_tree" }, { "model": "misc19:block/magic_tree", "y":180 }],
-    "facing=south": [{ "model": "misc19:block/magic_tree" }, { "model": "misc19:block/magic_tree", "y":180 }],
-    "facing=east": [{ "model": "misc19:block/magic_tree", "y":90 }, { "model": "misc19:block/magic_tree", "y":270 }],
-    "facing=west": [{ "model": "misc19:block/magic_tree", "y":90 }, { "model": "misc19:block/magic_tree", "y":270 }]
-  }
-}

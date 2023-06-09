@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "circles:block/imbued_crimson",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "circles:block/imbued_crimson"
+    },
+    "axis=z": {
+      "model": "circles:block/imbued_crimson",
+      "x": 90
+    }
+  }
+}

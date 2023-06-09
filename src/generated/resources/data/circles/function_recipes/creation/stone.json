@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:stone\"}",
+  "ID": "circles:creation/stone",
+  "Ingredients": [
+    "mundus"
+  ],
+  "Type": "circles:creation_function"
+}

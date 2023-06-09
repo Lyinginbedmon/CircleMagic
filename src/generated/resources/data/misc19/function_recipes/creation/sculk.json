@@ -1,8 +1,0 @@
-{
-  "Block": "{Name:\"minecraft:sculk\"}",
-  "ID": "misc19:creation/sculk",
-  "Ingredients": [
-    "sculk"
-  ],
-  "Type": "misc19:creation_function"
-}

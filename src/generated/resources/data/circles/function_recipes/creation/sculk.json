@@ -1,0 +1,8 @@
+{
+  "Block": "{Name:\"minecraft:sculk\"}",
+  "ID": "circles:creation/sculk",
+  "Ingredients": [
+    "sculk"
+  ],
+  "Type": "circles:creation_function"
+}
