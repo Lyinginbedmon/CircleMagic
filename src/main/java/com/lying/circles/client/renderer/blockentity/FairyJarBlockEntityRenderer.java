@@ -22,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.HitResult.Type;
@@ -53,7 +54,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		Vec3 dirToJar = jarPos.subtract(eyePos).normalize();
 		
 		renderOrb(fairyTile, matrixStack, bufferSource, dirToJar);
-		renderExpression(fairyTile, matrixStack, bufferSource, partialTicks);
+		renderExpression(fairyTile, matrixStack, bufferSource, partialTicks, combinedLightIn);
 	}
 	
 	private void renderName(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, int combinedLightIn)
@@ -73,7 +74,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
         matrixStack.popPose();
 	}
 	
-	private void renderExpression(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks)
+	private void renderExpression(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks, int combinedLightIn)
 	{
 		ResourceLocation expressionTex = fairyTile.isBlinking() ? BLINK_TEX : fairyTile.getExpression().getTexture();
 		matrixStack.pushPose();
@@ -81,26 +82,47 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 			matrixStack.scale(0.45F, 0.45F, 0.45F);
 			matrixStack.mulPose(Vector3f.YP.rotationDegrees(Mth.wrapDegrees(fairyTile.getYaw(partialTicks))));
 			matrixStack.mulPose(Vector3f.XP.rotationDegrees(Mth.wrapDegrees(fairyTile.getPitch(partialTicks))));
+			
 			Matrix4f matrix = matrixStack.last().pose();
 			VertexConsumer buffer = bufferSource.getBuffer(RenderType.text(expressionTex));
-			buffer.vertex(matrix, -0.5F, -0.5F, 0.5F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, 0.5F, -0.5F, 0.5F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, 0.5F, 0.5F, 0.5F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, -0.5F, 0.5F, 0.5F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
+			drawTexturedQuad(matrix, buffer, 0.5F, 255, 255);
 			
-			buffer.vertex(matrix, -0.5F, 0.5F, 0.5F).color(255, 255, 255, 255).uv(0F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, 0.5F, 0.5F, 0.5F).color(255, 255, 255, 255).uv(1F, 0F).uv2(255).endVertex();
-			buffer.vertex(matrix, 0.5F, -0.5F, 0.5F).color(255, 255, 255, 255).uv(1F, 1F).uv2(255).endVertex();
-			buffer.vertex(matrix, -0.5F, -0.5F, 0.5F).color(255, 255, 255, 255).uv(0F, 1F).uv2(255).endVertex();
+			ResourceLocation special = fairyTile.getSpecialTexture();
+			if(special != null)
+			{
+				matrixStack.pushPose();
+					buffer = bufferSource.getBuffer(RenderType.text(special));
+					drawTexturedQuad(matrix, buffer, 0.55F, 230, combinedLightIn);
+				matrixStack.popPose();
+			}
 		matrixStack.popPose();
+	}
+	
+	private static void drawTexturedQuad(Matrix4f matrix, VertexConsumer buffer, float z, int alpha, int light)
+	{
+		buffer.vertex(matrix, -0.5F, -0.5F, z).color(255, 255, 255, alpha).uv(0F, 1F).uv2(light).endVertex();
+		buffer.vertex(matrix, 0.5F, -0.5F, z).color(255, 255, 255, alpha).uv(1F, 1F).uv2(light).endVertex();
+		buffer.vertex(matrix, 0.5F, 0.5F, z).color(255, 255, 255, alpha).uv(1F, 0F).uv2(light).endVertex();
+		buffer.vertex(matrix, -0.5F, 0.5F, z).color(255, 255, 255, alpha).uv(0F, 0F).uv2(light).endVertex();
+		
+		buffer.vertex(matrix, -0.5F, 0.5F, z).color(255, 255, 255, alpha).uv(0F, 0F).uv2(light).endVertex();
+		buffer.vertex(matrix, 0.5F, 0.5F, z).color(255, 255, 255, alpha).uv(1F, 0F).uv2(light).endVertex();
+		buffer.vertex(matrix, 0.5F, -0.5F, z).color(255, 255, 255, alpha).uv(1F, 1F).uv2(light).endVertex();
+		buffer.vertex(matrix, -0.5F, -0.5F, z).color(255, 255, 255, alpha).uv(0F, 1F).uv2(light).endVertex();
 	}
 	
 	private void renderOrb(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, Vec3 dirToJar)
 	{
 		Matrix4f matrix = matrixStack.last().pose();
 		VertexConsumer buffer = bufferSource.getBuffer(RenderType.text(TEXTURE));
+		BlockPos pos = fairyTile.getBlockPos();
+		RandomSource rand = RandomSource.create(pos.getX() * pos.getX() + pos.getZ() * pos.getZ() - pos.getY() * pos.getY());
 		matrixStack.pushPose();
-			QUADS.forEach((quad) -> quad.scale(FairyJarBlockEntity.ORB_RADIUS).move(FairyJarBlockEntity.ORB_OFFSET).addToBuffer(matrix, buffer, 0, 0, 0));
+			for(Quad quad : QUADS)
+			{
+				int a = rand.nextInt(10);
+				quad.scale(FairyJarBlockEntity.ORB_RADIUS).move(FairyJarBlockEntity.ORB_OFFSET).addToBuffer(matrix, buffer, a, a, a);
+			}
 		matrixStack.popPose();
 	}
 	
@@ -125,6 +147,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 			return new Quad(topLeft.add(offset), topRight.add(offset), botRight.add(offset), botLeft.add(offset));
 		}
 		
+		// TODO Change from squares to triangles
 		public void addToBuffer(Matrix4f matrix, VertexConsumer buffer, int r, int g, int b)
 		{
 			buffer.vertex(matrix, (float)topLeft.x, (float)topLeft.y, (float)topLeft.z).color(r, g, b, 255).uv(0F, 1F).uv2(255).endVertex();
@@ -137,22 +160,27 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 	static
 	{
 		// Generate a sphere of R = 1
+		Vec2 altBot = new Vec2(0F, -1F);
+		Vec2 altTop = altBot;
+		double cos2 = Math.cos(Math.toRadians(180D / SPHERE_RESOLUTION));
+		double sin2 = Math.sin(Math.toRadians(180D / SPHERE_RESOLUTION));
+		
 		double cos = Math.cos(Math.toRadians(360D / SPHERE_RESOLUTION));
 		double sin = Math.sin(Math.toRadians(360D / SPHERE_RESOLUTION));
-		for(float j=0; j<SPHERE_RESOLUTION; j++)
+		while(altBot.y < 1F)
 		{
+			altTop = CMUtils.rotate(altBot, cos2, sin2).normalized();
+			
 			/*
 			 * Radius of spherical cap = sqrt(h(2R-h)) where h = cap height
 			 */
-			float botH = (j / SPHERE_RESOLUTION) * 2F;
-			float altBot = botH - 1F;
-			float a = (float)Math.sqrt(botH * (2F - botH));
-			Vec2 radiusBot = new Vec2(a, 0F);
+			float botAlt = altBot.y;
+			float botH = 1 - Math.abs(botAlt);
+			Vec2 radiusBot = new Vec2((float)Math.sqrt(botH * (2F - botH)), 0F);
 			
-			float topH = ((j + 1) / SPHERE_RESOLUTION) * 2F;
-			float altTop = topH - 1F;
-			a = (float)Math.sqrt(topH * (2F - topH));
-			Vec2 radiusTop = new Vec2(a, 0F);
+			float topAlt = altTop.y;
+			float topH = 1 - Math.abs(topAlt);
+			Vec2 radiusTop = new Vec2((float)Math.sqrt(topH * (2F - topH)), 0F);
 			
 			for(int i=0; i<SPHERE_RESOLUTION; i++)
 			{
@@ -162,11 +190,13 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 				Vec2 topRight = radiusTop = CMUtils.rotate(radiusTop, cos, sin);
 				
 				QUADS.add(new Quad(
-						new Vec3(topLeft.x, altTop, topLeft.y),
-						new Vec3(topRight.x, altTop, topRight.y),
-						new Vec3(botRight.x, altBot, botRight.y),
-						new Vec3(botLeft.x, altBot, botLeft.y)));
+						new Vec3(topLeft.x, topAlt, topLeft.y),
+						new Vec3(topRight.x, topAlt, topRight.y),
+						new Vec3(botRight.x, botAlt, botRight.y),
+						new Vec3(botLeft.x, botAlt, botLeft.y)));
 			}
+			
+			altBot = altTop;
 		}
 	}
 }

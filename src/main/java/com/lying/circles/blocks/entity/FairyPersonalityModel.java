@@ -35,9 +35,6 @@ public class FairyPersonalityModel
 	
 	private boolean isDirty = true;
 	
-	/*
-	 * Randomised speech style
-	 */
 	private MutableComponent name;
 	private MutableComponent ownerName;
 	private SpeechStyle speech;
@@ -218,6 +215,17 @@ public class FairyPersonalityModel
 		CompoundTag tag = saveToNbt(new CompoundTag());
 		nbt.put("Personality", tag);
 		return nbt;
+	}
+	
+	@Nullable
+	public ResourceLocation getSpecialTexture()
+	{
+		String name = name().getString();
+		if(name.equalsIgnoreCase("sammy"))
+			return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/fairy_jar/sammy_eyes.png");
+		else if(name.equalsIgnoreCase("falkory"))
+			;
+		return null;
 	}
 	
 	private static void addRandomName(String literal) { RANDOM_NAMES.add(Component.literal(literal)); }

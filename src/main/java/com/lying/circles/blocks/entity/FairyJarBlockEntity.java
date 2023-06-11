@@ -3,6 +3,8 @@ package com.lying.circles.blocks.entity;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 import com.lying.circles.blocks.entity.FairyPersonalityModel.Emotion;
 import com.lying.circles.blocks.entity.FairyPersonalityModel.EmotiveEvent;
 import com.lying.circles.init.CMBlockEntities;
@@ -17,6 +19,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -150,6 +153,9 @@ public class FairyJarBlockEntity extends BlockEntity
 	public boolean isBlinking() { return this.blinkTicks > 0; }
 	
 	public Emotion getExpression() { return this.personality.isPresent() ? this.personality.get().currentExpression() : Emotion.NEUTRAL; }
+	
+	@Nullable
+	public ResourceLocation getSpecialTexture() { return this.personality.isPresent() ? this.personality.get().getSpecialTexture() : null; }
 	
 	private Vec3 orbPos()
 	{
