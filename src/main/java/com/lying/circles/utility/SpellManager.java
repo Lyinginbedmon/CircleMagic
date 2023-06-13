@@ -31,9 +31,11 @@ public class SpellManager extends SavedData
 	protected static SpellManager INSTANCE = null;
 	protected static final String DATA_NAME = Reference.ModInfo.MOD_ID+"_spell_manager";
 	
-	private Map<EntityData, List<SpellData>> activeSpells = new HashMap<>();
+	protected Map<EntityData, List<SpellData>> activeSpells = new HashMap<>();
 	
-	private Level world;
+	// FIXME Map of spell UUIDs to Canvases and last known spell NBT for use in SpellLayer
+	
+	protected Level world;
 	private int ticks = 0;
 	
 	private SpellManager() { this(null); }
@@ -62,7 +64,8 @@ public class SpellManager extends SavedData
 		manager.read(tag);
 		return manager;
 	}
-	
+
+	// FIXME Ensure proper removal of dead spells
 	public CompoundTag save(CompoundTag data)
 	{
 		ListTag entries = new ListTag();
@@ -113,6 +116,7 @@ public class SpellManager extends SavedData
 		
 		ServerLevel serverWorld = (ServerLevel)this.world;
 		
+		boolean flagDirty = false;
 		List<EntityData> clearEntities = Lists.newArrayList();
 		for(EntityData entity : this.activeSpells.keySet())
 		{
@@ -123,18 +127,25 @@ public class SpellManager extends SavedData
 				continue;
 			
 			List<SpellData> activeSpells = this.activeSpells.get(entity);
-			activeSpells.removeAll(getDeadSpells(serverWorld, activeSpells));
+			List<SpellData> deadSpells = getDeadSpells(serverWorld, activeSpells);
+			activeSpells.removeAll(deadSpells);
 			if(activeSpells.isEmpty())
+			{
 				clearEntities.add(entity);
+				flagDirty = true;
+			}
+			this.activeSpells.put(entity, activeSpells);
+			flagDirty = flagDirty || !deadSpells.isEmpty();
 		}
 		clearEntities.forEach((entity) -> this.activeSpells.remove(entity));
 		
-		if(ticks++ % 10 == 0)
+		if(ticks++ % 10 == 0 || flagDirty)
 			setDirty();
 	}
 	
 	public boolean isEmpty() { return this.activeSpells.isEmpty(); }
 	
+	/** Executes all given spells, returns a list of any that returned FALSE */
 	private static List<SpellData> getDeadSpells(ServerLevel serverWorld, List<SpellData> spellEntities)
 	{
 		List<SpellData> deadSpells = Lists.newArrayList();
@@ -157,10 +168,9 @@ public class SpellManager extends SavedData
 	
 	public List<SpellData> getSpellsOn(Entity onEntity)
 	{
-		EntityData entity = new EntityData(onEntity);
-			for(Entry<EntityData, List<SpellData>> entry : this.activeSpells.entrySet())
-				if(entry.getKey().equals(entity))
-					return entry.getValue();
+		for(Entry<EntityData, List<SpellData>> entry : this.activeSpells.entrySet())
+			if(onEntity.getUUID().equals(entry.getKey().getA()))
+				return entry.getValue();
 		return Lists.newArrayList();
 	}
 	

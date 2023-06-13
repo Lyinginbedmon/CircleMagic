@@ -9,6 +9,7 @@ import com.lying.circles.blocks.MagicSapling;
 import com.lying.circles.blocks.MagicTree;
 import com.lying.circles.blocks.PhantomBlock;
 import com.lying.circles.blocks.Sandbox;
+import com.lying.circles.blocks.Statue;
 import com.lying.circles.blocks.TilledSand;
 import com.lying.circles.reference.Reference;
 
@@ -48,6 +49,8 @@ public class CMBlocks
      *  * What visual benefit do that give?
      *  * Can they be provided in multiple visual forms?
      */
+    
+    public static final RegistryObject<Block> STATUE = BLOCKS.register("statue", () -> new Statue(BlockBehaviour.Properties.of(Material.STONE).noOcclusion()));
     
     // Dwarf in the flask
     	/**

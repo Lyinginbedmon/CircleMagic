@@ -2,10 +2,9 @@ package com.lying.circles.client.renderer.entity;
 
 import java.util.List;
 
-import com.lying.circles.client.renderer.magic.ComponentRenderers;
-import com.lying.circles.magic.ISpellComponent;
-import com.lying.circles.utility.SpellData;
-import com.lying.circles.utility.SpellManager;
+import com.lying.circles.client.Canvas;
+import com.lying.circles.client.ClientSetupEvents;
+import com.lying.circles.client.ClientSpellManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 
@@ -27,12 +26,12 @@ public class SpellLayer<T extends LivingEntity, M extends EntityModel<T>> extend
 	
 	public void render(PoseStack matrixStack, MultiBufferSource bufferSource, int p_117351_, T livingEntity, float p_117353_, float p_117354_, float p_117355_, float p_117356_, float p_117357_, float p_117358_)
 	{
-		SpellManager manager = SpellManager.instance(livingEntity.getLevel());
-		List<SpellData> spells = manager.getSpellsOn(livingEntity);
+		ClientSpellManager manager = (ClientSpellManager)ClientSetupEvents.getLocalData();
+		List<Canvas> spells = manager.getSpellCanvasOn(livingEntity);
 		if(spells.isEmpty())
 			return;
 		
-		// FIXME Adapt to new spell texture system
+//		System.out.println("Spells on "+livingEntity.getDisplayName().getString()+": "+spells.size());
 		matrixStack.pushPose();
 			matrixStack.translate(0D, 1.501F, 0D);
 			matrixStack.translate(0D, -livingEntity.getBbHeight() * 0.5D, 0D);
@@ -45,11 +44,8 @@ public class SpellLayer<T extends LivingEntity, M extends EntityModel<T>> extend
 						int sign = i%2 == 0 ? 1 : -1;
 						Vec3 position = OFFSET.scale(pair * sign);
 						matrixStack.translate(position.x, position.y, position.z);
-						matrixStack.pushPose();
-							matrixStack.scale(2.2F, 2.2F, 2.2F);
-							ISpellComponent arrangement = spells.get(i).arrangement();
-							ComponentRenderers.renderWorld(arrangement, matrixStack, bufferSource);
-						matrixStack.popPose();
+						matrixStack.scale(2.2F, 2.2F, 2.2F);
+						spells.get(i).drawIntoWorld(matrixStack, bufferSource);
 					matrixStack.popPose();
 				}
 			matrixStack.popPose();

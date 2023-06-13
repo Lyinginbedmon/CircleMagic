@@ -120,8 +120,11 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		matrixStack.pushPose();
 			for(Quad quad : QUADS)
 			{
-				int a = rand.nextInt(10);
-				quad.scale(FairyJarBlockEntity.ORB_RADIUS).move(FairyJarBlockEntity.ORB_OFFSET).addToBuffer(matrix, buffer, a, a, a);
+				float a = rand.nextFloat() * (20F / 255F);
+				int r = (int)(a * Reference.Values.MAGIC_COLOR.x);
+				int g = (int)(a * Reference.Values.MAGIC_COLOR.y);
+				int b = (int)(a * Reference.Values.MAGIC_COLOR.z);
+				quad.scale(FairyJarBlockEntity.ORB_RADIUS).move(FairyJarBlockEntity.ORB_OFFSET).addToBuffer(matrix, buffer, r, g, b);
 			}
 		matrixStack.popPose();
 	}

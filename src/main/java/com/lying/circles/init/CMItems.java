@@ -24,6 +24,7 @@ public class CMItems
     
     public static final RegistryObject<Item> PENDULUM = ITEMS.register("pendulum", () -> new Pendulum(new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> PENDULUM_WEIGHT = ITEMS.register("pendulum_weight", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> STATUE_ITEM = ITEMS.register("statue", () -> new BlockItem(CMBlocks.STATUE.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> MAGIC_SCROLL = ITEMS.register("magic_scroll", () -> new ScrollItem(new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> CURRUID_DUST = ITEMS.register("curruid_dust", () -> new CurruidDustItem(new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> CURRUID_BLOCK = ITEMS.register("curruid_block", () -> new BlockItem(CMBlocks.CURRUID_BLOCK.get(), new Item.Properties().tab(TAB)));

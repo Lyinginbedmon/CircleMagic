@@ -34,6 +34,7 @@ public class SpellData
 	private int ticks = 0;
 	
 	private UUID spellUUID = null;
+	private boolean isAlive = true;
 	
 	public SpellData(ISpellComponent spellIn, LivingEntity casterIn)
 	{
@@ -54,12 +55,12 @@ public class SpellData
 	}
 	
 	/** Returns true if this spell has been registered with the world */
-	public boolean isAlive() { return this.spellUUID != null; }
+	public boolean isAlive() { return this.isAlive; }
 	
 	public void setUUID(UUID uuidIn) { this.spellUUID = uuidIn; }
 	public UUID getUUID() { return this.spellUUID; }
 	
-	public void kill(){ this.spellUUID = null; }
+	public void kill(){ this.isAlive = false; }
 	
 	public IVariable getVariable(Slot name) { return this.variables.get(name); }
 	
@@ -126,7 +127,7 @@ public class SpellData
 		nbt.putUUID("UUID", this.spellUUID);
 		nbt.put("Spell", ISpellComponent.saveToNBT(arrangement));
 		nbt.put("Owner", this.ownerData.save(new CompoundTag()));
-		
+		nbt.putBoolean("Alive", isAlive);
 		nbt.put("Vars", variables.writeToNBT(new CompoundTag()));
 		nbt.putInt("Ticks", ticks);
 		return nbt;
@@ -137,6 +138,7 @@ public class SpellData
 		SpellData data = new SpellData(SpellComponents.readFromNBT(nbt.getCompound("Spell")), EntityData.load(nbt.getCompound("Owner")));
 		data.variables = VariableSet.readFromNBT(nbt.getCompound("Vars"));
 		data.setUUID(nbt.getUUID("UUID"));
+		data.isAlive = nbt.getBoolean("Alive");
 		data.ticks = nbt.getInt("Ticks");
 		return data;
 	}

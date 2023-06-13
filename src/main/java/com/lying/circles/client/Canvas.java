@@ -53,6 +53,12 @@ public class Canvas
 		texture = textureIn;
 	}
 	
+	public void close()
+	{
+		this.clear();
+		this.texture.close();
+	}
+	
 	public void clear()
 	{
 		this.elements.clear();

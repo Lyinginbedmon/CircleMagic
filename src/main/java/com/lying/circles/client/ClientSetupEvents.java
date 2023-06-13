@@ -2,6 +2,7 @@ package com.lying.circles.client;
 
 import com.lying.circles.CircleMagic;
 import com.lying.circles.client.gui.screen.ScreenSandbox;
+import com.lying.circles.client.renderer.CMModelLayers;
 import com.lying.circles.client.renderer.entity.PendulumLayer;
 import com.lying.circles.client.renderer.entity.SpellLayer;
 import com.lying.circles.init.CMBlocks;
@@ -13,6 +14,9 @@ import com.lying.circles.utility.bus.ClientBus;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -33,7 +37,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 public class ClientSetupEvents
 {
 	private static final Minecraft MC = Minecraft.getInstance();
-	private static SpellManager LOCAL_DATA = new SpellManager(null);
+	private static SpellManager LOCAL_DATA = null;
 	
     @SuppressWarnings("removal")
 	@SubscribeEvent
@@ -67,6 +71,12 @@ public class ClientSetupEvents
     	event.register((blockState, tintGetter, pos, layer) -> { return 3650559; }, CMBlocks.MAGIC_TREE.get());
     }
     
+    @SubscribeEvent
+    public static void registerLayersEvent(EntityRenderersEvent.RegisterLayerDefinitions event)
+    {
+    	event.registerLayerDefinition(CMModelLayers.STATUE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
+    }
+    
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	@SubscribeEvent
     public static void addEntityRendererLayers(EntityRenderersEvent.AddLayers event)
@@ -80,7 +90,7 @@ public class ClientSetupEvents
     	}
     	dispatcher.renderers.forEach((type,renderer) -> 
     	{
-    		if(renderer.getClass().isAssignableFrom(LivingEntityRenderer.class))
+    		if(LivingEntityRenderer.class.isAssignableFrom(renderer.getClass()))
     		{
     			LivingEntityRenderer livingRender = (LivingEntityRenderer)renderer;
     			livingRender.addLayer((SpellLayer)(new SpellLayer<>(livingRender)));
@@ -91,7 +101,7 @@ public class ClientSetupEvents
 	public static SpellManager getLocalData()
 	{
 		if(LOCAL_DATA == null)
-			LOCAL_DATA = new SpellManager(MC.player.getLevel());
+			LOCAL_DATA = new ClientSpellManager(MC.player.getLevel());
 		return LOCAL_DATA;
 	}
 	

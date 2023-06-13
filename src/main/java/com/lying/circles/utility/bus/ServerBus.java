@@ -4,6 +4,8 @@ import com.lying.circles.blocks.ICruciblePart;
 import com.lying.circles.blocks.TilledSand;
 import com.lying.circles.blocks.TilledSand.Shape;
 import com.lying.circles.init.CMBlocks;
+import com.lying.circles.network.PacketHandler;
+import com.lying.circles.network.PacketSyncSpellManager;
 import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.CrucibleManager;
 import com.lying.circles.utility.SpellManager;
@@ -19,6 +21,7 @@ import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.level.BlockEvent.BreakEvent;
 import net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent;
@@ -31,6 +34,13 @@ import net.minecraftforge.registries.RegistryObject;
 @Mod.EventBusSubscriber(modid = Reference.ModInfo.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ServerBus
 {
+	@SubscribeEvent
+	public static void onPlayerLogIn(PlayerLoggedInEvent event)
+	{
+		ServerPlayer player = (ServerPlayer)event.getEntity();
+		PacketHandler.sendTo(player, new PacketSyncSpellManager(SpellManager.instance(player.getLevel())));
+	}
+	
 	@SubscribeEvent
 	public static void onLevelTick(LevelTickEvent event)
 	{
