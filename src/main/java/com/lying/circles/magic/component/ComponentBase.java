@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.compress.utils.Lists;
 
 import com.lying.circles.init.SpellComponents;
@@ -16,6 +18,8 @@ import com.lying.circles.network.PacketHandler;
 import com.lying.circles.utility.CMUtils;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -140,6 +144,41 @@ public abstract class ComponentBase implements ISpellComponent
 			return ((OperationGlyph)input).getResult(variablesIn);
 		else
 			return VariableSet.DEFAULT;
+	}
+	
+	public static MutableComponent describeVariable(ISpellComponent variable, @Nullable VariableType type)
+	{
+		if(variable.type() == Type.VARIABLE)
+		{
+			VariableSigil var = (VariableSigil)variable;
+			if(variable instanceof VariableSigil.Constant)
+			{
+				if(type == null)
+					return describeVariable(variable, var.get(null).type());
+				
+				IVariable value = var.get(null);
+				switch(type)
+				{
+					case DOUBLE:
+						return Component.literal(String.valueOf(value.asDouble()));
+					case VECTOR:
+						return Component.literal(String.valueOf(value.asVec()));
+					case STACK:
+						return (MutableComponent)value.asStack().translate();
+					case ELEMENT:
+						return (MutableComponent)value.translate();
+					case ENTITY:
+						return Component.literal("Entity");
+					case WORLD:
+						break;
+					default:
+						return (MutableComponent)value.translate();
+				}
+			}
+			else
+				return ((VariableSigil.Local)var).slot().translate();
+		}
+		return variable.translatedName();
 	}
 	
 	public Param[] getInputNeeds() { return inputNeeds; }

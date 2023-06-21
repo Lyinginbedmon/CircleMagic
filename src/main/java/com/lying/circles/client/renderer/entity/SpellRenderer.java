@@ -26,7 +26,6 @@ public class SpellRenderer extends EntityRenderer<SpellEntity>
 		if(spell == null)
 			return;
 		
-//		ISpellComponent arrangement = spell.arrangement();
 		RenderSystem.setShaderColor(1F, 1F, 1F, spellEntity.getVisibility());
 		matrixStack.pushPose();
 			matrixStack.translate(0D, spellEntity.getBbHeight() * 0.5D, 0D);
@@ -34,7 +33,6 @@ public class SpellRenderer extends EntityRenderer<SpellEntity>
 			matrixStack.mulPose(Vector3f.XP.rotationDegrees(spellEntity.getXRot()));
 			matrixStack.pushPose();
 				spellEntity.getCanvas().drawIntoWorld(matrixStack, bufferSource);
-//				ComponentRenderers.renderWorld(arrangement, matrixStack, bufferSource);
 			matrixStack.popPose();
 		matrixStack.popPose();
 	}

@@ -19,6 +19,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 
@@ -47,7 +49,7 @@ public class FairyPersonalityModel
 		for(EmotiveEvent event : EmotiveEvent.values())
 		{
 			Emotion emote = Emotion.ACTIVE_EMOTIONS[rand.nextInt(Emotion.ACTIVE_EMOTIONS.length)];
-			float intensity = rand.nextFloat();
+			float intensity = rand.nextFloat() * 10F;
 			model.put(event, Pair.of(emote, intensity));
 		}
 	}
@@ -330,19 +332,27 @@ public class FairyPersonalityModel
 	
 	public static enum Emotion implements StringRepresentable
 	{
-		NEUTRAL,
-		HAPPY,
-		ANGRY,
-		SAD,
-		SCARED;
+		NEUTRAL(null),
+		HAPPY(SoundEvents.VILLAGER_CELEBRATE),
+		ANGRY(SoundEvents.ENDERMAN_SCREAM),
+		SAD(SoundEvents.WOLF_WHINE),
+		SCARED(SoundEvents.PIGLIN_RETREAT);
 		
 		public static Emotion[] ACTIVE_EMOTIONS = new Emotion[] {HAPPY, ANGRY, SAD, SCARED};
 		
 		private static final Map<Emotion, EnumSet<Emotion>> MOVE_MAP = new HashMap<>();
+		private final SoundEvent ambientNoise;
+		
+		private Emotion(@Nullable SoundEvent noise)
+		{
+			this.ambientNoise = noise;
+		}
 		
 		public String getSerializedName() { return this.name().toLowerCase(); }
 		
 		public ResourceLocation getTexture() { return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/fairy_jar/"+getSerializedName()+".png"); }
+		
+		public SoundEvent getSound() { return this.ambientNoise; }
 		
 		public boolean canMoveInto(Emotion emote) { return getMoveOptions().contains(emote); }
 		

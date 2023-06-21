@@ -26,6 +26,24 @@ public interface ISpellComponent
 	public default MutableComponent translatedName() { return Component.translatable("magic."+Reference.ModInfo.MOD_ID+"."+getRegistryName().getPath()); }
 	public default MutableComponent description() { return Component.translatable("magic."+Reference.ModInfo.MOD_ID+"."+getRegistryName().getPath()+".description"); }
 	
+	public default List<MutableComponent> tooltip(boolean hasFairy)
+	{
+		List<MutableComponent> tooltip = Lists.newArrayList();
+		tooltip.add(description());
+		if(hasFairy)
+		{
+			List<MutableComponent> details = extendedTooltip();
+			if(!details.isEmpty())
+			{
+				tooltip.add(Component.empty());
+				tooltip.addAll(details);
+			}
+		}
+		return tooltip;
+	}
+	
+	public default List<MutableComponent> extendedTooltip(){ return List.of(); }
+	
 	public default ResourceLocation spriteLocation() { return new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/magic/"+category().getSerializedName()+"/"+getRegistryName().getPath()+".png"); }
 	
 	public void setParent(ISpellComponent parentIn, ComponentState stateIn);

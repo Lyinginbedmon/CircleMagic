@@ -33,8 +33,6 @@ public class SpellManager extends SavedData
 	
 	protected Map<EntityData, List<SpellData>> activeSpells = new HashMap<>();
 	
-	// FIXME Map of spell UUIDs to Canvases and last known spell NBT for use in SpellLayer
-	
 	protected Level world;
 	private int ticks = 0;
 	
@@ -64,7 +62,7 @@ public class SpellManager extends SavedData
 		manager.read(tag);
 		return manager;
 	}
-
+	
 	// FIXME Ensure proper removal of dead spells
 	public CompoundTag save(CompoundTag data)
 	{
@@ -128,7 +126,18 @@ public class SpellManager extends SavedData
 			
 			List<SpellData> activeSpells = this.activeSpells.get(entity);
 			List<SpellData> deadSpells = getDeadSpells(serverWorld, activeSpells);
-			activeSpells.removeAll(deadSpells);
+			for(SpellData dead : deadSpells)
+			{
+				SpellData match = null;
+				for(SpellData active : activeSpells)
+					if(active.getUUID().equals(dead.getUUID()))
+					{
+						match = active;
+						break;
+					}
+				if(match != null)
+					activeSpells.remove(match);
+			}
 			if(activeSpells.isEmpty())
 			{
 				clearEntities.add(entity);

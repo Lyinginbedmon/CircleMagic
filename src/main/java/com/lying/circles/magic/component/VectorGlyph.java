@@ -1,6 +1,9 @@
 package com.lying.circles.magic.component;
 
+import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.compress.utils.Lists;
 
 import com.lying.circles.magic.ISpellComponent;
 import com.lying.circles.magic.variable.IVariable;
@@ -9,6 +12,9 @@ import com.lying.circles.magic.variable.VarVec;
 import com.lying.circles.magic.variable.VariableSet;
 import com.lying.circles.magic.variable.VariableSet.VariableType;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class VectorGlyph extends OperationGlyph
@@ -75,6 +81,34 @@ public abstract class VectorGlyph extends OperationGlyph
 	public static class Compose extends OperationGlyph
 	{
 		public boolean isValidInput(ISpellComponent componentIn) { return componentIn.type() == Type.VARIABLE && inputs().size() < 3; }
+		
+		public List<MutableComponent> extendedTooltip()
+		{
+			List<MutableComponent> tooltip = Lists.newArrayList();
+			Component desc1 = inputs().size() > 0 ? describeVariable(inputs().get(0), VariableType.DOUBLE) : Component.empty();
+			Component desc2 = inputs().size() > 1 ? describeVariable(inputs().get(1), VariableType.DOUBLE) : Component.empty();
+			Component desc3 = inputs().size() > 2 ? describeVariable(inputs().get(2), VariableType.DOUBLE) : Component.empty();
+			switch(inputs().size())
+			{
+				case 0:
+					tooltip.add(Component.literal("Insufficient inputs").withStyle(ChatFormatting.RED));
+					break;
+				case 1:
+					tooltip.add(Component.literal("Resulting vector: ["+desc1.getString()+", 0, 0]"));
+					break;
+				case 2:
+					tooltip.add(Component.literal("Resulting vector: ["+desc1.getString()+", 0, "+desc2.getString()+"]"));
+					break;
+				case 3:
+					tooltip.add(Component.literal("Resulting vector: ["+desc1.getString()+", "+desc2.getString()+", "+desc3.getString()+"]"));
+					break;
+			}
+			
+			if(outputs().isEmpty() && state() != ComponentState.INPUT)
+				tooltip.add(Component.literal("Has no output!").withStyle(ChatFormatting.RED));
+			
+			return tooltip;
+		}
 		
 		public IVariable getResult(VariableSet variablesIn)
 		{

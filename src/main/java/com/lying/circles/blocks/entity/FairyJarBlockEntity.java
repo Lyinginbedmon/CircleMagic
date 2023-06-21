@@ -21,6 +21,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -39,6 +40,7 @@ public class FairyJarBlockEntity extends BlockEntity
 	
 	private Optional<FairyPersonalityModel> personality = Optional.empty();
 	private int blinkTicks = 0;
+	private int soundTicks = 0;
 	
 	private Optional<FairyLookHelper> lookHelper = Optional.empty();
 	
@@ -114,6 +116,13 @@ public class FairyJarBlockEntity extends BlockEntity
 			blinkTicks--;
 		
 		lookHelper.ifPresent((look) -> look.tick(orbPos(), world, random));
+		
+		if(--soundTicks <= 0 && random.nextInt(20) == 0 && personality.isPresent() && personality.get().currentExpression().getSound() != null)
+		{
+			BlockPos pos = getBlockPos();
+			world.playLocalSound(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, personality.get().currentExpression().getSound(), SoundSource.NEUTRAL, 1F, 1F, false);
+			soundTicks = 150 + random.nextInt(100);
+		}
 	}
 	
 	public void rename(MutableComponent nameIn) { this.personality.ifPresent((fairy) -> fairy.setName(nameIn)); }

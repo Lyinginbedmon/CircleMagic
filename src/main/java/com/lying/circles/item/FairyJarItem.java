@@ -6,6 +6,7 @@ import com.lying.circles.init.CMBlockEntities;
 import com.lying.circles.init.CMBlocks;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +25,7 @@ public class FairyJarItem extends BlockItem
 	public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean isSelected)
 	{
 		CompoundTag blockData = BlockItem.getBlockEntityData(stack);
-		if(world == null || world.isClientSide() || stack.getCount() != 1 || (blockData != null && !blockData.isEmpty()))
+		if(world == null || world.isClientSide() || stack.getCount() != 1 || (blockData != null && !blockData.isEmpty()) || entity.isInvulnerableTo(DamageSource.OUT_OF_WORLD))
 			return;
 		
 		FairyPersonalityModel personality = FairyJarBlockEntity.makeRandomPersonality(world.random);
@@ -34,5 +35,7 @@ public class FairyJarItem extends BlockItem
 			blockData = new CompoundTag();
 		blockData.put("BlockEntityTag", data);
 		BlockItem.setBlockEntityData(stack, CMBlockEntities.FAIRY_JAR.get(), data);
+		
+		entity.hurt(DamageSource.OUT_OF_WORLD, (world.random.nextFloat() * 2F) + 1F);
 	}
 }

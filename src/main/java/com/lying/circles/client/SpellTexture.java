@@ -233,10 +233,10 @@ public class SpellTexture
 		Matrix4f matrix = matrixStack.last().pose();
 		
 		matrixStack.pushPose();
-			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMin).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMin).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMax).uv2(255).endVertex();
-			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMax).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[0].x, vertices[0].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMin).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[1].x, vertices[1].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMin).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[2].x, vertices[2].y, 0F).color(255, 255, 255, 255).uv(texXMax, texYMax).uv2(255).endVertex();
+			buffer.vertex(matrix, vertices[3].x, vertices[3].y, 0F).color(255, 255, 255, 255).uv(texXMin, texYMax).uv2(255).endVertex();
 		matrixStack.popPose();
 		
 		matrixStack.pushPose();

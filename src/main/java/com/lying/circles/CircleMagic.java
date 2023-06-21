@@ -73,6 +73,8 @@ public class CircleMagic
     		PacketHandler.init();
     		
     		((FlowerPotBlock)Blocks.FLOWER_POT).addPlant(CMBlocks.MAGIC_SAPLING.getId(), () -> CMBlocks.POTTED_MAGIC_SAPLING.get());
+    		
+            CMItems.addBrewingRecipes();
     	});
     }
     

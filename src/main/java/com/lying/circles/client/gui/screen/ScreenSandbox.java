@@ -208,7 +208,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			List<Component> tooltip = Lists.newArrayList();
 			tooltip.add(hoveredPart.translatedName().withStyle(ChatFormatting.BOLD));
 			tooltip.add(hoveredPart.category().translate());
-			tooltip.add(hoveredPart.description().withStyle(ChatFormatting.ITALIC));
+			hoveredPart.tooltip(true).forEach((line) -> tooltip.add(line.withStyle(ChatFormatting.ITALIC)));
 			
 			this.renderComponentTooltip(matrixStack, tooltip, mouseX, mouseY);
 		}
