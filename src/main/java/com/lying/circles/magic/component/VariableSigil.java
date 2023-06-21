@@ -1,7 +1,5 @@
 package com.lying.circles.magic.component;
 
-import java.util.List;
-
 import javax.annotation.Nullable;
 
 import com.lying.circles.magic.ComponentGlyph;
@@ -11,7 +9,6 @@ import com.lying.circles.magic.variable.VarVec;
 import com.lying.circles.magic.variable.VariableSet;
 import com.lying.circles.reference.Reference;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -30,6 +27,8 @@ public abstract class VariableSigil extends ComponentGlyph
 	public abstract VariableSet set(VariableSet variablesIn, @Nullable IVariable value);
 	
 	public VariableSet execute(VariableSet variablesIn) { return variablesIn; }
+	
+	public ComponentError getErrorState() { return ComponentError.GOOD; }
 	
 	/** Constant variables store useful values and cannot be assigned */
 	public static class Constant extends VariableSigil
@@ -50,11 +49,6 @@ public abstract class VariableSigil extends ComponentGlyph
 		public IVariable get(VariableSet variablesIn) { return this.value; }
 		
 		public VariableSet set(VariableSet variablesIn, @Nullable IVariable value) { return variablesIn; }
-		
-		public List<MutableComponent> extendedTooltip()
-		{
-			return state() == ComponentState.OUTPUT ? List.of(Component.literal("Greater Truths cannot be altered").withStyle(ChatFormatting.RED)) : List.of();
-		}
 		
 		public static Constant doubleConst(double varIn) { return new Constant(new VarDouble(varIn)); }
 		public static Constant dirConst(Direction varIn) { return new Constant(new VarVec(new Vec3(varIn.getNormal().getX(), varIn.getNormal().getY(), varIn.getNormal().getZ()))); }

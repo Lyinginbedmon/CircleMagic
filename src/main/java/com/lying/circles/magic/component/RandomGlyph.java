@@ -17,13 +17,23 @@ import net.minecraft.world.level.Level;
 
 public class RandomGlyph extends OperationGlyph
 {
+	public ComponentError getErrorState()
+	{
+		if(outputs().isEmpty() && state() != ComponentState.INPUT)
+			return ComponentError.ERROR;
+		else if(inputs().size() < 2)
+			return ComponentError.WARNING;
+		else 
+			return ComponentError.GOOD;
+	}
+	
 	public List<MutableComponent> extendedTooltip()
 	{
 		List<MutableComponent> tooltip = Lists.newArrayList();
 		if(inputs().isEmpty())
-			tooltip.add(Component.literal("Will always return 0").withStyle(ChatFormatting.RED));
+			tooltip.add(RETURN_0);
 		else if(inputs().size() == 1)
-			tooltip.add(Component.literal("Will always return "+describeVariable(inputs().get(0), null)).withStyle(ChatFormatting.RED));
+			tooltip.add(Component.literal("Will always return "+describeVariable(inputs().get(0), null)).withStyle(ChatFormatting.GOLD));
 		else
 		{
 			String var = "Randomly returns a value from amongst: ";
@@ -41,6 +51,8 @@ public class RandomGlyph extends OperationGlyph
 		
 		return tooltip;
 	}
+	
+	public Component getResultString() { return Component.literal("R["+inputs().size()+"]"); }
 	
 	public IVariable getResult(VariableSet variablesIn)
 	{

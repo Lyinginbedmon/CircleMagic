@@ -39,6 +39,8 @@ public abstract class ComponentCircle extends ComponentBase
 		return false;
 	}
 	
+	public ComponentError getErrorState() { return ComponentError.GOOD; }
+	
 	public void organise()
 	{
 		Vec2 core = core().add(position().negated());

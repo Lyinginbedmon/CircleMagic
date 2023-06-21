@@ -15,8 +15,10 @@ import com.lying.circles.magic.variable.VariableSet;
 import com.lying.circles.magic.variable.VariableSet.VariableType;
 import com.lying.circles.network.PacketAddComponentEffect;
 import com.lying.circles.network.PacketHandler;
+import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.CMUtils;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -28,6 +30,9 @@ import net.minecraft.world.phys.Vec3;
 
 public abstract class ComponentBase implements ISpellComponent
 {
+	protected static final MutableComponent ERROR_NO_OUTPUT = Component.literal("Has no output!").withStyle(ChatFormatting.RED);
+	protected static final MutableComponent ERROR_NEED_MORE_INPUT = Component.literal("Insufficient inputs!").withStyle(ChatFormatting.RED);
+	
 	private ISpellComponent parent = null;
 	private ComponentState state = ComponentState.NORMAL;
 	
@@ -53,6 +58,8 @@ public abstract class ComponentBase implements ISpellComponent
 		});
 	}
 	
+	protected int paramCount() { return this.inputNeeds.length; }
+	
 	public void setParent(ISpellComponent parentIn) { this.parent = parentIn; }
 	public void setParent(ISpellComponent parentIn, ComponentState stateIn)
 	{
@@ -63,6 +70,8 @@ public abstract class ComponentBase implements ISpellComponent
 	public ISpellComponent parent() { return this.parent; }
 	
 	public ComponentState state() { return this.state; }
+	
+	public abstract ComponentError getErrorState();
 	
 	public void setPosition(float x, float y)
 	{
@@ -168,7 +177,7 @@ public abstract class ComponentBase implements ISpellComponent
 					case ELEMENT:
 						return (MutableComponent)value.translate();
 					case ENTITY:
-						return Component.literal("Entity");
+						return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".variable_entity");
 					case WORLD:
 						break;
 					default:
@@ -178,6 +187,8 @@ public abstract class ComponentBase implements ISpellComponent
 			else
 				return ((VariableSigil.Local)var).slot().translate();
 		}
+		else if(variable instanceof OperationGlyph)
+			return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".variable_operation", ((OperationGlyph)variable).getResultString());
 		return variable.translatedName();
 	}
 	
@@ -253,13 +264,25 @@ public abstract class ComponentBase implements ISpellComponent
 		public IVariable get(Map<String, IVariable> paramsIn) { return paramsIn.getOrDefault(name, VariableSet.DEFAULT); }
 	}
 	
-	public static enum ComponentStatus
+	public static enum ComponentError
 	{
-		NEED_INPUT,
-		NEED_OUTPUT,
-		EMPTY,
-		FINE;
+		GOOD(ChatFormatting.WHITE),
+		WARNING(ChatFormatting.GOLD),
+		ERROR(ChatFormatting.RED);
 		
-		public boolean isError() { return this != FINE; }
+		private final int colour;
+		private final ChatFormatting nameColour;
+		
+		private ComponentError(ChatFormatting colourIn)
+		{
+			this.nameColour = colourIn;
+			this.colour = colourIn.getColor();
+		}
+		
+		public ChatFormatting displayColor() { return this.nameColour; }
+		
+		public int color() { return this.colour; }
+		
+		public boolean isProblem() { return this != GOOD; }
 	}
 }

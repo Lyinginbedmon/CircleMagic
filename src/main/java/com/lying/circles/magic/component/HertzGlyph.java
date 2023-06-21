@@ -12,6 +12,8 @@ public class HertzGlyph extends ComponentBase
 	
 	public Type type() { return Type.HERTZ; }
 	
+	public ComponentError getErrorState() { return ComponentError.GOOD; }
+	
 	public VariableSet execute(VariableSet variablesIn) { return variablesIn; }
 	
 	public int getTickRate() { return tickRate; }

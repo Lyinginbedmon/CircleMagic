@@ -16,6 +16,7 @@ import com.lying.circles.reference.Reference;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ClipContext;
@@ -28,10 +29,14 @@ import net.minecraft.world.phys.Vec3;
 
 public abstract class WorldGlyph extends OperationGlyph
 {
+	protected static final String RETURN = "gui."+Reference.ModInfo.MOD_ID+".world_";
+	
 	/** Returns a value between 0 (occupied) and 2 (replaceable) representing the contents of the given position */
 	public static class IsBlockEmpty extends WorldGlyph
 	{
 		public boolean isValidInput(ISpellComponent input) { return super.isValidInput(input) && inputs().isEmpty(); }
+		
+		public Component getResultString() { return inputs().isEmpty() ? RETURN_0 : Component.translatable(RETURN+"emptiness", describeVariable(inputs().get(0), VariableType.VECTOR)); }
 		
 		public IVariable getResult(VariableSet variablesIn)
 		{
@@ -64,6 +69,8 @@ public abstract class WorldGlyph extends OperationGlyph
 	public static class EntitiesWithin extends WorldGlyph
 	{
 		public boolean isValidInput(ISpellComponent input) { return super.isValidInput(input) && inputs().size() < 2; }
+		
+		public Component getResultString() { return Component.translatable(RETURN+"entities", describeVariable(inputs().get(0), null), describeVariable(inputs().get(1), null)); }
 		
 		public IVariable getResult(VariableSet variablesIn)
 		{
@@ -107,6 +114,8 @@ public abstract class WorldGlyph extends OperationGlyph
 	public static class RayTrace extends WorldGlyph
 	{
 		public boolean isValidInput(ISpellComponent input) { return super.isValidInput(input) && inputs().size() < 2; }
+		
+		public Component getResultString() { return inputs().size() < 2 ? RETURN_0 : Component.translatable(RETURN+"raytrace", describeVariable(inputs().get(0), null), describeVariable(inputs().get(1), null)); }
 		
 		public IVariable getResult(VariableSet variablesIn)
 		{

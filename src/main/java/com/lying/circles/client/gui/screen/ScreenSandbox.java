@@ -18,6 +18,7 @@ import com.lying.circles.item.ScrollItem;
 import com.lying.circles.magic.ISpellComponent;
 import com.lying.circles.magic.ISpellComponent.Category;
 import com.lying.circles.magic.ISpellComponent.Type;
+import com.lying.circles.magic.component.ComponentBase;
 import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.CMUtils;
 import com.lying.circles.utility.SpellTextureManager;
@@ -206,7 +207,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		if(hoveredPart != null && !hasNewPart())
 		{
 			List<Component> tooltip = Lists.newArrayList();
-			tooltip.add(hoveredPart.translatedName().withStyle(ChatFormatting.BOLD));
+			tooltip.add(hoveredPart.translatedName().withStyle(ChatFormatting.BOLD).withStyle(((ComponentBase)hoveredPart).getErrorState().displayColor()));
 			tooltip.add(hoveredPart.category().translate());
 			hoveredPart.tooltip(true).forEach((line) -> tooltip.add(line.withStyle(ChatFormatting.ITALIC)));
 			

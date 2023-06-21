@@ -178,6 +178,8 @@ public abstract class FunctionGlyph extends ComponentBase
 		
 		public boolean isValidInput(ISpellComponent part) { return false; }
 		
+		public ComponentError getErrorState() { return ComponentError.GOOD; }
+		
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
 			List<Component> messages = Lists.newArrayList();
@@ -212,6 +214,8 @@ public abstract class FunctionGlyph extends ComponentBase
 			
 //			addAugmentation(AddMotion::doTP, Element.FINIS);
 		}
+		
+		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
 		
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
@@ -300,6 +304,8 @@ public abstract class FunctionGlyph extends ComponentBase
 		{
 			super(15);
 		}
+		
+		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
 		
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
@@ -400,6 +406,8 @@ public abstract class FunctionGlyph extends ComponentBase
 			super(20);
 		}
 		
+		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
+		
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{
 			if(inputVariables.isEmpty())
@@ -435,6 +443,8 @@ public abstract class FunctionGlyph extends ComponentBase
 		{
 			super(32);
 		}
+		
+		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
 		
 		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
 		{

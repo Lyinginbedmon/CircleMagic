@@ -16,5 +16,7 @@ public abstract class ComponentGlyph extends ComponentBase
 		public int castingCost() { return 0; }
 		
 		public boolean playerPlaceable() { return false; }
+		
+		public ComponentError getErrorState() { return ComponentError.WARNING; }
 	}
 }
