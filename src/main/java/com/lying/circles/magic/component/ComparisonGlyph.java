@@ -21,7 +21,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				return ComponentError.ERROR;
-			else if(inputs().size() < 2)
+			else if(inputs().size() < 2 || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -30,12 +30,18 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().size() < 2)
-				tooltip.add(WARNING_ALWAYS_TRUE);
-			else if(outputs().isEmpty() && state() != ComponentState.INPUT)
+			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().size() < 2)
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -78,7 +84,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT || inputs().isEmpty())
 				return ComponentError.ERROR;
-			else if(inputs().size() == 1)
+			else if(inputs().size() == 1 || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -87,15 +93,21 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().size() == 1)
-				tooltip.add(WARNING_ALWAYS_TRUE);
 			
 			if(inputs().size() < 1)
 				tooltip.add(ERROR_NEED_MORE_INPUT);
 			else if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().size() == 1)
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -140,7 +152,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT || inputs().isEmpty())
 				return ComponentError.ERROR;
-			else if(inputs().size() == 1)
+			else if(inputs().size() == 1 || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -149,15 +161,20 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().size() == 1)
-				tooltip.add(WARNING_ALWAYS_TRUE);
-			
 			if(inputs().size() < 1)
 				tooltip.add(ERROR_NEED_MORE_INPUT);
 			else if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().size() == 1)
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -202,7 +219,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				return ComponentError.ERROR;
-			else if(inputs().isEmpty())
+			else if(inputs().isEmpty() || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -211,13 +228,18 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().isEmpty())
-				tooltip.add(WARNING_ALWAYS_TRUE);
-			
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().isEmpty())
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -253,7 +275,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				return ComponentError.ERROR;
-			else if(inputs().isEmpty())
+			else if(inputs().isEmpty() || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -262,13 +284,18 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().isEmpty())
-				tooltip.add(WARNING_ALWAYS_TRUE);
-			
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().isEmpty())
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -304,7 +331,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				return ComponentError.ERROR;
-			else if(inputs().isEmpty())
+			else if(inputs().isEmpty() || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -313,13 +340,17 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().isEmpty())
-				tooltip.add(WARNING_ALWAYS_FALSE);
-			
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
-			else
+			{
+				if(inputs().isEmpty())
+					tooltip.add(WARNING_ALWAYS_FALSE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}
@@ -355,7 +386,7 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		{
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				return ComponentError.ERROR;
-			else if(inputs().size() < 1)
+			else if(inputs().size() < 1 || allInputsStatic())
 				return ComponentError.WARNING;
 			else 
 				return ComponentError.GOOD;
@@ -364,13 +395,18 @@ public abstract class ComparisonGlyph extends OperationGlyph
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().size() < 2)
-				tooltip.add(WARNING_ALWAYS_TRUE);
-			
 			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().size() < 2)
+					tooltip.add(WARNING_ALWAYS_TRUE);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}

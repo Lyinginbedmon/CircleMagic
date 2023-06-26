@@ -30,8 +30,8 @@ import net.minecraft.world.phys.Vec3;
 
 public abstract class ComponentBase implements ISpellComponent
 {
-	protected static final MutableComponent ERROR_NO_OUTPUT = Component.literal("Has no output!").withStyle(ChatFormatting.RED);
-	protected static final MutableComponent ERROR_NEED_MORE_INPUT = Component.literal("Insufficient inputs!").withStyle(ChatFormatting.RED);
+	protected static final MutableComponent ERROR_NO_OUTPUT = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".error_no_output").withStyle(ChatFormatting.RED);
+	protected static final MutableComponent ERROR_NEED_MORE_INPUT = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".error_more_inputs").withStyle(ChatFormatting.RED);
 	
 	private ISpellComponent parent = null;
 	private ComponentState state = ComponentState.NORMAL;
@@ -110,6 +110,19 @@ public abstract class ComponentBase implements ISpellComponent
 			output.setPositionAndOrganise(offset.x, offset.y);
 			offset = CMUtils.rotate(offset, spin);
 		}
+	}
+	
+	/** Returns true if every input to this component can never change its value */
+	protected boolean allInputsStatic()
+	{
+		if(inputGlyphs.isEmpty())
+			return false;
+		
+		for(ISpellComponent component : inputs())
+			if(!((ComponentBase)component).allInputsStatic())
+				return false;
+		
+		return true;
 	}
 	
 	public void addInput(ISpellComponent component)

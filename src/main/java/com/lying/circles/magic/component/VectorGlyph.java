@@ -13,6 +13,7 @@ import com.lying.circles.magic.variable.VariableSet;
 import com.lying.circles.magic.variable.VariableSet.VariableType;
 import com.lying.circles.reference.Reference;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.phys.Vec3;
@@ -29,6 +30,14 @@ public abstract class VectorGlyph extends OperationGlyph
 	public boolean isValidInput(ISpellComponent componentIn) { return ISpellComponent.canBeInput(componentIn) && inputs().size() < 2; }
 	
 	protected abstract IVariable applyTo(Vec3 var1, Vec3 var2);
+	
+	public ComponentError getErrorState()
+	{
+		if(inputs().size() < paramCount() || outputs().isEmpty() && state() != ComponentState.INPUT)
+			return ComponentError.ERROR;
+		else 
+			return ComponentError.GOOD;
+	}
 	
 	public List<MutableComponent> extendedTooltip()
 	{
@@ -140,7 +149,19 @@ public abstract class VectorGlyph extends OperationGlyph
 	
 	public static class Compose extends OperationGlyph
 	{
+		public static final MutableComponent WARNING_NOT_3D = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".warning_not_3d").withStyle(ChatFormatting.GOLD);
+		
 		public boolean isValidInput(ISpellComponent componentIn) { return componentIn.type() == Type.VARIABLE && inputs().size() < 3; }
+		
+		public ComponentError getErrorState()
+		{
+			if(inputs().isEmpty() || outputs().isEmpty() && state() != ComponentState.INPUT)
+				return ComponentError.ERROR;
+			else if(inputs().size() < 3)
+				return ComponentError.WARNING;
+			else 
+				return ComponentError.GOOD;
+		}
 		
 		public List<MutableComponent> extendedTooltip()
 		{
@@ -150,7 +171,15 @@ public abstract class VectorGlyph extends OperationGlyph
 			else if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
 			else
+			{
+				if(inputs().size() < 3)
+					tooltip.add(WARNING_NOT_3D);
+				
+				if(allInputsStatic())
+					tooltip.add(WARNING_ALL_STATIC);
+				
 				tooltip.add(standardOutput());
+			}
 			
 			return tooltip;
 		}

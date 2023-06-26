@@ -20,6 +20,7 @@ public abstract class OperationGlyph extends ComponentBase
 {
 	public static final MutableComponent WARNING_ALWAYS_TRUE = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".warning_true").withStyle(ChatFormatting.GOLD);
 	public static final MutableComponent WARNING_ALWAYS_FALSE = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".warning_false").withStyle(ChatFormatting.GOLD);
+	public static final MutableComponent WARNING_ALL_STATIC = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".warning_all_static").withStyle(ChatFormatting.GOLD);
 	protected static final MutableComponent RETURN_0 = Component.literal("0").withStyle(ChatFormatting.GOLD);
 	protected static final MutableComponent RETURN_1 = Component.literal("1").withStyle(ChatFormatting.GOLD);
 	protected static final MutableComponent RETURN_NAN = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".return_nan").withStyle(ChatFormatting.RED);
@@ -70,7 +71,11 @@ public abstract class OperationGlyph extends ComponentBase
 		else if(outputs().isEmpty() && state() != ComponentState.INPUT)
 			tooltip.add(ERROR_NO_OUTPUT);
 		else
+		{
+			if(allInputsStatic())
+				tooltip.add(WARNING_ALL_STATIC);
 			tooltip.add(standardOutput());
+		}
 		
 		return tooltip;
 	}
@@ -79,6 +84,8 @@ public abstract class OperationGlyph extends ComponentBase
 	{
 		if(outputs().isEmpty() && state() != ComponentState.INPUT || inputs().size() < 2)
 			return ComponentError.ERROR;
+		else if(allInputsStatic())
+			return ComponentError.WARNING;
 		else 
 			return ComponentError.GOOD;
 	}
@@ -341,10 +348,10 @@ public abstract class OperationGlyph extends ComponentBase
 		public List<MutableComponent> extendedTooltip()
 		{
 			List<MutableComponent> tooltip = Lists.newArrayList();
-			if(inputs().size() < 2)
-				tooltip.add(WARNING_ALWAYS_FALSE);
-			else if(outputs().isEmpty() && state() != ComponentState.INPUT)
+			if(outputs().isEmpty() && state() != ComponentState.INPUT)
 				tooltip.add(ERROR_NO_OUTPUT);
+			else if(inputs().size() < 2)
+				tooltip.add(WARNING_ALWAYS_FALSE);
 			else
 				tooltip.add(standardOutput());
 			

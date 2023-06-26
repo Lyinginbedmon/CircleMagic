@@ -38,6 +38,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -68,6 +69,7 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private GlyphList glyphList;
 	/** The part we have selected to add with left-click */
 	private ISpellComponent attachPart = null;
+	private int capShakeTicks = 0;
 	
 	private ISpellComponent selectedPart = null;
 	
@@ -169,8 +171,14 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		
 		if(menu.getCap() > 0)
 		{
-			Component cap = Component.literal(getCurrentParts()+" / "+menu.getCap());
-			this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5, 5, -1);
+			MutableComponent cap = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_glyph_cap", getCurrentParts(), menu.getCap());
+			float volume = (float)getCurrentParts() / (float)menu.getCap();
+			int r = (int)(volume * 255);
+			int g = (int)((1F - volume) * 255);
+			int textCol = (r << 16) + (g << 8);
+			
+			int shake = capShakeTicks > 0 ? capShakeTicks-- : 0;
+			this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5 + (int)(Math.sin(shake * 1.5D) * 5), 5, textCol);
 		}
 		
 		if(menu.arrangement() != null)
@@ -283,7 +291,10 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			}
 		}
 		else
+		{
 			this.attachPart = null;
+			this.capShakeTicks = Reference.Values.TICKS_PER_SECOND;
+		}
 	}
 	
 	public boolean hasNewPart() { return this.attachPart != null; }

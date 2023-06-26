@@ -46,6 +46,8 @@ public abstract class VariableSigil extends ComponentGlyph
 			this.category = catIn;
 		}
 		
+		protected boolean allInputsStatic() { return true; }
+		
 		public IVariable get(VariableSet variablesIn) { return this.value; }
 		
 		public VariableSet set(VariableSet variablesIn, @Nullable IVariable value) { return variablesIn; }
@@ -63,6 +65,8 @@ public abstract class VariableSigil extends ComponentGlyph
 		public Local(VariableSet.Slot slotIn) { this.slot = slotIn; }
 		
 		public VariableSet.Slot slot() { return slot; }
+		
+		protected boolean allInputsStatic() { return false; }
 		
 		public MutableComponent translatedName() { return Component.translatable("magic."+Reference.ModInfo.MOD_ID+".local_sigil", slot.translate()); }
 		public MutableComponent description() { return slot.isRegister() ? Component.translatable("magic."+Reference.ModInfo.MOD_ID+".local_sigil.description", slot.translate()) : super.description(); }

@@ -3,11 +3,12 @@ package com.lying.circles.client.renderer.magic.components;
 import java.util.function.BiConsumer;
 
 import com.lying.circles.client.Canvas;
-import com.lying.circles.client.SpellTexture;
 import com.lying.circles.client.Canvas.ExclusionCircle;
 import com.lying.circles.client.Canvas.Sprite;
+import com.lying.circles.client.SpellTexture;
 import com.lying.circles.client.renderer.magic.ComponentRenderers;
 import com.lying.circles.magic.ISpellComponent;
+import com.lying.circles.magic.component.ComponentBase;
 
 import net.minecraft.world.phys.Vec2;
 
@@ -18,7 +19,8 @@ public class ComponentRenderer
 	/** Adds the given component and all of its descendants to the canvas */
 	public final void addToCanvasRecursive(ISpellComponent component, Canvas canvas)
 	{
-		canvas.addElement(new Sprite(component.spriteLocation(), component.position(), spriteScale(), spriteScale()), Canvas.SPRITES);
+		int colour = ((ComponentBase)component).getErrorState().color();
+		canvas.addElement(new Sprite(component.spriteLocation(), component.position(), spriteScale(), spriteScale(), colour), Canvas.SPRITES);
 		addToCanvas(component, canvas);
 		component.inputs().forEach((input) -> ComponentRenderers.get(input.getRegistryName()).addToCanvasRecursive(input, canvas));
 		component.outputs().forEach((output) -> ComponentRenderers.get(output.getRegistryName()).addToCanvasRecursive(output, canvas));

@@ -122,7 +122,6 @@ public class Canvas
 	
 	public interface ICanvasObject
 	{
-		// FIXME Update all objects to draw as little as necessary outside actual GUI area
 		public void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height);
 		
 		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions);
@@ -227,12 +226,13 @@ public class Canvas
 	public static class Sprite implements ICanvasObject
 	{
 		private final ResourceLocation textureLocation;
-		
+		private final int color;
 		private final Vec2[] vertices;
 		
-		public Sprite(ResourceLocation texture, Vec2 position, int width, int height)
+		public Sprite(ResourceLocation texture, Vec2 position, int width, int height, int color)
 		{
 			this.textureLocation = texture;
+			this.color = color;
 			vertices = new Vec2[]{
 					new Vec2(position.x - width / 2, position.y - height / 2),
 					new Vec2(position.x + width / 2, position.y - height / 2),
@@ -254,7 +254,11 @@ public class Canvas
 			
 		    RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		    RenderSystem.setShaderTexture(0, textureLocation);
-		    RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+		    
+		    float r = ((color & 0xff0000) >> 16) / 255F;
+		    float g = ((color & 0x00ff00) >> 8) / 255F;;
+		    float b = (color & 0x0000ff) / 255F;
+		    RenderSystem.setShaderColor(r, g, b, 1F);
 			RenderUtils.draw(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX, (buffer) -> 
 			{
 				buffer.vertex(vertices[0].x, vertices[0].y, 0).uv(0F, 0F).endVertex();
@@ -262,6 +266,7 @@ public class Canvas
 				buffer.vertex(vertices[2].x, vertices[2].y, 0).uv(1F, 1F).endVertex();
 				buffer.vertex(vertices[1].x, vertices[1].y, 0).uv(1F, 0F).endVertex();
 			});
+		    RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 		}
 		
 		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions)

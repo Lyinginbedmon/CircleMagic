@@ -26,6 +26,14 @@ public abstract class EntityGlyph extends OperationGlyph
 		return super.isValidInput(componentIn) && inputs().isEmpty();
 	}
 	
+	public ComponentError getErrorState()
+	{
+		if(inputs().isEmpty() || outputs().isEmpty() && state() != ComponentState.INPUT)
+			return ComponentError.ERROR;
+		else 
+			return ComponentError.GOOD;
+	}
+	
 	public List<MutableComponent> extendedTooltip()
 	{
 		List<MutableComponent> tooltip = Lists.newArrayList();
