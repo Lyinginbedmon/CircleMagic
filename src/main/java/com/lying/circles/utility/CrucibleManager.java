@@ -43,9 +43,9 @@ public class CrucibleManager extends SavedData
 	private CrucibleManager() { }
 	
 	@Nullable
-	public static CrucibleManager instance(Level worldIn)
+	public static CrucibleManager instance(@Nullable Level worldIn)
 	{
-		if(worldIn.isClientSide())
+		if(worldIn == null || worldIn.isClientSide())
 			return null;
 		
 		CrucibleManager manager = ((ServerLevel)worldIn).getDataStorage().computeIfAbsent(CrucibleManager::fromNbt, CrucibleManager::new, DATA_NAME);

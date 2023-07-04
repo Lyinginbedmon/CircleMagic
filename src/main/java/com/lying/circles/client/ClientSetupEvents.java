@@ -1,8 +1,11 @@
 package com.lying.circles.client;
 
 import com.lying.circles.CircleMagic;
+import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.client.gui.screen.ScreenSandbox;
+import com.lying.circles.client.model.CurruisisModel;
 import com.lying.circles.client.renderer.CMModelLayers;
+import com.lying.circles.client.renderer.entity.CurruisisLayer;
 import com.lying.circles.client.renderer.entity.PendulumLayer;
 import com.lying.circles.client.renderer.entity.SpellLayer;
 import com.lying.circles.init.CMBlocks;
@@ -38,6 +41,7 @@ public class ClientSetupEvents
 {
 	private static final Minecraft MC = Minecraft.getInstance();
 	private static SpellManager LOCAL_DATA = null;
+	private static PlayerData LOCAL_DATA_PLAYER = new PlayerData(null);
 	
     @SuppressWarnings("removal")
 	@SubscribeEvent
@@ -75,6 +79,7 @@ public class ClientSetupEvents
     public static void registerLayersEvent(EntityRenderersEvent.RegisterLayerDefinitions event)
     {
     	event.registerLayerDefinition(CMModelLayers.STATUE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
+    	event.registerLayerDefinition(CMModelLayers.CURRUISIS, () -> LayerDefinition.create(CurruisisModel.createMesh(CubeDeformation.NONE, 0F), 32, 32));
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -87,6 +92,7 @@ public class ClientSetupEvents
     		PlayerRenderer value = (PlayerRenderer)renderer;
     		value.addLayer((PendulumLayer)(new PendulumLayer<>(value)));
     		value.addLayer((SpellLayer)(new SpellLayer<>(value)));
+    		value.addLayer((CurruisisLayer)(new CurruisisLayer(value, event.getEntityModels())));
     	}
     	dispatcher.renderers.forEach((type,renderer) -> 
     	{
@@ -106,4 +112,10 @@ public class ClientSetupEvents
 	}
 	
 	public static ClientLevel getLevel() { return MC.level; }
+	
+	public static PlayerData getPlayerData(Player playerIn)
+	{
+		LOCAL_DATA_PLAYER.setPlayer(playerIn);
+		return LOCAL_DATA_PLAYER;
+	}
 }

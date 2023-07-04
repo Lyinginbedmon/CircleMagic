@@ -26,9 +26,9 @@ public class MenuSandbox extends AbstractContainerMenu
 	
 	private final Slot boughInput;
 	
-	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainer(1), null, -1, BlockPos.ZERO); }
+	public MenuSandbox(int containerId, Inventory inv) { this(containerId, inv, new SimpleContainer(1), null, -1, BlockPos.ZERO, null); }
 	
-	public MenuSandbox(int containerId, Inventory inv, @Nullable Container treeIn, @Nullable ISpellComponent spellIn, int capIn, BlockPos tilePos)
+	public MenuSandbox(int containerId, Inventory inv, @Nullable Container treeIn, @Nullable ISpellComponent spellIn, int capIn, BlockPos tilePos, @Nullable BlockPos fairyPos)
 	{
 		super(CMMenus.SANDBOX_MENU.get(), containerId);
 		this.arrangement = spellIn;
@@ -42,13 +42,26 @@ public class MenuSandbox extends AbstractContainerMenu
 				public boolean isActive() { return false; }
 			});
 		
-		this.editorData = new SimpleContainerData(4);
+		this.editorData = new SimpleContainerData(8);
 		setCap(capIn);
 		this.editorData.set(0, tilePos.getX());
 		this.editorData.set(1, tilePos.getY());
 		this.editorData.set(2, tilePos.getZ());
-		this.addDataSlots(this.editorData);
 		
+		this.editorData.set(4, fairyPos != null ? 1 : 0);
+		if(fairyPos != null)
+		{
+			this.editorData.set(5, fairyPos.getX());
+			this.editorData.set(6, fairyPos.getY());
+			this.editorData.set(7, fairyPos.getZ());
+		}
+		else
+		{
+			this.editorData.set(5, 0);
+			this.editorData.set(6, 0);
+			this.editorData.set(7, 0);
+		}
+		this.addDataSlots(this.editorData);
 	}
 	
 	public ItemStack quickMoveStack(Player player, int slot) { return ItemStack.EMPTY; }
@@ -58,6 +71,13 @@ public class MenuSandbox extends AbstractContainerMenu
 	public BlockPos tilePos()
 	{
 		return new BlockPos(this.editorData.get(0), this.editorData.get(1), this.editorData.get(2));
+	}
+	
+	public boolean hasFairy() { return this.editorData.get(4) > 0; }
+	
+	public BlockPos fairyPos()
+	{
+		return new BlockPos(this.editorData.get(5), this.editorData.get(6), this.editorData.get(7));
 	}
 	
 	public ISpellComponent arrangement() { return this.arrangement; }

@@ -22,4 +22,9 @@ public class StatueRenderer extends LivingEntityRenderer<StatueEntity, HumanoidM
 	{
 		return TEXTURE;
 	}
+	
+	protected boolean shouldShowName(StatueEntity p_115506_)
+	{
+		return super.shouldShowName(p_115506_) && (p_115506_.shouldShowName() || p_115506_.hasCustomName() && p_115506_ == this.entityRenderDispatcher.crosshairPickEntity);
+	}
 }

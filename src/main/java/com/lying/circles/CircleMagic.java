@@ -6,12 +6,13 @@ import com.lying.circles.client.ClientSetupEvents;
 import com.lying.circles.client.particle.M19Particles;
 import com.lying.circles.client.renderer.magic.ComponentEffectsRegistry;
 import com.lying.circles.data.CMDataGenerators;
-import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.CMBlockEntities;
 import com.lying.circles.init.CMBlocks;
+import com.lying.circles.init.CMCapabilities;
 import com.lying.circles.init.CMEntities;
 import com.lying.circles.init.CMItems;
 import com.lying.circles.init.CMMenus;
+import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.SpellComponents;
 import com.lying.circles.init.SpellVariables;
 import com.lying.circles.network.PacketHandler;
@@ -50,6 +51,7 @@ public class CircleMagic
     	
         EVENT_BUS.addListener(this::commonSetup);
         EVENT_BUS.addListener(CMDataGenerators::onGatherData);
+        EVENT_BUS.addListener(CMCapabilities::onRegisterCapabilities);
         
         CMEntities.ENTITIES.register(EVENT_BUS);
         CMBlocks.BLOCKS.register(EVENT_BUS);

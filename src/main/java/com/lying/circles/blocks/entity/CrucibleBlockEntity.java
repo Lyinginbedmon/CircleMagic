@@ -222,6 +222,23 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		return null;
 	}
 	
+	@Nullable
+	public BlockPos getClosestFairy(@Nullable Level world)
+	{
+		if(world == null || world.isClientSide())
+			return null;
+		
+		BlockPos fairy = null;
+		for(BlockPos jar : CrucibleManager.instance(world).getPartsOfType(PartType.FAIRY, getBlockPos()))
+		{
+			double dist = jar.distSqr(getBlockPos());
+			if(dist <= (RANGE * RANGE))
+				if(fairy == null || dist < fairy.distSqr(getBlockPos()))
+					fairy = jar;
+		}
+		return fairy;
+	}
+	
 	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
 	{
 		if(!hasArrangement())
@@ -235,7 +252,7 @@ public class CrucibleBlockEntity extends BlockEntity implements MenuProvider, Ar
 		if(tree == null)
 			tree = new SimpleContainer(2);
 		
-		return new MenuSandbox(containerId, inventory, tree, arrangement(), glyphCap(), getBlockPos());
+		return new MenuSandbox(containerId, inventory, tree, arrangement(), glyphCap(), getBlockPos(), getClosestFairy(player.getLevel()));
 	}
 	
 	public Component getDisplayName() { return Component.translatable("gui."+Reference.ModInfo.MOD_ID+".crucible"); }

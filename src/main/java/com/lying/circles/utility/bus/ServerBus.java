@@ -3,6 +3,7 @@ package com.lying.circles.utility.bus;
 import com.lying.circles.blocks.ICruciblePart;
 import com.lying.circles.blocks.TilledSand;
 import com.lying.circles.blocks.TilledSand.Shape;
+import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.init.CMBlocks;
 import com.lying.circles.network.PacketHandler;
 import com.lying.circles.network.PacketSyncSpellManager;
@@ -13,14 +14,19 @@ import com.lying.circles.utility.SpellManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ToolActions;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
 import net.minecraftforge.event.level.BlockEvent.BreakEvent;
@@ -35,10 +41,36 @@ import net.minecraftforge.registries.RegistryObject;
 public class ServerBus
 {
 	@SubscribeEvent
+	public static void onAttachCapabilityEvent(AttachCapabilitiesEvent<Entity> event)
+	{
+		if(event.getObject().getType() == EntityType.PLAYER)
+			event.addCapability(PlayerData.IDENTIFIER, new PlayerData((Player)event.getObject()));
+	}
+	
+	@SubscribeEvent
 	public static void onPlayerLogIn(PlayerLoggedInEvent event)
 	{
 		ServerPlayer player = (ServerPlayer)event.getEntity();
 		PacketHandler.sendTo(player, new PacketSyncSpellManager(SpellManager.instance(player.getLevel())));
+		
+		PlayerData data = PlayerData.getCapability(player);
+		if(data != null)
+			data.markDirty();
+	}
+	
+	@SubscribeEvent
+	public static void onPlayerRespawn(PlayerEvent.Clone event)
+	{
+		Player playerNew = event.getEntity();
+		Player playerOld = event.getOriginal();
+		playerOld.reviveCaps();
+		
+		PlayerData dataNew = PlayerData.getCapability(playerNew);
+		PlayerData dataOld = PlayerData.getCapability(playerOld);
+		if(dataNew != null && dataOld != null)
+			dataNew.deserializeNBT(dataOld.serializeNBT());
+		
+		playerOld.invalidateCaps();
 	}
 	
 	@SubscribeEvent

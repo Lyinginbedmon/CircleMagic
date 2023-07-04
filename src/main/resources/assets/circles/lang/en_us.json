@@ -49,7 +49,7 @@
 	"gui.circles.error_no_output": "This glyph needs an output sigil to store its result",
 	"gui.circles.error_more_inputs": "This glyph has too few input sigils",
 	"gui.circles.warning_true": "This glyph will always return true",
-	"gui.circles.warning_false": "This glyph will always return true",
+	"gui.circles.warning_false": "This glyph will always return false",
 	"gui.circles.warning_static": "This glyph will always return %s",
 	"gui.circles.warning_all_static": "All sigils this glyph receives can never change",
 	"gui.circles.warning_not_3d": "This glyph needs more input sigils to create a full path",

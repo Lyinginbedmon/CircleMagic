@@ -1,6 +1,7 @@
 package com.lying.circles.client.gui.screen;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -8,10 +9,13 @@ import javax.annotation.Nullable;
 import org.apache.commons.compress.utils.Lists;
 import org.lwjgl.glfw.GLFW;
 
+import com.lying.circles.blocks.entity.FairyJarBlockEntity;
 import com.lying.circles.client.Canvas;
 import com.lying.circles.client.gui.menu.MenuSandbox;
 import com.lying.circles.client.renderer.RenderUtils;
 import com.lying.circles.client.renderer.magic.ComponentRenderers;
+import com.lying.circles.init.CMBlockEntities;
+import com.lying.circles.init.CMBlocks;
 import com.lying.circles.init.CMItems;
 import com.lying.circles.init.SpellComponents;
 import com.lying.circles.item.ScrollItem;
@@ -22,6 +26,7 @@ import com.lying.circles.magic.component.ComponentBase;
 import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.CMUtils;
 import com.lying.circles.utility.SpellTextureManager;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -34,6 +39,10 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
@@ -49,6 +58,7 @@ import net.minecraft.world.phys.Vec2;
 public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 {
 	public static final ResourceLocation HIGHLIGHT_TEXTURE = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/gui/sandbox_highlight.png");
+	private static final FairyJarBlockEntity fairyBase = CMBlockEntities.FAIRY_JAR.get().create(BlockPos.ZERO, CMBlocks.FAIRY_JAR.get().defaultBlockState());
 	private final MenuSandbox menu;
 	private final Inventory playerInv;
 	private Vec2 position = Vec2.ZERO;
@@ -72,6 +82,9 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	private int capShakeTicks = 0;
 	
 	private ISpellComponent selectedPart = null;
+	
+	private BlockEntityRenderDispatcher blockEntityRenderer;
+	private Optional<FairyJarBlockEntity> fairy = Optional.empty();
 	
 	private Button printButton, nextCatButton, prevCatButton;
 	private ImageButton copyButton, pasteButton;
@@ -155,6 +168,14 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		
 		this.glyphList.checkCategory(menu.arrangement());
 		this.nextCatButton.active = this.prevCatButton.active = menu.arrangement() != null;
+		
+		if(menu.hasFairy() && this.fairy.isEmpty())
+			this.minecraft.level.getBlockEntity(menu.fairyPos(), CMBlockEntities.FAIRY_JAR.get()).ifPresent((jar) -> 
+			{
+				// Populate fairy value with duplicate of in-world fairy at [0,0,0]
+				fairyBase.load(jar.serializeNBT());
+				this.fairy = Optional.of(fairyBase);
+			});
 	}
 	
 	public boolean isOverCap()
@@ -165,10 +186,12 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
 	{
 		this.renderBackground(matrixStack);
+		this.blockEntityRenderer = this.minecraft.getBlockEntityRenderDispatcher();
 		
 		if(clickTicks > 0)
 			clickTicks--;
 		
+		// Glyph cap
 		if(menu.getCap() > 0)
 		{
 			MutableComponent cap = Component.translatable("gui."+Reference.ModInfo.MOD_ID+".sandbox_glyph_cap", getCurrentParts(), menu.getCap());
@@ -181,43 +204,29 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			this.minecraft.font.draw(matrixStack, cap, width - this.font.width(cap.getString()) - 5 + (int)(Math.sin(shake * 1.5D) * 5), 5, textCol);
 		}
 		
+		// Arrangement
 		if(menu.arrangement() != null)
-		{
-			ISpellComponent arrangement = menu.arrangement();
-			float scrollX = position.x, scrollY = position.y;
-			if(isMoving)
-			{
-				Vec2 shift = new Vec2(mouseX - moveStart.x, mouseY - moveStart.y);
-				if(shift.length() > 5)
-				{
-					scrollX += mouseX - moveStart.x;
-					scrollY += mouseY - moveStart.y;
-				}
-			}
-			
-			arrangement.setPosition((width / 2) + (int)scrollX, (height / 2) + (int)scrollY);
-			
-			Vec2 currentPos = new Vec2(scrollX, scrollY);
-			if(currentPos != lastPosition)
-				updateCanvas(arrangement);
-			this.canvasMain.drawIntoGUI(matrixStack, (width / 2) + (int)scrollX, (height / 2) + (int)scrollY, width, height);
-			this.lastPosition = currentPos;
-			
-			hoveredPart = getComponentAt(mouseX, mouseY);
-		}
+			renderArrangement(matrixStack, mouseX, mouseY);
 		
+		// Selected part highlight
 		if(this.selectedPart != null)
 			drawHighlightAround(selectedPart, matrixStack, partialTicks);
 		
+		// Fairy
+		if(this.fairy.isPresent())
+			renderFairyJar(partialTicks, matrixStack);
+		
+		// Glyph list
 		this.glyphList.setLeftPos(0);
 		this.glyphList.render(matrixStack, mouseX, mouseY, partialTicks);
 		
+		// Tooltips
 		if(hoveredPart != null && !hasNewPart())
 		{
 			List<Component> tooltip = Lists.newArrayList();
 			tooltip.add(hoveredPart.translatedName().withStyle(ChatFormatting.BOLD).withStyle(((ComponentBase)hoveredPart).getErrorState().displayColor()));
 			tooltip.add(hoveredPart.category().translate());
-			hoveredPart.tooltip(true).forEach((line) -> tooltip.add(line.withStyle(ChatFormatting.ITALIC)));
+			hoveredPart.tooltip(getMenu().hasFairy()).forEach((line) -> tooltip.add(line.withStyle(ChatFormatting.ITALIC)));
 			
 			this.renderComponentTooltip(matrixStack, tooltip, mouseX, mouseY);
 		}
@@ -237,6 +246,54 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		}
 		
 		super.render(matrixStack, mouseX, mouseY, partialTicks);
+	}
+	
+	protected void renderArrangement(PoseStack matrixStack, int mouseX, int mouseY)
+	{
+		ISpellComponent arrangement = menu.arrangement();
+		float scrollX = position.x, scrollY = position.y;
+		if(isMoving)
+		{
+			Vec2 shift = new Vec2(mouseX - moveStart.x, mouseY - moveStart.y);
+			if(shift.length() > 5)
+			{
+				scrollX += mouseX - moveStart.x;
+				scrollY += mouseY - moveStart.y;
+			}
+		}
+		
+		arrangement.setPosition((width / 2) + (int)scrollX, (height / 2) + (int)scrollY);
+		
+		Vec2 currentPos = new Vec2(scrollX, scrollY);
+		if(currentPos != lastPosition)
+			updateCanvas(arrangement);
+		this.canvasMain.drawIntoGUI(matrixStack, (width / 2) + (int)scrollX, (height / 2) + (int)scrollY, width, height);
+		this.lastPosition = currentPos;
+		
+		hoveredPart = getComponentAt(mouseX, mouseY);
+	}
+	
+	// FIXME Render fairy in UI
+	@SuppressWarnings("deprecation")
+	protected void renderFairyJar(float partialTicks, PoseStack matrixStack)
+	{
+		if(!this.fairy.isPresent())
+			return;
+		
+		MutableComponent fairyName = this.fairy.get().displayName();
+		this.minecraft.font.draw(matrixStack, fairyName, width - this.font.width(fairyName.getString()) - 5, 5, -1);
+		
+		matrixStack.pushPose();
+			matrixStack.translate(-0.5D, -0.5D, -0.5D);
+			RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
+			RenderSystem.enableBlend();
+			RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
+			blockEntityRenderer.renderItem(this.fairy.get(), matrixStack, bufferSource, -1, -1);
+			bufferSource.endBatch();
+			RenderSystem.enableDepthTest();
+		matrixStack.popPose();
 	}
 	
 	/** Returns true if the part will be added as an input, false for an output */

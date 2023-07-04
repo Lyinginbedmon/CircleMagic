@@ -74,7 +74,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
         matrixStack.popPose();
 	}
 	
-	private void renderExpression(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks, int combinedLightIn)
+	private static void renderExpression(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, float partialTicks, int combinedLightIn)
 	{
 		ResourceLocation expressionTex = fairyTile.isBlinking() ? BLINK_TEX : fairyTile.getExpression().getTexture();
 		matrixStack.pushPose();
@@ -111,7 +111,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		buffer.vertex(matrix, -0.5F, -0.5F, z).color(255, 255, 255, alpha).uv(0F, 1F).uv2(light).endVertex();
 	}
 	
-	private void renderOrb(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, Vec3 dirToJar)
+	private static void renderOrb(FairyJarBlockEntity fairyTile, PoseStack matrixStack, MultiBufferSource bufferSource, Vec3 dirToJar)
 	{
 		Matrix4f matrix = matrixStack.last().pose();
 		VertexConsumer buffer = bufferSource.getBuffer(RenderType.text(TEXTURE));
@@ -120,7 +120,7 @@ public class FairyJarBlockEntityRenderer implements BlockEntityRenderer<FairyJar
 		matrixStack.pushPose();
 			for(Quad quad : QUADS)
 			{
-				float a = rand.nextFloat() * (20F / 255F);
+				float a = 0.95F + (rand.nextFloat() * 0.05F);
 				int r = (int)(a * Reference.Values.MAGIC_COLOR.x);
 				int g = (int)(a * Reference.Values.MAGIC_COLOR.y);
 				int b = (int)(a * Reference.Values.MAGIC_COLOR.z);

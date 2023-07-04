@@ -59,6 +59,7 @@ public class Sandbox extends Block implements MenuProvider, ArrangementHolder
 		return InteractionResult.FAIL;
 	}
 	
+	// FIXME Sandbox editor access currently broken
 	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player)
 	{
 		return new MenuSandbox(containerId, inventory);

@@ -8,4 +8,6 @@ import net.minecraft.resources.ResourceLocation;
 public class CMModelLayers
 {
 	public static final ModelLayerLocation STATUE				= new ModelLayerLocation(new ResourceLocation(Reference.ModInfo.MOD_ID, "statue"), "main");
+	
+	public static final ModelLayerLocation CURRUISIS			= new ModelLayerLocation(new ResourceLocation(Reference.ModInfo.MOD_ID, "curruisis"), "main");
 }
