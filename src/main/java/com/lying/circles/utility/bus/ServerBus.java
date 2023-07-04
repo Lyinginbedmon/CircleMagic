@@ -3,8 +3,10 @@ package com.lying.circles.utility.bus;
 import com.lying.circles.blocks.ICruciblePart;
 import com.lying.circles.blocks.TilledSand;
 import com.lying.circles.blocks.TilledSand.Shape;
+import com.lying.circles.capabilities.LivingData;
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.init.CMBlocks;
+import com.lying.circles.init.CMDamageSource;
 import com.lying.circles.network.PacketHandler;
 import com.lying.circles.network.PacketSyncSpellManager;
 import com.lying.circles.reference.Reference;
@@ -16,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -26,6 +29,7 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
@@ -45,6 +49,9 @@ public class ServerBus
 	{
 		if(event.getObject().getType() == EntityType.PLAYER)
 			event.addCapability(PlayerData.IDENTIFIER, new PlayerData((Player)event.getObject()));
+		
+		if(event.getObject() instanceof LivingEntity)
+			event.addCapability(LivingData.IDENTIFIER, new LivingData((LivingEntity)event.getObject()));
 	}
 	
 	@SubscribeEvent
@@ -74,6 +81,13 @@ public class ServerBus
 	}
 	
 	@SubscribeEvent
+	public static void onPlayerData(LivingDeathEvent event)
+	{
+		if(event.getSource() == CMDamageSource.PETRIFICATION && event.getEntity().getType() == EntityType.PLAYER)
+			PlayerData.getCapability((Player)event.getEntity()).flagPetrified();
+	}
+	
+	@SubscribeEvent
 	public static void onLevelTick(LevelTickEvent event)
 	{
 		if(event.level.isClientSide() || event.phase == TickEvent.Phase.END)
@@ -82,6 +96,19 @@ public class ServerBus
 		SpellManager manager = SpellManager.instance(event.level);
 		if(!manager.isEmpty())
 			manager.tick();
+	}
+	
+	@SubscribeEvent
+	public static void onLivingTick(LivingTickEvent event)
+	{
+		LivingData data = LivingData.getCapability(event.getEntity());
+		data.tick(event.getEntity().getLevel());
+		
+		if(event.getEntity().getType() == EntityType.PLAYER)
+		{
+			PlayerData playerData = PlayerData.getCapability((Player)event.getEntity());
+			playerData.tick(event.getEntity().getLevel());
+		}
 	}
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)

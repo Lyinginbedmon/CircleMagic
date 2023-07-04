@@ -124,7 +124,6 @@ public class Quad
 		 * If not, check if the top and bottom lines are both intersected
 		 * 	If so, create new quads using the intersections
 		 * Otherwise, return null
-		 * FIXME Intersections that do not exclusively produce two quads are currently ignored
 		 */
 		
 		// Intersections on the vertical axis

@@ -40,7 +40,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -83,7 +82,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	
 	private ISpellComponent selectedPart = null;
 	
-	private BlockEntityRenderDispatcher blockEntityRenderer;
 	private Optional<FairyJarBlockEntity> fairy = Optional.empty();
 	
 	private Button printButton, nextCatButton, prevCatButton;
@@ -186,7 +184,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
 	{
 		this.renderBackground(matrixStack);
-		this.blockEntityRenderer = this.minecraft.getBlockEntityRenderDispatcher();
 		
 		if(clickTicks > 0)
 			clickTicks--;
@@ -273,7 +270,6 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 		hoveredPart = getComponentAt(mouseX, mouseY);
 	}
 	
-	// FIXME Render fairy in UI
 	@SuppressWarnings("deprecation")
 	protected void renderFairyJar(float partialTicks, PoseStack matrixStack)
 	{
@@ -281,16 +277,26 @@ public class ScreenSandbox extends Screen implements MenuAccess<MenuSandbox>
 			return;
 		
 		MutableComponent fairyName = this.fairy.get().displayName();
-		this.minecraft.font.draw(matrixStack, fairyName, width - this.font.width(fairyName.getString()) - 5, 5, -1);
 		
+		Vec2 fairyPos = new Vec2(width - 50, height - 50);
+		this.minecraft.font.draw(matrixStack, fairyName, (int)fairyPos.x - (this.font.width(fairyName.getString()) / 2), (int)fairyPos.y - 10, -1);
+		
+		MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
+		
+		// Temp handling to just get anything at all to render
+		matrixStack.pushPose();
+			this.minecraft.getItemRenderer().renderAndDecorateItem(new ItemStack(CMItems.FAIRY_JAR_ITEM.get()), (int)fairyPos.x, (int)fairyPos.y, -1, -1);
+		matrixStack.popPose();
+		
+		// FIXME Actually render fairy jar block and entity on screen
 		matrixStack.pushPose();
 			matrixStack.translate(-0.5D, -0.5D, -0.5D);
+			matrixStack.scale(10F, 10F, 10F);
 			RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
 			RenderSystem.enableBlend();
 			RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-			MultiBufferSource.BufferSource bufferSource = this.minecraft.renderBuffers().bufferSource();
-			blockEntityRenderer.renderItem(this.fairy.get(), matrixStack, bufferSource, -1, -1);
+			this.minecraft.getBlockEntityRenderDispatcher().renderItem(this.fairy.get(), matrixStack, bufferSource, -1, -1);
 			bufferSource.endBatch();
 			RenderSystem.enableDepthTest();
 		matrixStack.popPose();

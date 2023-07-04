@@ -12,6 +12,7 @@ import com.lying.circles.init.CMCapabilities;
 import com.lying.circles.init.CMEntities;
 import com.lying.circles.init.CMItems;
 import com.lying.circles.init.CMMenus;
+import com.lying.circles.init.CMStatusEffects;
 import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.SpellComponents;
 import com.lying.circles.init.SpellVariables;
@@ -57,6 +58,7 @@ public class CircleMagic
         CMBlocks.BLOCKS.register(EVENT_BUS);
         CMBlockEntities.BLOCK_ENTITIES.register(EVENT_BUS);
         CMItems.ITEMS.register(EVENT_BUS);
+        CMStatusEffects.EFFECTS.register(EVENT_BUS);
         CMMenus.MENUS.register(EVENT_BUS);
         
         FunctionRecipes.REGISTRY.register(EVENT_BUS);

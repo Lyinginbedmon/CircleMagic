@@ -35,6 +35,8 @@ public class PacketHandler
 		HANDLER.registerMessage(id(), PacketSyncArrangementClient.class, PacketSyncArrangementClient::encode, PacketSyncArrangementClient::decode, PacketSyncArrangementClient::handle);
 		HANDLER.registerMessage(id(), PacketAddComponentEffect.class, PacketAddComponentEffect::encode, PacketAddComponentEffect::decode, PacketAddComponentEffect::handle);
 		HANDLER.registerMessage(id(), PacketFairyLookAt.class, PacketFairyLookAt::encode, PacketFairyLookAt::decode, PacketFairyLookAt::handle);
+		HANDLER.registerMessage(id(), PacketSyncPlayerData.class, PacketSyncPlayerData::encode, PacketSyncPlayerData::decode, PacketSyncPlayerData::handle);
+		HANDLER.registerMessage(id(), PacketSyncLivingData.class, PacketSyncLivingData::encode, PacketSyncLivingData::decode, PacketSyncLivingData::handle);
 	}
 	
 	private static int id() { return id++; }

@@ -1,6 +1,7 @@
 package com.lying.circles.client;
 
 import com.lying.circles.CircleMagic;
+import com.lying.circles.capabilities.LivingData;
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.client.gui.screen.ScreenSandbox;
 import com.lying.circles.client.model.CurruisisModel;
@@ -30,6 +31,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
@@ -41,7 +43,8 @@ public class ClientSetupEvents
 {
 	private static final Minecraft MC = Minecraft.getInstance();
 	private static SpellManager LOCAL_DATA = null;
-	private static PlayerData LOCAL_DATA_PLAYER = new PlayerData(null);
+	public static PlayerData LOCAL_DATA_PLAYER = new PlayerData(null);
+	public static LivingData LOCAL_DATA_LIVING = new LivingData(null);
 	
     @SuppressWarnings("removal")
 	@SubscribeEvent
@@ -117,5 +120,11 @@ public class ClientSetupEvents
 	{
 		LOCAL_DATA_PLAYER.setPlayer(playerIn);
 		return LOCAL_DATA_PLAYER;
+	}
+	
+	public static LivingData getLivingData(LivingEntity playerIn)
+	{
+		LOCAL_DATA_LIVING.setLiving(playerIn);
+		return LOCAL_DATA_LIVING;
 	}
 }

@@ -1,5 +1,6 @@
 package com.lying.circles.client.renderer.entity;
 
+import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.client.model.CurruisisModel;
 import com.lying.circles.client.renderer.CMModelLayers;
 import com.lying.circles.reference.Reference;
@@ -28,15 +29,16 @@ public class CurruisisLayer<T extends Player, M extends HumanoidModel<T>> extend
 		this.model = new CurruisisModel<T>(modelSet.bakeLayer(CMModelLayers.CURRUISIS));
 	}
 	
-	public void render(PoseStack p_116951_, MultiBufferSource p_116952_, int p_116953_, T p_116954_, float p_116955_, float p_116956_, float p_116957_, float p_116958_, float p_116959_, float p_116960_)
+	public void render(PoseStack p_116951_, MultiBufferSource p_116952_, int p_116953_, T player, float p_116955_, float p_116956_, float p_116957_, float p_116958_, float p_116959_, float p_116960_)
 	{
-//		PlayerData data = PlayerData.getCapability(player);
-//		if(data.curruisis() <= 0)
-//			return;
+		PlayerData data = PlayerData.getCapability(player);
+		if(!data.hasCurruisis())
+			return;
 		
 		p_116951_.pushPose();
 			this.getParentModel().copyPropertiesTo(this.model);
-			this.model.setupAnim(p_116954_, p_116955_, p_116956_, p_116958_, p_116959_, p_116960_);
+			this.model.setupAnim(player, p_116955_, p_116956_, p_116958_, p_116959_, p_116960_);
+			this.model.adjustCurruisis(data.getCurruisis());
 			VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(p_116952_, RenderType.armorCutoutNoCull(TEXTURE_LOCATION), false, false);
 			this.model.renderToBuffer(p_116951_, vertexconsumer, p_116953_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 		p_116951_.popPose();

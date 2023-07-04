@@ -1,4 +1,7 @@
 {
+	"death.attack.curruisis": "%s succumbed to curruisis",
+	"death.attack.out_of_mana": "%s ran out of mana",
+	"death.attack.too_much_mana": "%s experienced the infinite curve",
 	"itemGroup.circles": "Circle Magic",
 	"item.circles.pendulum": "Pendulum",
 	"item.circles.magic_scroll": "Magic Scroll",
