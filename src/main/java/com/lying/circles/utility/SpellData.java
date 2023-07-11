@@ -76,8 +76,11 @@ public class SpellData
 		LivingEntity caster = getOwner(world);
 		
 		// If we can't find the caster, we won't know who to bill for the mana
-		if(caster != null && !this.variables.isUsing(Slot.CASTER))
-			this.variables.set(Slot.CASTER, new VarEntity(caster));
+		if(caster != null)
+		{
+			if(!this.variables.isUsing(Slot.CASTER))
+				this.variables.set(Slot.CASTER, new VarEntity(caster));
+		}
 		else
 			return true;
 		

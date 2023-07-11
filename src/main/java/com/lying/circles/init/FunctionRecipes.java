@@ -1,5 +1,6 @@
 package com.lying.circles.init;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import com.google.gson.JsonParseException;
 import com.lying.circles.CircleMagic;
 import com.lying.circles.data.recipe.CreationRecipe;
 import com.lying.circles.data.recipe.FunctionRecipe;
+import com.lying.circles.data.recipe.ImbueRecipe;
 import com.lying.circles.data.recipe.StatusEffectRecipe;
 import com.lying.circles.magic.Element;
 import com.lying.circles.reference.Reference;
@@ -37,6 +39,7 @@ public class FunctionRecipes extends SimpleJsonResourceReloadListener
 	
 	public static final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> CREATION = REGISTRY.register("creation_function", () -> CreationRecipe::deserialize);
 	public static final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> STATUS_EFFECT = REGISTRY.register("status_effect_function", () -> StatusEffectRecipe::deserialize);
+	public static final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> IMBUE = REGISTRY.register("imbue_function", () -> ImbueRecipe::deserialize);
 	
 	private static FunctionRecipes instance;
 	private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();
@@ -71,6 +74,11 @@ public class FunctionRecipes extends SimpleJsonResourceReloadListener
 			if(recipe.matches(elements))
 				return recipe;
 		return null;
+	}
+	
+	public Collection<FunctionRecipe<?>> getRecipes(RegistryObject<Function<JsonObject, FunctionRecipe<?>>> registry)
+	{
+		return recipeMap.getOrDefault(registry.getId(), new HashMap<>()).values();
 	}
 	
 	protected void apply(Map<ResourceLocation, JsonElement> objectIn, ResourceManager manager, ProfilerFiller filler)

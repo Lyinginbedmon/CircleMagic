@@ -1,6 +1,7 @@
 package com.lying.circles.magic.component;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -11,6 +12,8 @@ import com.google.common.base.Predicate;
 import com.lying.circles.CircleMagic;
 import com.lying.circles.api.event.SpellEvent;
 import com.lying.circles.data.recipe.CreationRecipe;
+import com.lying.circles.data.recipe.FunctionRecipe;
+import com.lying.circles.data.recipe.ImbueRecipe;
 import com.lying.circles.data.recipe.StatusEffectRecipe;
 import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.CMBlocks;
@@ -302,7 +305,12 @@ public abstract class FunctionGlyph extends ComponentBase
 	{
 		public Create()
 		{
-			super(15);
+			this(15);
+		}
+		
+		protected Create(int manaCost)
+		{
+			super(manaCost);
 		}
 		
 		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
@@ -469,6 +477,71 @@ public abstract class FunctionGlyph extends ComponentBase
 					
 					spell.kill();
 				}
+		}
+	}
+	
+	public static class Imbue extends Create
+	{
+		public Imbue()
+		{
+			super(100);
+		}
+		
+		public ComponentError getErrorState() { return inputs().isEmpty() ? ComponentError.ERROR : ComponentError.GOOD; }
+		
+		protected void performFunction(EnumSet<Element> inputElements, List<IVariable> inputVariables, VariableSet totalVariables, Level world)
+		{
+			if(inputVariables.isEmpty())
+				return;
+			
+			Entity caster = totalVariables.get(Slot.CASTER).asEntity();
+			Vec3 spellPos = totalVariables.get(Slot.POSITION).asVec();
+			
+			Vec3 pos = inputVariables.get(0).asVec();
+			BlockPos blockPos = new BlockPos(pos.x, pos.y, pos.z);
+			ImbueRecipe recipe = getMatchingRecipe(inputElements, world, blockPos);
+			if(recipe == null)
+			{
+				// Default behaviour
+			}
+			else
+			{
+				recipe.consumeIngredients(world, blockPos);
+				
+				BlockState state = recipe.getState();
+				if(state != null)
+				{
+					placeBlock(inputVariables, world, state);
+					
+					CompoundTag data = new CompoundTag();
+					data.put("Pos", NbtUtils.writeBlockPos(blockPos));
+					notifySpellEffect(world, SpellEffects.PLACE_BLOCK, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+				}
+				
+//				if(recipe.hasEntity())
+//				{
+//					spawnEntity(inputVariables, world, recipe, totalVariables.get(Slot.CASTER).asEntity());
+//					
+//					Vec3 pos = inputVariables.get(0).asVec();
+//					CompoundTag data = new CompoundTag();
+//					data.putDouble("PosX", pos.x);
+//					data.putDouble("PosY", pos.y);
+//					data.putDouble("PosZ", pos.z);
+//					notifySpellEffect(world, SpellEffects.SPAWN_ENTITY, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+//				}
+				
+				CommandFunction.CacheableFunction func = recipe.getFunction();
+				if(func != null && func != CommandFunction.CacheableFunction.NONE)
+					runCommandOn(getFirstOfType(inputVariables, VariableType.ENTITY).asEntity(), world, func);
+			}
+		}
+		
+		protected ImbueRecipe getMatchingRecipe(EnumSet<Element> elements, Level world, BlockPos pos)
+		{
+			for(FunctionRecipe<?> recipe : FunctionRecipes.getInstance().getRecipes(FunctionRecipes.IMBUE))
+				if(((ImbueRecipe)recipe).matches(elements, world, pos))
+					return (ImbueRecipe)recipe;
+			return null;
 		}
 	}
 }

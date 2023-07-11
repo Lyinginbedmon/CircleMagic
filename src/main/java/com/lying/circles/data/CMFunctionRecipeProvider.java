@@ -12,7 +12,9 @@ import com.google.common.collect.Sets;
 import com.lying.circles.CircleMagic;
 import com.lying.circles.data.recipe.CreationRecipe;
 import com.lying.circles.data.recipe.FunctionRecipe;
+import com.lying.circles.data.recipe.ImbueRecipe;
 import com.lying.circles.data.recipe.StatusEffectRecipe;
+import com.lying.circles.init.CMBlocks;
 import com.lying.circles.magic.Element;
 import com.lying.circles.reference.Reference;
 
@@ -22,7 +24,9 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
 public class CMFunctionRecipeProvider implements DataProvider
@@ -72,6 +76,7 @@ public class CMFunctionRecipeProvider implements DataProvider
 		List<FunctionRecipe<?>> recipes = Lists.newArrayList();
 		addCreationRecipes(recipes);
 		addStatusEffectRecipes(recipes);
+		addImbueRecipes(recipes);
 		return recipes;
 	}
 	
@@ -100,5 +105,10 @@ public class CMFunctionRecipeProvider implements DataProvider
 		list.add(new StatusEffectRecipe("water_breathing", new MobEffectInstance(MobEffects.WATER_BREATHING, Reference.Values.TICKS_PER_SECOND * 30, 0, false, false), Element.MARE));
 		list.add(new StatusEffectRecipe("regeneration", new MobEffectInstance(MobEffects.REGENERATION, Reference.Values.TICKS_PER_SECOND * 30, 0, false, false), Element.ORIGO));
 		list.add(new StatusEffectRecipe("wither", new MobEffectInstance(MobEffects.WITHER, Reference.Values.TICKS_PER_SECOND * 30, 0, false, false), Element.SCULK, Element.ORIGO));
+	}
+	
+	private void addImbueRecipes(List<FunctionRecipe<?>> list)
+	{
+		list.add(new ImbueRecipe("mana_crystal", CMBlocks.MANA_CRYSTAL.get().defaultBlockState(), new Element[] {Element.ORIGO, Element.ORIGO}, new Block[] {Blocks.DIAMOND_BLOCK}, new BlockState[] {Blocks.LEVER.defaultBlockState()}));
 	}
 }

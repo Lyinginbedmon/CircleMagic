@@ -1,0 +1,16 @@
+{
+  "Block": "{Name:\"circles:mana_crystal\"}",
+  "ID": "circles:imbue/mana_crystal",
+  "Ingredients": {
+    "BlockStates": [
+      "{Name:\"minecraft:lever\",Properties:{face:\"wall\",facing:\"north\",powered:\"false\"}}"
+    ],
+    "Blocks": [
+      "minecraft:diamond_block"
+    ],
+    "Elements": [
+      "origo"
+    ]
+  },
+  "Type": "circles:imbue_function"
+}

@@ -64,6 +64,8 @@ public class CMItems
     public static final RegistryObject<Item> INSCRIBED_WARPED_ITEM = ITEMS.register("inscribed_warped", () -> new BlockItem(CMBlocks.INSCRIBED_WARPED.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> INSCRIBED_MANGROVE_ITEM = ITEMS.register("inscribed_mangrove", () -> new BlockItem(CMBlocks.INSCRIBED_MANGROVE.get(), new Item.Properties().tab(TAB)));
     
+    public static final RegistryObject<Item> MANA_CRYSTAL = ITEMS.register("mana_crystal", () -> new BlockItem(CMBlocks.MANA_CRYSTAL.get(), new Item.Properties().tab(TAB)));
+    
 	public static Item register(String nameIn, Item itemIn)
 	{
 		ITEMS.register(Reference.ModInfo.MOD_ID+"."+nameIn, () -> itemIn);

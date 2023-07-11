@@ -1,4 +1,4 @@
-// 1.19	2023-06-08T01:20:47.5341904	Circle Magic function recipes
+// 1.19	2023-07-11T23:40:40.0740776	Circle Magic function recipes
 8181a387c9639f857416ca88b8139cffb7a9bc78 data/circles/function_recipes/creation/end_stone.json
 ad56fc7dc2cd8fc8857bcbc9b61341f1fe2fa908 data/circles/function_recipes/creation/fire.json
 ca9fdcf908e8b1508da59f87976f6c14d9f32978 data/circles/function_recipes/creation/grass.json
@@ -6,6 +6,7 @@ ca9fdcf908e8b1508da59f87976f6c14d9f32978 data/circles/function_recipes/creation/
 f5574c2115e2ec2076de5d4c30412ec841f17cc3 data/circles/function_recipes/creation/sculk.json
 03fa3b7161389f0574a76866ba881f790b29599c data/circles/function_recipes/creation/stone.json
 9738af48a0c53c206372e675bc56e4eac1051e52 data/circles/function_recipes/creation/water.json
+620b778cfd8ace1e4887e4c26495e1a74516328b data/circles/function_recipes/imbue/mana_crystal.json
 560eee4408f9c5857d11aa0edba672aab740e17b data/circles/function_recipes/status_effect/damage_boost.json
 91d8b66893404d7277db42c2ea7494bacf1ce3f2 data/circles/function_recipes/status_effect/damage_resistance.json
 38e261293d8748b07fabcdb5d72f438dcfe4a74b data/circles/function_recipes/status_effect/dig_speed.json

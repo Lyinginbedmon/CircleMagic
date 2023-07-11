@@ -20,9 +20,9 @@ public abstract class FunctionRecipe<T>
 {
 	public static final ResourceKey<Registry<Function<JsonObject, FunctionRecipe<?>>>> REGISTRY_KEY = ResourceKey.createRegistryKey(new ResourceLocation(Reference.ModInfo.MOD_ID, "function_recipes"));
 	
-	private final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> functionType;
-	private final ResourceLocation id;
-	private final EnumSet<Element> elements;
+	protected final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> functionType;
+	protected final ResourceLocation id;
+	protected final EnumSet<Element> elements;	// FIXME Allow for repeats of elements
 	
 	protected FunctionRecipe(ResourceLocation idIn, RegistryObject<Function<JsonObject, FunctionRecipe<?>>> typeIn, Element... elementsIn)
 	{
@@ -50,7 +50,7 @@ public abstract class FunctionRecipe<T>
 	}
 	
 	/** Stores the recipe to JSON */
-	public final JsonObject serialize()
+	public JsonObject serialize()
 	{
 		JsonObject obj = new JsonObject();
 		obj.addProperty("ID", id.toString());

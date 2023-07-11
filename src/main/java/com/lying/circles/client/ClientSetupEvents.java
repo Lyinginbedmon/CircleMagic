@@ -35,6 +35,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -70,6 +71,12 @@ public class ClientSetupEvents
 			MenuScreens.register(CMMenus.SANDBOX_MENU.get(), ScreenSandbox::new);
 		});
 	}
+    
+    @SubscribeEvent
+    public static void registerOverlayEvent(final RegisterGuiOverlaysEvent event)
+    {
+    	event.registerAboveAll("mana_bar", new OverlayManaBar());
+    }
     
     @SubscribeEvent
     public static void registerColorHandlersBlock(final RegisterColorHandlersEvent.Block event)

@@ -111,23 +111,24 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		if(++tickCounter % Reference.Values.TICKS_PER_SECOND > 0)
 			return;
 		
-		if(this.diedToCurruisis && this.thePlayer.isAlive())
-		{
-			ameliorateCurruisis(this.thePlayer.getRandom());
-			this.diedToCurruisis = false;
-		}
-		else if(isFullyCurruided() && this.thePlayer.isAlive() && !worldIn.isClientSide() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION))
-		{
-			BlockPos feetPos = this.thePlayer.blockPosition();
-			BlockPos headPos = new BlockPos(feetPos.getX(), this.thePlayer.getEyeY(), feetPos.getZ());
-			if(worldIn.getBlockState(feetPos).canBeReplaced(Fluids.FLOWING_WATER) && worldIn.getBlockState(headPos).canBeReplaced(Fluids.FLOWING_WATER))
+		if(this.thePlayer.isAlive() && !worldIn.isClientSide())
+			if(this.diedToCurruisis)
 			{
-				worldIn.setBlockAndUpdate(feetPos, CMBlocks.STATUE.get().defaultBlockState());
-				worldIn.setBlockAndUpdate(headPos, CMBlocks.STATUE.get().defaultBlockState().cycle(Statue.HALF));
+				ameliorateCurruisis(this.thePlayer.getRandom());
+				this.diedToCurruisis = false;
 			}
-			
-			this.thePlayer.hurt(CMDamageSource.PETRIFICATION, Float.MAX_VALUE);
-		}
+			else if(isFullyCurruided() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION))
+			{
+				BlockPos feetPos = this.thePlayer.blockPosition();
+				BlockPos headPos = new BlockPos(feetPos.getX(), this.thePlayer.getEyeY(), feetPos.getZ());
+				if(worldIn.getBlockState(feetPos).canBeReplaced(Fluids.FLOWING_WATER) && worldIn.getBlockState(headPos).canBeReplaced(Fluids.FLOWING_WATER))
+				{
+					worldIn.setBlockAndUpdate(feetPos, CMBlocks.STATUE.get().defaultBlockState());
+					worldIn.setBlockAndUpdate(headPos, CMBlocks.STATUE.get().defaultBlockState().cycle(Statue.HALF));
+				}
+				
+				this.thePlayer.hurt(CMDamageSource.PETRIFICATION, Float.MAX_VALUE);
+			}
 	}
 	
 	public boolean hasCurruisis() { return !this.curruisisMap.isEmpty(); }
@@ -152,6 +153,15 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 				setCurruisis(limb, value);
 		}
 		markDirty();
+	}
+	
+	/** Returns the progression of curruisis, as a float value between 0 and 1 */
+	public float curruisisIntensity()
+	{
+		float intensity = 0F;
+		for(EnumBodyPart limb : EnumBodyPart.values())
+			intensity += (float)this.curruisisMap.getOrDefault(limb, 0);
+		return intensity / (EnumBodyPart.values().length * MAX_CURRUISIS);
 	}
 	
 	public boolean isFullyCurruided()

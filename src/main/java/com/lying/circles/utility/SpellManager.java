@@ -111,7 +111,6 @@ public class SpellManager extends SavedData
 	{
 		if(isEmpty() || this.world == null || this.world.isClientSide())
 			return;
-		
 		ServerLevel serverWorld = (ServerLevel)this.world;
 		
 		boolean flagDirty = false;

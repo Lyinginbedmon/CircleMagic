@@ -10,12 +10,15 @@ import com.lying.circles.init.CMStatusEffects;
 import com.lying.circles.network.PacketHandler;
 import com.lying.circles.network.PacketSyncLivingData;
 import com.lying.circles.reference.Reference;
+import com.lying.circles.utility.ManaReserve;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
@@ -25,13 +28,13 @@ import net.minecraftforge.common.util.LazyOptional;
 public class LivingData implements ICapabilitySerializable<CompoundTag>
 {
 	public static final ResourceLocation IDENTIFIER = new ResourceLocation(Reference.ModInfo.MOD_ID, "living_data");
-	private static final int INITIAL_CAPACITY = 1000;
+	private static final float INITIAL_CAPACITY = 1000F;
 	
 	private LivingEntity theEntity;
 	
-	private int manaCapacity = INITIAL_CAPACITY;
-	private int currentMana = manaCapacity;
-	private int recoveryRate = 1;
+	private float manaCapacity = INITIAL_CAPACITY;
+	private float currentMana = manaCapacity;
+	private float recoveryRate = 1F;
 	
 	public LivingData(LivingEntity playerIn)
 	{
@@ -45,6 +48,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		return CMCapabilities.LIVING_DATA.orEmpty(cap, LazyOptional.of(() -> this));
 	}
 	
+	@Nullable
 	public static LivingData getCapability(LivingEntity player)
 	{
 		if(player == null)
@@ -61,18 +65,18 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	{
 		CompoundTag data = new CompoundTag();
 		
-		data.putInt("Mana", this.currentMana);
-		data.putInt("Capacity", manaCapacity);
-		data.putInt("Recovery", recoveryRate);
+		data.putFloat("Mana", this.currentMana);
+		data.putFloat("Capacity", manaCapacity);
+		data.putFloat("Recovery", recoveryRate);
 		
 		return data;
 	}
 	
 	public void deserializeNBT(CompoundTag nbt)
 	{
-		this.currentMana = nbt.getInt("Mana");
-		this.manaCapacity = nbt.getInt("Capacity");
-		this.recoveryRate = nbt.getInt("Recovery");
+		this.currentMana = nbt.getFloat("Mana");
+		this.manaCapacity = nbt.getFloat("Capacity");
+		this.recoveryRate = nbt.getFloat("Recovery");
 	}
 	
 	public void tick(Level worldIn)
@@ -80,10 +84,11 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		if(!this.theEntity.isAlive())
 			return;
 		
-		int capacity = getCurrentCapacity();
-		if(currentMana < capacity || capacity < 0)
+		float capacity = getCurrentCapacity();
+		float recoveryRate = getRecoveryRate();
+		if(currentMana < capacity || capacity < 0 || recoveryRate < 0)
 		{
-			currentMana += getRecoveryRate();
+			currentMana += recoveryRate;
 			markDirty();
 		}
 		else if(currentMana > capacity && capacity > 0)
@@ -94,7 +99,19 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		
 		if(currentMana < 0)
 		{
-			this.theEntity.hurt(CMDamageSource.OUT_OF_MANA, Math.abs(currentMana - 1));
+			ManaReserve reserve = ManaReserve.instance(worldIn);
+			float value = Math.abs(currentMana - 1);
+			if(reserve != null)
+			{
+				float inReserve = reserve.getManaFor(this.theEntity.getUUID());
+				float delta = Math.min(value, inReserve);
+				value -= delta;
+				reserve.addManaTo(this.theEntity.getUUID(), -delta);
+			}
+			
+			if(value > 0)
+				this.theEntity.hurt(CMDamageSource.OUT_OF_MANA, value);
+			
 			this.currentMana = 1;
 			markDirty();
 		}
@@ -111,17 +128,35 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	
 	public void resetMana() { this.currentMana = this.manaCapacity; markDirty(); }
 	
-	public int getRecoveryRate()
+	public boolean spendMana(float amount)
 	{
-		int bonus = this.recoveryRate;
+		currentMana -= amount;
+		markDirty();
+		return currentMana > 0;
+	}
+	
+	public float getCurrentMana() { return this.currentMana; }
+	
+	public float getRecoveryRate()
+	{
+		float bonus = this.recoveryRate;
+		
+		if(this.theEntity.getType() == EntityType.PLAYER)
+		{
+			PlayerData data = PlayerData.getCapability((Player)this.theEntity);
+			if(data.hasCurruisis())
+				bonus *= 1F - (data.curruisisIntensity() * 2F);
+		}
+		
 		if(hasLeyPower())
 			bonus += this.theEntity.getEffect(CMStatusEffects.LEY_POWER.get()).getAmplifier() + 1;
+		
 		return bonus;
 	}
 	
-	public int getCurrentCapacity()
+	public float getCurrentCapacity()
 	{
-		return hasLeyPower() ? -1 : this.manaCapacity;
+		return hasLeyPower() ? -1F : this.manaCapacity;
 	}
 	
 	private boolean hasLeyPower() { return this.theEntity.hasEffect(CMStatusEffects.LEY_POWER.get()) && this.theEntity.getEffect(CMStatusEffects.LEY_POWER.get()).getDuration() > 0; }

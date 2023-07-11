@@ -81,7 +81,7 @@ public class ServerBus
 	}
 	
 	@SubscribeEvent
-	public static void onPlayerData(LivingDeathEvent event)
+	public static void onPlayerDeathByCurruisis(LivingDeathEvent event)
 	{
 		if(event.getSource() == CMDamageSource.PETRIFICATION && event.getEntity().getType() == EntityType.PLAYER)
 			PlayerData.getCapability((Player)event.getEntity()).flagPetrified();

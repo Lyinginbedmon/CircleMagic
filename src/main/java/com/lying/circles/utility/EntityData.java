@@ -34,8 +34,9 @@ public class EntityData extends Tuple<UUID, BlockPos>
 		}
 		else if(world.isLoaded(getB()))
 		{
-			AABB searchBounds = new AABB(-32, -32, -32, 32, 32, 32);
-			for(Entity ent : world.getEntitiesOfClass(Entity.class, searchBounds.move(getB()), (entity) -> entity.isAlive() && entity.getUUID().equals(getA())))
+			double minY = Math.max(-64, getB().getY() - 32);
+			AABB searchBounds = new AABB(getB().getX() - 32, minY, getB().getZ() - 32, getB().getX() + 32, minY + (32 * 2), getB().getZ() + 32);
+			for(Entity ent : world.getEntitiesOfClass(Entity.class, searchBounds, (entity) -> entity.isAlive() && entity.getUUID().equals(getA())))
 			{
 				this.cached = ent;
 				return ent;

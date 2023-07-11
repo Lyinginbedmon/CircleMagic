@@ -1,10 +1,13 @@
 package com.lying.circles.magic.component;
 
+import java.util.UUID;
+
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.base.Predicates;
+import com.lying.circles.capabilities.LivingData;
 import com.lying.circles.entities.SpellEntity;
 import com.lying.circles.init.CMEntities;
 import com.lying.circles.magic.ComponentCircle;
@@ -17,6 +20,7 @@ import com.lying.circles.magic.variable.VariableSet;
 import com.lying.circles.magic.variable.VariableSet.Slot;
 import com.lying.circles.magic.variable.VariableSet.VariableType;
 import com.lying.circles.utility.CMUtils;
+import com.lying.circles.utility.ManaReserve;
 import com.lying.circles.utility.SpellData;
 import com.lying.circles.utility.SpellManager;
 
@@ -91,6 +95,7 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 	
 	public void performExecution(@Nonnull Level world, @Nonnull LivingEntity caster, @Nonnull VariableSet variablesIn)
 	{
+		System.out.println("Executing spell at "+variablesIn.get(Slot.POSITION).asVec().toString());
 		variablesIn.resetExecutions();
 		variablesIn.recacheBeforeExecution(world);
 		
@@ -102,7 +107,23 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 	
 	public static boolean payManaCost(@Nonnull LivingEntity caster, int cost)
 	{
-		// TODO Subtract variables mana from caster and damage if necessary
+		UUID casterID = caster.getUUID();
+		
+		ManaReserve reserve = ManaReserve.instance(caster.getLevel());
+		float inReserve = reserve.getManaFor(casterID);
+		if(inReserve > 0)
+		{
+			float volume = Math.min(cost, inReserve);
+			reserve.addManaTo(casterID, -volume);
+			cost -= volume;
+		}
+		
+		if(cost > 0)
+		{
+			LivingData living = LivingData.getCapability(caster);
+			return living.spendMana(cost);
+		}
+		
 		return true;
 	}
 	
