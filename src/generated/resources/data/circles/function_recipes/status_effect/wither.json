@@ -4,8 +4,8 @@
   ],
   "ID": "circles:status_effect/wither",
   "Ingredients": [
-    "origo",
-    "sculk"
+    "sculk",
+    "origo"
   ],
   "Type": "circles:status_effect_function"
 }

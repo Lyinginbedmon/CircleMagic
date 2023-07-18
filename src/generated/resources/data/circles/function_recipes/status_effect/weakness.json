@@ -4,8 +4,8 @@
   ],
   "ID": "circles:status_effect/weakness",
   "Ingredients": [
-    "mundus",
-    "sculk"
+    "sculk",
+    "mundus"
   ],
   "Type": "circles:status_effect_function"
 }

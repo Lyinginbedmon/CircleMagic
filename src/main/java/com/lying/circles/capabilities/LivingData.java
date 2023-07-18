@@ -159,6 +159,8 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		return hasLeyPower() ? -1F : this.manaCapacity;
 	}
 	
+	public float getNativeCapacity() { return this.manaCapacity; }
+	
 	private boolean hasLeyPower() { return this.theEntity.hasEffect(CMStatusEffects.LEY_POWER.get()) && this.theEntity.getEffect(CMStatusEffects.LEY_POWER.get()).getDuration() > 0; }
 	
 	public void markDirty()

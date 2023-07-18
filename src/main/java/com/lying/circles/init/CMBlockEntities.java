@@ -22,6 +22,7 @@ public class CMBlockEntities
 	public static final RegistryObject<BlockEntityType<CrucibleBlockEntity>> CRUCIBLE = BLOCK_ENTITIES.register("crucible", () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new, CMBlocks.CRUCIBLE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "crucible")));
 	public static final RegistryObject<BlockEntityType<FairyJarBlockEntity>> FAIRY_JAR = BLOCK_ENTITIES.register("fairy_jar", () -> BlockEntityType.Builder.of(FairyJarBlockEntity::new, CMBlocks.FAIRY_JAR.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "fairy_jar")));
 	public static final RegistryObject<BlockEntityType<MagicTreeBlockEntity>> MAGIC_TREE = BLOCK_ENTITIES.register("magecrafted_bough", () -> BlockEntityType.Builder.of(MagicTreeBlockEntity::new, CMBlocks.MAGIC_TREE.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "magecrafted_bough")));
+	public static final RegistryObject<BlockEntityType<LeyPointBlockEntity>> LEY_POINT = BLOCK_ENTITIES.register("ley_point", () -> BlockEntityType.Builder.of(LeyPointBlockEntity::new, CMBlocks.LEY_POINT.get()).build(Util.fetchChoiceType(References.BLOCK_ENTITY, "ley_point")));
 	
 	public static final RegistryObject<BlockEntityType<InscribedBlockEntity>> INSCRIPTION = BLOCK_ENTITIES.register("inscribed", () -> BlockEntityType.Builder.of(InscribedBlockEntity::new, 
 			CMBlocks.INSCRIBED_ACACIA.get(),

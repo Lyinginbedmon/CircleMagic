@@ -18,18 +18,16 @@ public class CurruisisModel<T extends LivingEntity> extends HumanoidModel<T>
 		super(p_170677_);
 	}
 	
-	// TODO Improve modelling
+	// TODO Improve curruisis modelling
 	public static MeshDefinition createMesh(CubeDeformation deformation, float scale)
 	{
 		MeshDefinition meshdefinition = HumanoidModel.createMesh(deformation, scale);
 		PartDefinition partdefinition = meshdefinition.getRoot();
 		
-		// TODO Build actual model of curruisis
-		
 		return meshdefinition;
 	}
 	
-	public void adjustCurruisis(Map<EnumBodyPart, Integer> curruisisMap)
+	public void adjustCurruisis(Map<EnumBodyPart, Integer> curruisisMap, int stage)
 	{
 		setAllVisible(false);
 		curruisisMap.entrySet().forEach((entry) -> 
@@ -58,7 +56,7 @@ public class CurruisisModel<T extends LivingEntity> extends HumanoidModel<T>
 			}
 			
 			if(limb != null)
-				limb.visible = entry.getValue() > 0;
+				limb.visible = entry.getValue() == stage;
 		});
 	}
 }

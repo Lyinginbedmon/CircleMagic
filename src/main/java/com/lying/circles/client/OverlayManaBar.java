@@ -14,12 +14,15 @@ public class OverlayManaBar implements IGuiOverlay
 	
 	public void render(ForgeGui gui, PoseStack poseStack, float partialTick, int width, int height)
 	{
+		if(mc.options.hideGui)
+			return;
+		
 		LivingData living = LivingData.getCapability(mc.player);
 		if(living == null)
 			return;
 		
 		float mana = living.getCurrentMana();
-		float capacity = living.getCurrentCapacity();
+		float capacity = living.getNativeCapacity();
 		gui.getFont().draw(poseStack, Component.literal((int)mana + " / " + (int)capacity), 10, height - 10, -1);
 	}
 }

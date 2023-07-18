@@ -1,7 +1,6 @@
 package com.lying.circles.magic.component;
 
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -13,10 +12,11 @@ import com.lying.circles.CircleMagic;
 import com.lying.circles.api.event.SpellEvent;
 import com.lying.circles.data.recipe.CreationRecipe;
 import com.lying.circles.data.recipe.FunctionRecipe;
+import com.lying.circles.data.recipe.IEntityRecipe;
 import com.lying.circles.data.recipe.ImbueRecipe;
 import com.lying.circles.data.recipe.StatusEffectRecipe;
-import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.CMBlocks;
+import com.lying.circles.init.FunctionRecipes;
 import com.lying.circles.init.SpellEffects;
 import com.lying.circles.magic.Element;
 import com.lying.circles.magic.ISpellComponent;
@@ -173,6 +173,52 @@ public abstract class FunctionGlyph extends ComponentBase
 		
 		MinecraftServer server = ((ServerLevel)world).getServer();
 		func.get(server.getFunctions()).ifPresent((exec) -> server.getFunctions().execute(exec, target.createCommandSourceStack().withSuppressedOutput().withPermission(2)));
+	}
+	
+	protected static void placeBlock(List<IVariable> inputVariables, Level world, BlockState state)
+	{
+		if(inputVariables.isEmpty() || world.isClientSide())
+			return;
+		
+		if(state.getBlock() instanceof FireBlock && inputVariables.get(0).type() == VariableType.ENTITY)
+		{
+			inputVariables.get(0).asEntity().setSecondsOnFire(8);
+			return;
+		}
+		
+		Vec3 pos = inputVariables.get(0).asVec();
+		BlockPos blockPos = new BlockPos(pos.x, pos.y, pos.z);
+		if(blockPos.getY() < -64)
+			return;
+		
+		if(world.isEmptyBlock(blockPos) || world.getBlockState(blockPos).getMaterial().isReplaceable())
+		{
+			world.playSound((Player)null, blockPos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS,  0.5F + world.random.nextFloat(), world.random.nextFloat() * 0.7F + 0.6F);
+			world.setBlockAndUpdate(blockPos, state);
+		}
+	}
+	
+	protected static void spawnEntity(List<IVariable> inputVariables, Level world, IEntityRecipe recipe, Entity caster)
+	{
+		if(inputVariables.isEmpty() || world.isClientSide())
+			return;
+		
+		Vec3 position = inputVariables.get(0).asVec();
+		
+		Entity spawnedEntity = recipe.createEntityAt(world, position);
+		if(spawnedEntity == null || !spawnedEntity.isAlive())
+			return;
+		
+		if(spawnedEntity.getType() == EntityType.LIGHTNING_BOLT)
+			((LightningBolt)spawnedEntity).setCause((ServerPlayer)caster);
+		else if(spawnedEntity instanceof TamableAnimal)
+		{
+			TamableAnimal animal = (TamableAnimal)spawnedEntity;
+			animal.setTame(true);
+			animal.setOwnerUUID(caster.getUUID());
+		}
+		
+		world.addFreshEntity(spawnedEntity);
 	}
 	
 	public static class Debug extends FunctionGlyph
@@ -359,52 +405,6 @@ public abstract class FunctionGlyph extends ComponentBase
 					runCommandOn(getFirstOfType(inputVariables, VariableType.ENTITY).asEntity(), world, func);
 			}
 		}
-		
-		protected static void placeBlock(List<IVariable> inputVariables, Level world, BlockState state)
-		{
-			if(inputVariables.isEmpty() || world.isClientSide())
-				return;
-			
-			if(state.getBlock() instanceof FireBlock && inputVariables.get(0).type() == VariableType.ENTITY)
-			{
-				inputVariables.get(0).asEntity().setSecondsOnFire(8);
-				return;
-			}
-			
-			Vec3 pos = inputVariables.get(0).asVec();
-			BlockPos blockPos = new BlockPos(pos.x, pos.y, pos.z);
-			if(blockPos.getY() < -64)
-				return;
-			
-			if(world.isEmptyBlock(blockPos) || world.getBlockState(blockPos).getMaterial().isReplaceable())
-			{
-				world.playSound((Player)null, blockPos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS,  0.5F + world.random.nextFloat(), world.random.nextFloat() * 0.7F + 0.6F);
-				world.setBlockAndUpdate(blockPos, state);
-			}
-		}
-		
-		protected static void spawnEntity(List<IVariable> inputVariables, Level world, CreationRecipe recipe, Entity caster)
-		{
-			if(inputVariables.isEmpty() || world.isClientSide())
-				return;
-			
-			Vec3 position = inputVariables.get(0).asVec();
-			
-			Entity spawnedEntity = recipe.createEntityAt(world, position);
-			if(spawnedEntity == null || !spawnedEntity.isAlive())
-				return;
-			
-			if(spawnedEntity.getType() == EntityType.LIGHTNING_BOLT)
-				((LightningBolt)spawnedEntity).setCause((ServerPlayer)caster);
-			else if(spawnedEntity instanceof TamableAnimal)
-			{
-				TamableAnimal animal = (TamableAnimal)spawnedEntity;
-				animal.setTame(true);
-				animal.setOwnerUUID(caster.getUUID());
-			}
-			
-			world.addFreshEntity(spawnedEntity);
-		}
 	}
 	
 	public static class StatusEffect extends FunctionGlyph
@@ -494,11 +494,13 @@ public abstract class FunctionGlyph extends ComponentBase
 			if(inputVariables.isEmpty())
 				return;
 			
+			System.out.println("Performing imbue");
+			
 			Entity caster = totalVariables.get(Slot.CASTER).asEntity();
 			Vec3 spellPos = totalVariables.get(Slot.POSITION).asVec();
 			
-			Vec3 pos = inputVariables.get(0).asVec();
-			BlockPos blockPos = new BlockPos(pos.x, pos.y, pos.z);
+			Vec3 targetVec = inputVariables.get(0).asVec();
+			BlockPos blockPos = new BlockPos(targetVec.x, targetVec.y, targetVec.z);
 			ImbueRecipe recipe = getMatchingRecipe(inputElements, world, blockPos);
 			if(recipe == null)
 			{
@@ -506,29 +508,31 @@ public abstract class FunctionGlyph extends ComponentBase
 			}
 			else
 			{
+				System.out.println("Recipe found");
 				recipe.consumeIngredients(world, blockPos);
 				
 				BlockState state = recipe.getState();
 				if(state != null)
 				{
 					placeBlock(inputVariables, world, state);
+					System.out.println("Placing block: "+state.toString());
 					
 					CompoundTag data = new CompoundTag();
 					data.put("Pos", NbtUtils.writeBlockPos(blockPos));
 					notifySpellEffect(world, SpellEffects.PLACE_BLOCK, spellPos, data, Reference.Values.TICKS_PER_SECOND);
 				}
 				
-//				if(recipe.hasEntity())
-//				{
-//					spawnEntity(inputVariables, world, recipe, totalVariables.get(Slot.CASTER).asEntity());
-//					
-//					Vec3 pos = inputVariables.get(0).asVec();
-//					CompoundTag data = new CompoundTag();
-//					data.putDouble("PosX", pos.x);
-//					data.putDouble("PosY", pos.y);
-//					data.putDouble("PosZ", pos.z);
-//					notifySpellEffect(world, SpellEffects.SPAWN_ENTITY, spellPos, data, Reference.Values.TICKS_PER_SECOND);
-//				}
+				if(recipe.hasEntity())
+				{
+					spawnEntity(inputVariables, world, recipe, caster);
+					
+					Vec3 pos = inputVariables.get(0).asVec();
+					CompoundTag data = new CompoundTag();
+					data.putDouble("PosX", pos.x);
+					data.putDouble("PosY", pos.y);
+					data.putDouble("PosZ", pos.z);
+					notifySpellEffect(world, SpellEffects.SPAWN_ENTITY, spellPos, data, Reference.Values.TICKS_PER_SECOND);
+				}
 				
 				CommandFunction.CacheableFunction func = recipe.getFunction();
 				if(func != null && func != CommandFunction.CacheableFunction.NONE)
@@ -539,8 +543,12 @@ public abstract class FunctionGlyph extends ComponentBase
 		protected ImbueRecipe getMatchingRecipe(EnumSet<Element> elements, Level world, BlockPos pos)
 		{
 			for(FunctionRecipe<?> recipe : FunctionRecipes.getInstance().getRecipes(FunctionRecipes.IMBUE))
+			{
+				System.out.println("Checking recipe "+recipe.getId());
 				if(((ImbueRecipe)recipe).matches(elements, world, pos))
 					return (ImbueRecipe)recipe;
+			}
+			System.out.println("No recipe found");
 			return null;
 		}
 	}

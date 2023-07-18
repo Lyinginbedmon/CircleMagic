@@ -4,8 +4,8 @@
   ],
   "ID": "circles:status_effect/damage_boost",
   "Ingredients": [
-    "mundus",
-    "ardere"
+    "ardere",
+    "mundus"
   ],
   "Type": "circles:status_effect_function"
 }

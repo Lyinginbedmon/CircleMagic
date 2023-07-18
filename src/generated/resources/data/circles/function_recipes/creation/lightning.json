@@ -2,9 +2,9 @@
   "EntityType": "minecraft:lightning_bolt",
   "ID": "circles:creation/lightning",
   "Ingredients": [
-    "mundus",
+    "finis",
     "ardere",
-    "finis"
+    "mundus"
   ],
   "Type": "circles:creation_function"
 }

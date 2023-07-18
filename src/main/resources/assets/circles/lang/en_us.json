@@ -36,6 +36,7 @@
 	"block.circles.tilled_red_sand": "Tilled Red Sand",
 	"block.circles.mana_crystal": "Crystalline Mana",
 	"entity.circles.spell": "Spell",
+	"effect.circles.ley_power": "Leyline Power",
 	"variable.circles.double": "Double[%s]",
 	"variable.circles.boolean": "Boolean[%s]",
 	"variable.circles.vector": "Path[%s, %s, %s]",

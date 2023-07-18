@@ -22,15 +22,13 @@ public abstract class FunctionRecipe<T>
 	
 	protected final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> functionType;
 	protected final ResourceLocation id;
-	protected final EnumSet<Element> elements;	// FIXME Allow for repeats of elements
+	protected final Element[] elements;	// FIXME Allow for repeats of elements
 	
 	protected FunctionRecipe(ResourceLocation idIn, RegistryObject<Function<JsonObject, FunctionRecipe<?>>> typeIn, Element... elementsIn)
 	{
 		this.id = idIn;
 		this.functionType = typeIn;
-		this.elements = EnumSet.noneOf(Element.class);
-		for(Element element : elementsIn)
-			this.elements.add(element);
+		this.elements = elementsIn;
 	}
 	
 	public ResourceLocation getId() { return this.id; }
@@ -57,7 +55,7 @@ public abstract class FunctionRecipe<T>
 		obj.addProperty("Type", functionType.getId().toString());
 		
 		JsonArray ingredients = new JsonArray();
-		for(Element element : elements.toArray(new Element[0]))
+		for(Element element : elements)
 			ingredients.add(element.getSerializedName());
 		obj.add("Ingredients", ingredients);
 		
@@ -70,14 +68,14 @@ public abstract class FunctionRecipe<T>
 	
 	protected static Element[] loadElements(JsonObject obj)
 	{
-		EnumSet<Element> elements = EnumSet.noneOf(Element.class);
 		JsonArray ingredients = obj.get("Ingredients").getAsJsonArray();
+		Element[] elements = new Element[ingredients.size()];
 		for(int i=0; i<ingredients.size(); i++)
 		{
 			Element element = Element.fromString(ingredients.get(i).getAsString());
 			if(element != null)
-				elements.add(element);
+				elements[i] = element;
 		}
-		return elements.toArray(new Element[0]);
+		return elements;
 	}
 }

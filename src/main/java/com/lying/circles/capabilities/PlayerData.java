@@ -37,7 +37,10 @@ import net.minecraftforge.common.util.LazyOptional;
 public class PlayerData implements ICapabilitySerializable<CompoundTag>
 {
 	public static final ResourceLocation IDENTIFIER = new ResourceLocation(Reference.ModInfo.MOD_ID, "player_data");
+	/** Highest amount of curruisis a given limb can have */
 	public static final int MAX_CURRUISIS = 3;
+	/** Highest possible total curruisis across all body parts */
+	public static final int TOTAL_CURRUISIS = MAX_CURRUISIS * EnumBodyPart.values().length;
 	
 	private Player thePlayer;
 	
@@ -140,7 +143,7 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		if(!isFullyCurruided())
 			return;
 		
-		for(int i=(int)((MAX_CURRUISIS * EnumBodyPart.values().length) * 0.6D); i>0; i--)
+		for(int i=(int)(TOTAL_CURRUISIS * 0.6D); i>0; i--)
 		{
 			Set<EnumBodyPart> limbs = this.curruisisMap.keySet();
 			EnumBodyPart[] limbsArray = limbs.toArray(new EnumBodyPart[0]);
@@ -161,7 +164,7 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		float intensity = 0F;
 		for(EnumBodyPart limb : EnumBodyPart.values())
 			intensity += (float)this.curruisisMap.getOrDefault(limb, 0);
-		return intensity / (EnumBodyPart.values().length * MAX_CURRUISIS);
+		return intensity / (float)TOTAL_CURRUISIS;
 	}
 	
 	public boolean isFullyCurruided()

@@ -1,0 +1,16 @@
+{
+  "EntityType": "minecraft:snow_golem",
+  "ID": "circles:imbue/snow_golem",
+  "Ingredients": {
+    "Blocks": [
+      "minecraft:snow_block",
+      "minecraft:snow_block",
+      "minecraft:carved_pumpkin"
+    ],
+    "Elements": [
+      "origo",
+      "origo"
+    ]
+  },
+  "Type": "circles:imbue_function"
+}

@@ -110,5 +110,7 @@ public class CMFunctionRecipeProvider implements DataProvider
 	private void addImbueRecipes(List<FunctionRecipe<?>> list)
 	{
 		list.add(new ImbueRecipe("mana_crystal", CMBlocks.MANA_CRYSTAL.get().defaultBlockState(), new Element[] {Element.ORIGO, Element.ORIGO}, new Block[] {Blocks.DIAMOND_BLOCK}, new BlockState[] {Blocks.LEVER.defaultBlockState()}));
+		list.add(new ImbueRecipe("snow_golem", EntityType.SNOW_GOLEM, new Element[] { Element.ORIGO, Element.ORIGO }, new Block[] {Blocks.SNOW_BLOCK, Blocks.SNOW_BLOCK, Blocks.CARVED_PUMPKIN}, new BlockState[0]));
+		list.add(new ImbueRecipe("ley_point", CMBlocks.LEY_POINT.get().defaultBlockState(), new Element[] {Element.ORIGO, Element.ORIGO}, new Block[] {Blocks.DIAMOND_BLOCK, Blocks.EMERALD_BLOCK, Blocks.DRAGON_EGG, Blocks.BEACON}, new BlockState[] {}));
 	}
 }

@@ -20,7 +20,7 @@ import net.minecraft.world.entity.player.Player;
 
 public class CurruisisLayer<T extends Player, M extends HumanoidModel<T>> extends RenderLayer<T, M>
 {
-	private static final ResourceLocation TEXTURE_LOCATION = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/curruisis.png");
+	private static final ResourceLocation[] TEXTURES = new ResourceLocation[PlayerData.MAX_CURRUISIS];
 	private final CurruisisModel<T> model;
 	
 	public CurruisisLayer(RenderLayerParent<T, M> rendererIn, EntityModelSet modelSet)
@@ -35,12 +35,21 @@ public class CurruisisLayer<T extends Player, M extends HumanoidModel<T>> extend
 		if(!data.hasCurruisis())
 			return;
 		
-		p_116951_.pushPose();
-			this.getParentModel().copyPropertiesTo(this.model);
-			this.model.setupAnim(player, p_116955_, p_116956_, p_116958_, p_116959_, p_116960_);
-			this.model.adjustCurruisis(data.getCurruisis());
-			VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(p_116952_, RenderType.armorCutoutNoCull(TEXTURE_LOCATION), false, false);
-			this.model.renderToBuffer(p_116951_, vertexconsumer, p_116953_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
-		p_116951_.popPose();
+		for(int i=1; i<PlayerData.MAX_CURRUISIS; i++)
+		{
+			p_116951_.pushPose();
+				this.getParentModel().copyPropertiesTo(this.model);
+				this.model.setupAnim(player, p_116955_, p_116956_, p_116958_, p_116959_, p_116960_);
+				this.model.adjustCurruisis(data.getCurruisis(), i);
+				VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(p_116952_, RenderType.armorCutoutNoCull(TEXTURES[i-1]), false, false);
+				this.model.renderToBuffer(p_116951_, vertexconsumer, p_116953_, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+			p_116951_.popPose();
+		}
+	}
+	
+	static
+	{
+		for(int i=1; i<PlayerData.MAX_CURRUISIS; i++)
+			TEXTURES[i-1] = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/curruisis_"+i+".png");
 	}
 }

@@ -11,6 +11,7 @@ import com.lying.circles.network.PacketHandler;
 import com.lying.circles.network.PacketSyncSpellManager;
 import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.CrucibleManager;
+import com.lying.circles.utility.LeylineManager;
 import com.lying.circles.utility.SpellManager;
 
 import net.minecraft.core.BlockPos;
@@ -96,6 +97,10 @@ public class ServerBus
 		SpellManager manager = SpellManager.instance(event.level);
 		if(!manager.isEmpty())
 			manager.tick();
+		
+		LeylineManager leyLines = LeylineManager.instance(event.level);
+		if(!leyLines.isEmpty())
+			leyLines.tick();
 	}
 	
 	@SubscribeEvent

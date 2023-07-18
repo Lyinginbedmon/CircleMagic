@@ -3,6 +3,7 @@ package com.lying.circles.data.recipe;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 
 import javax.annotation.Nullable;
 
@@ -27,12 +28,16 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
-public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
+public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityRecipe
 {
+	// Maximum number of steps to take away from origin in any direction whilst searching for in-world ingredients
+	private static final int SEARCH_RANGE = 2;
+	
+	// In-world ingredients
 	private Block[] blockIngredients;
 	private BlockState[] blockStateIngredients;
 	
@@ -96,53 +101,134 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 		if(!super.matches(elements))
 			return false;
 		
+		List<BlockPos> foundIngredients = Lists.newArrayList();
+		if(blockStateIngredients.length > 0)
+			for(BlockState block : blockStateIngredients)
+			{
+				BlockPos foundPos;
+				if((foundPos = findBlockStateNearby(pos, worldIn, block, foundIngredients.toArray(new BlockPos[0]))) == null)
+					return false;
+				
+				foundIngredients.add(foundPos);
+			}
+		
 		if(blockIngredients.length > 0)
 		{
 			for(Block block : blockIngredients)
 			{
-				boolean blockFound = false;
-				
-				for(int y=-3; y<3; y++)
-					for(int x=-3; x<3; x++)
-						for(int z=-3; z<3; z++)
-						{
-							BlockPos position = pos.offset(x, y, z);
-							if(worldIn.getBlockState(position).getBlock() == block)
-							{
-								blockFound = true;
-								break;
-							}
-						}
-				
-				if(!blockFound)
+				BlockPos foundPos;
+				if((foundPos = findBlockNearby(pos, worldIn, block, foundIngredients.toArray(new BlockPos[0]))) == null)
 					return false;
-			}
-		}
-		
-		if(blockStateIngredients.length > 0)
-		{
-			for(BlockState block : blockStateIngredients)
-			{
-				boolean blockFound = false;
 				
-				for(int y=-3; y<3; y++)
-					for(int x=-3; x<3; x++)
-						for(int z=-3; z<3; z++)
-						{
-							BlockPos position = pos.offset(x, y, z);
-							if(worldIn.getBlockState(position) == block)
-							{
-								blockFound = true;
-								break;
-							}
-						}
-				
-				if(!blockFound)
-					return false;
+				foundIngredients.add(foundPos);
 			}
 		}
 		
 		return true;
+	}
+	
+	/** Searches a 3x3x3 area around the given position for the given block, returns the first instance if any */
+	@Nullable
+	public static BlockPos findBlockNearby(BlockPos pos, Level worldIn, Block block, BlockPos... toIgnore)
+	{
+		return searchAreaNearby(pos, worldIn, (position, world) -> world.getBlockState(position).getBlock() == block, toIgnore);
+	}
+	
+	/** Searches a 3x3x3 area around the given position for the given blockstate, returns the first instance if any */
+	@Nullable
+	public static BlockPos findBlockStateNearby(BlockPos pos, Level worldIn, BlockState blockState, BlockPos... toIgnore)
+	{
+		return searchAreaNearby(pos, worldIn, (position, world) -> world.getBlockState(position) == blockState, toIgnore);
+	}
+	
+	@Nullable
+	protected static BlockPos searchAreaNearby(BlockPos pos, Level worldIn, BiPredicate<BlockPos,Level> predicate, BlockPos... toIgnore)
+	{
+		for(int cubeRadius = 0; cubeRadius <= SEARCH_RANGE; cubeRadius++)
+			if(cubeRadius == 0)
+			{
+				if(predicate.test(pos, worldIn))
+					return pos;
+			}
+			else
+			{
+				// Length of the cube on any side
+				int cubeSize = (cubeRadius * 2) + 1;
+				
+				// 2D Circumference of the cube
+				int cubeCircumference = (cubeSize * 4) - 4;
+				
+				// Scan intermediate levels around the circumference only
+				for(int index = 0; index < cubeSize - 2; index++)
+				{
+					// Alternating +/- of incrementing Y offset
+					int yOff = index%2 == 0 ? (index/2)*-1 : (index/2);
+					
+					// Starting at these values creates a reliable spiral around the circumference
+					Vec2 offset = new Vec2(cubeRadius, -cubeRadius + 1);
+					Vec2 dir = new Vec2(1, 0);
+					
+					for(int i=0; i<cubeCircumference; i++)
+					{
+						int x = (int)offset.x;
+						int z = (int)offset.y;
+						
+						BlockPos position = pos.offset(x, yOff, z);
+						if(!arrayContainsPos(position, toIgnore) && predicate.test(position, worldIn))
+							return position;
+						
+						if(x == z || (x < 0 && x == -z) || (x > 0 && x == 1-z))
+							dir = new Vec2(-dir.y, dir.x);
+						
+						offset = offset.add(dir);
+					}
+				}
+				
+				// Total 2D footprint of the cube;
+				int searchLen = cubeSize * cubeSize;
+				
+				// Check bottom level (ie. the floor)
+				BlockPos resultBot = searchSpiralAround(pos.offset(0, -cubeRadius, 0), worldIn, searchLen, predicate, toIgnore);
+				if(resultBot != null)
+					return resultBot;
+				
+				// Check top level (ie. the ceiling)
+				BlockPos resultTop = searchSpiralAround(pos.offset(0, cubeRadius, 0), worldIn, searchLen, predicate, toIgnore);
+				if(resultTop != null)
+					return resultTop;
+			}
+		
+		return null;
+	}
+	
+	@Nullable
+	protected static BlockPos searchSpiralAround(BlockPos pos, Level worldIn, int len, BiPredicate<BlockPos,Level> predicate, BlockPos... toIgnore)
+	{
+		Vec2 offset = new Vec2(0, 0);
+		Vec2 dir = new Vec2(0, -1);
+		for(int i=0; i<len; i++)
+		{
+			int x = (int)offset.x;
+			int z = (int)offset.y;
+			
+			BlockPos position = pos.offset(x, 0, z);
+			if(!arrayContainsPos(position, toIgnore) && predicate.test(position, worldIn))
+				return position;
+			
+			if(x == z || (x < 0 && x == -z) || (x > 0 && x == 1-z))
+				dir = new Vec2(-dir.y, dir.x);
+			
+			offset = offset.add(dir);
+		}
+		return null;
+	}
+	
+	private static boolean arrayContainsPos(BlockPos pos, BlockPos... toIgnore)
+	{
+		for(BlockPos position : toIgnore)
+			if(position.distSqr(pos) == 0D)
+				return true;
+		return false;
 	}
 	
 	public BlockState getState() { return this.blockPlaced; }
@@ -174,27 +260,11 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 	{
 		if(blockStateIngredients.length > 0)
 		{
-			for(BlockState block : blockStateIngredients)
+			for(BlockState blockState : blockStateIngredients)
 			{
-				boolean found = false;
-				for(int y=-3; y<3; y++)
-				{
-					if(found) break;
-					for(int x=-3; x<3; x++)
-					{
-						if(found) break;
-						for(int z=-3; z<3; z++)
-						{
-							BlockPos position = pos.offset(x, y, z);
-							if(worldIn.getBlockState(position) == block)
-							{
-								worldIn.setBlockAndUpdate(position, Blocks.AIR.defaultBlockState());
-								found = true;
-								break;
-							}
-						}
-					}
-				}
+				BlockPos position = findBlockStateNearby(pos, worldIn, blockState);
+				if(position != null)
+					worldIn.destroyBlock(position, false);
 			}
 		}
 		
@@ -202,25 +272,9 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 		{
 			for(Block block : blockIngredients)
 			{
-				boolean found = false;
-				for(int y=-3; y<3; y++)
-				{
-					if(found) break;
-					for(int x=-3; x<3; x++)
-					{
-						if(found) break;
-						for(int z=-3; z<3; z++)
-						{
-							BlockPos position = pos.offset(x, y, z);
-							if(worldIn.getBlockState(position).getBlock() == block)
-							{
-								worldIn.setBlockAndUpdate(position, Blocks.AIR.defaultBlockState());
-								found = true;
-								break;
-							}
-						}
-					}
-				}
+				BlockPos position = findBlockNearby(pos, worldIn, block);
+				if(position != null)
+					worldIn.destroyBlock(position, false);
 			}
 		}
 	}
@@ -234,22 +288,31 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 		
 		JsonObject ingredients = new JsonObject();
 		
-		JsonArray elementSet = new JsonArray();
-		for(Element element : elements.toArray(new Element[0]))
-			elementSet.add(element.getSerializedName());
-		ingredients.add("Elements", elementSet);
+		if(elements.length > 0)
+		{
+			JsonArray elementSet = new JsonArray();
+			for(Element element : elements)
+				elementSet.add(element.getSerializedName());
+			ingredients.add("Elements", elementSet);
+		}
 		
 		// Store Blocks
-		JsonArray blockSet = new JsonArray();
-		for(Block block : blockIngredients)
-			blockSet.add(Registry.BLOCK.getKey(block).toString());
-		ingredients.add("Blocks", blockSet);
+		if(blockIngredients.length > 0)
+		{
+			JsonArray blockSet = new JsonArray();
+			for(Block block : blockIngredients)
+				blockSet.add(Registry.BLOCK.getKey(block).toString());
+			ingredients.add("Blocks", blockSet);
+		}
 		
 		// Store Block States
-		JsonArray blockStateSet = new JsonArray();
-		for(BlockState blockState : blockStateIngredients)
-			blockStateSet.add(NbtUtils.writeBlockState(blockState).toString());
-		ingredients.add("BlockStates", blockStateSet);
+		if(blockStateIngredients.length > 0)
+		{
+			JsonArray blockStateSet = new JsonArray();
+			for(BlockState blockState : blockStateIngredients)
+				blockStateSet.add(NbtUtils.writeBlockState(blockState).toString());
+			ingredients.add("BlockStates", blockStateSet);
+		}
 		
 		obj.add("Ingredients", ingredients);
 		
@@ -296,10 +359,14 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 	protected static Element[] loadElements(JsonObject obj)
 	{
 		EnumSet<Element> elements = EnumSet.noneOf(Element.class);
-		JsonArray ingredients = obj.get("Ingredients").getAsJsonObject().get("Elements").getAsJsonArray();
-		for(int i=0; i<ingredients.size(); i++)
+		JsonObject ingredients = obj.getAsJsonObject("Ingredients");
+		if(!ingredients.has("Elements"))
+			return new Element[0];
+		
+		JsonArray elementJson = ingredients.get("Elements").getAsJsonArray();
+		for(int i=0; i<elementJson.size(); i++)
 		{
-			Element element = Element.fromString(ingredients.get(i).getAsString());
+			Element element = Element.fromString(elementJson.get(i).getAsString());
 			if(element != null)
 				elements.add(element);
 		}
@@ -310,13 +377,17 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 	protected static Block[] loadBlocks(JsonObject obj)
 	{
 		List<Block> states = Lists.newArrayList();
-		JsonArray ingredients = obj.get("Ingredients").getAsJsonObject().get("Blocks").getAsJsonArray();
-		for(int i=0; i<ingredients.size(); i++)
+		JsonObject ingredients = obj.getAsJsonObject("Ingredients");
+		if(!ingredients.has("Blocks"))
+			return new Block[0];
+		
+		JsonArray blockJson = ingredients.get("Blocks").getAsJsonArray();
+		for(int i=0; i<blockJson.size(); i++)
 		{
 			Block block = null;
 			try
 			{
-				block = Registry.BLOCK.get(new ResourceLocation(ingredients.get(i).getAsString()));
+				block = Registry.BLOCK.get(new ResourceLocation(blockJson.get(i).getAsString()));
 			}
 			catch(Exception e) { }
 			if(block != null)
@@ -328,13 +399,17 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe>
 	protected static BlockState[] loadBlockStates(JsonObject obj)
 	{
 		List<BlockState> states = Lists.newArrayList();
-		JsonArray ingredients = obj.get("Ingredients").getAsJsonObject().get("BlockStates").getAsJsonArray();
-		for(int i=0; i<ingredients.size(); i++)
+		JsonObject ingredients = obj.getAsJsonObject("Ingredients");
+		if(!ingredients.has("BlockStates"))
+			return new BlockState[0];
+		
+		JsonArray blockStatesJson = ingredients.get("BlockStates").getAsJsonArray();
+		for(int i=0; i<blockStatesJson.size(); i++)
 		{
 			BlockState state = null;
 			try
 			{
-				state = NbtUtils.readBlockState(TagParser.parseTag(ingredients.get(i).getAsString()));
+				state = NbtUtils.readBlockState(TagParser.parseTag(blockStatesJson.get(i).getAsString()));
 			}
 			catch(Exception e) { }
 			if(state != null)

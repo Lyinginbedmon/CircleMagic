@@ -5,6 +5,7 @@ import com.lying.circles.blocks.CurruidDust;
 import com.lying.circles.blocks.FairyJar;
 import com.lying.circles.blocks.ImbuedBlock;
 import com.lying.circles.blocks.InscribedBlock;
+import com.lying.circles.blocks.LeyPoint;
 import com.lying.circles.blocks.MagicSapling;
 import com.lying.circles.blocks.MagicTree;
 import com.lying.circles.blocks.ManaCrystal;
@@ -122,6 +123,8 @@ public class CMBlocks
     public static final RegistryObject<Block> TILLED_RED_SAND = BLOCKS.register("tilled_red_sand", () -> new TilledSand(11098145, BlockBehaviour.Properties.of(Material.SAND, MaterialColor.COLOR_ORANGE).strength(0.5F).sound(SoundType.SAND), Blocks.RED_SAND.defaultBlockState()));
     
     public static final RegistryObject<Block> MANA_CRYSTAL = BLOCKS.register("mana_crystal", () -> new ManaCrystal(BlockBehaviour.Properties.of(Material.AMETHYST)));
+    
+    public static final RegistryObject<Block> LEY_POINT = BLOCKS.register("ley_point", () -> new LeyPoint(BlockBehaviour.Properties.of(Material.STONE).strength(-1.0F, 3600000.0F).noLootTable()));
     
     public static void init() { }
 }

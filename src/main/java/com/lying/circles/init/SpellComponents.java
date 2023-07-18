@@ -131,6 +131,7 @@ public class SpellComponents
 	public static final ResourceLocation FUNCTION_CREATE = make("creation_function");
 	public static final ResourceLocation FUNCTION_DISPEL = make("dispel_function");
 	public static final ResourceLocation FUNCTION_STATUS = make("potion_function");
+	public static final ResourceLocation FUNCTION_IMBUE = make("imbue_function");
 	
 	public static ResourceLocation make(String path) { return new ResourceLocation(Reference.ModInfo.MOD_ID, path); }
 	
@@ -201,6 +202,7 @@ public class SpellComponents
 		register(FUNCTION_CREATE, () -> () -> new FunctionGlyph.Create());
 		register(FUNCTION_DISPEL, () -> () -> new FunctionGlyph.Dispel());
 		register(FUNCTION_STATUS, () -> () -> new FunctionGlyph.StatusEffect());
+		register(FUNCTION_IMBUE, () -> () -> new FunctionGlyph.Imbue());
 	}
 	
 	private static RegistryObject<ISpellComponentBuilder> register(ResourceLocation nameIn, Supplier<ISpellComponentBuilder> miracleIn)
