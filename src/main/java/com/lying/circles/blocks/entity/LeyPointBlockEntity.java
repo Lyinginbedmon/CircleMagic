@@ -15,6 +15,7 @@ import net.minecraft.world.phys.AABB;
 
 public class LeyPointBlockEntity extends BlockEntity
 {
+	private static final double RANGE = LeylineManager.LEYLINE_RANGE;
 	private int serverTicks = 0;
 	private boolean reportedToManager = false;
 	
@@ -27,9 +28,9 @@ public class LeyPointBlockEntity extends BlockEntity
 	{
 		if(blockEntity.serverTicks++ % Reference.Values.TICKS_PER_SECOND == 0)
 		{
-			int minY = Math.max(pos.getY() - 8, world.dimensionType().minY());
-			int maxY = minY + 16;
-			AABB bounds = new AABB(pos.getX() - 8, minY, pos.getZ() - 8, pos.getX() + 8, maxY, pos.getZ() + 8);
+			int minY = (int)Math.max(pos.getY() - RANGE, world.dimensionType().minY());
+			int maxY = (int)(minY + (RANGE * 2));
+			AABB bounds = new AABB(pos.getX() - RANGE, minY, pos.getZ() - RANGE, pos.getX() + RANGE, maxY, pos.getZ() + RANGE);
 			world.getEntitiesOfClass(LivingEntity.class, bounds).forEach((living) ->  living.addEffect(new MobEffectInstance(CMStatusEffects.LEY_POWER.get(), Reference.Values.TICKS_PER_SECOND * 5)));
 			
 			if(!blockEntity.reportedToManager)
