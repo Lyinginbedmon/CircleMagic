@@ -124,7 +124,7 @@ public class CMBlocks
     
     public static final RegistryObject<Block> MANA_CRYSTAL = BLOCKS.register("mana_crystal", () -> new ManaCrystal(BlockBehaviour.Properties.of(Material.AMETHYST)));
     
-    public static final RegistryObject<Block> LEY_POINT = BLOCKS.register("ley_point", () -> new LeyPoint(BlockBehaviour.Properties.of(Material.STONE).strength(-1.0F, 3600000.0F).noLootTable()));
+    public static final RegistryObject<Block> LEY_POINT = BLOCKS.register("ley_point", () -> new LeyPoint(BlockBehaviour.Properties.of(Material.STONE).strength(-1.0F, 3600000.0F).noCollission().noOcclusion().noLootTable()));
     
     public static void init() { }
 }

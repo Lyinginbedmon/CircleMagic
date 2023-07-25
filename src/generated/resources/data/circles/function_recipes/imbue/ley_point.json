@@ -1,0 +1,17 @@
+{
+  "Block": "{Name:\"circles:ley_point\"}",
+  "ID": "circles:imbue/ley_point",
+  "Ingredients": {
+    "Blocks": [
+      "minecraft:diamond_block",
+      "minecraft:emerald_block",
+      "minecraft:dragon_egg",
+      "minecraft:beacon"
+    ],
+    "Elements": [
+      "origo",
+      "origo"
+    ]
+  },
+  "Type": "circles:imbue_function"
+}

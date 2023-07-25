@@ -162,7 +162,8 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 				for(int index = 0; index < cubeSize - 2; index++)
 				{
 					// Alternating +/- of incrementing Y offset
-					int yOff = index%2 == 0 ? (index/2)*-1 : (index/2);
+					int yDiv = (int)Math.ceil(index * 0.5D);
+					int yOff = index%2 == 0 ? -yDiv : yDiv;
 					
 					// Starting at these values creates a reliable spiral around the circumference
 					Vec2 offset = new Vec2(cubeRadius, -cubeRadius + 1);

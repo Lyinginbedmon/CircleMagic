@@ -14,6 +14,7 @@ import com.lying.circles.client.renderer.magic.components.ComponentRenderer;
 import com.lying.circles.magic.ISpellComponent;
 import com.lying.circles.utility.CMUtils;
 import com.lying.circles.utility.SpellTextureManager;
+import com.lying.circles.utility.shapes.Quad2;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -99,7 +100,7 @@ public class Canvas
 		matrixStack.popPose();
 	}
 	
-	private void draw(PoseStack matrixStack, TriConsumer<ICanvasObject, PoseStack, List<Quad>> func)
+	private void draw(PoseStack matrixStack, TriConsumer<ICanvasObject, PoseStack, List<Quad2>> func)
 	{
 		List<Integer> levels = Lists.newArrayList();
 		levels.addAll(elements.keySet());
@@ -109,9 +110,9 @@ public class Canvas
 			elements.get(i).forEach((element) -> { if(!element.isExclusion()) func.accept(element,matrixStack, getExclusionsBelow(i)); });
 	}
 	
-	public List<Quad> getExclusionsBelow(int level)
+	public List<Quad2> getExclusionsBelow(int level)
 	{
-		List<Quad> exclusions = Lists.newArrayList();
+		List<Quad2> exclusions = Lists.newArrayList();
 		for(Entry<Integer, List<ICanvasObject>> entry : elements.entrySet())
 			if(entry.getKey() < level)
 				entry.getValue().forEach((object) -> {
@@ -122,9 +123,9 @@ public class Canvas
 	
 	public interface ICanvasObject
 	{
-		public void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height);
+		public void drawGui(PoseStack matrixStack, List<Quad2> exclusions, int width, int height);
 		
-		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions);
+		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad2> exclusions);
 		
 		public default boolean isExclusion() { return false; }
 	}
@@ -133,10 +134,10 @@ public class Canvas
 	{
 		public default boolean isExclusion() { return true; }
 		
-		public List<Quad> getQuads();
+		public List<Quad2> getQuads();
 		
-		public default void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height) { }
-		public default void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions) { }
+		public default void drawGui(PoseStack matrixStack, List<Quad2> exclusions, int width, int height) { }
+		public default void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad2> exclusions) { }
 	}
 	
 	public static class Circle implements ICanvasObject
@@ -145,7 +146,7 @@ public class Canvas
 		private final float radius, thickness;
 		private final int r, g, b, a;
 		
-		private final List<Quad> quads = Lists.newArrayList();
+		private final List<Quad2> quads = Lists.newArrayList();
 		
 		public Circle(Vec2 pos, float radiusIn, float thicknessIn)
 		{
@@ -171,19 +172,19 @@ public class Canvas
 			double cos = Math.cos(rads), sin = Math.sin(rads);
 			
 			for(int i=0; i<resolution; i++)
-				quads.add(new Quad(pos.add(offsetOut), pos.add(offsetIn), pos.add(offsetIn = CMUtils.rotate(offsetIn, cos, sin)), pos.add(offsetOut = CMUtils.rotate(offsetOut, cos, sin))));
+				quads.add(new Quad2(pos.add(offsetOut), pos.add(offsetIn), pos.add(offsetIn = CMUtils.rotate(offsetIn, cos, sin)), pos.add(offsetOut = CMUtils.rotate(offsetOut, cos, sin))));
 		}
 		
-		public void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height)
+		public void drawGui(PoseStack matrixStack, List<Quad2> exclusions, int width, int height)
 		{
-			for(Quad quad : quads)
+			for(Quad2 quad : quads)
 				if(quad.isWithinScreen(width, height))
 					RenderUtils.drawBlockColorSquare(quad, r, g, b, a, exclusions);
 		}
 		
-		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions)
+		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad2> exclusions)
 		{
-			for(Quad quad : quads)
+			for(Quad2 quad : quads)
 				if(!quad.isUndrawable())
 					;
 			RenderUtils.drawOutlineCircle(matrixStack, bufferSource, position, radius, thickness, r, g, b, a);
@@ -212,12 +213,12 @@ public class Canvas
 			this.a = alpha;
 		}
 		
-		public void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height)
+		public void drawGui(PoseStack matrixStack, List<Quad2> exclusions, int width, int height)
 		{
 			RenderUtils.drawColorLine(start, end, thickness, r, g, b, a, exclusions);
 		}
 		
-		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions)
+		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad2> exclusions)
 		{
 			RenderUtils.drawColorLine(matrixStack, bufferSource, start, end, thickness, r, g, b, a);
 		}
@@ -240,7 +241,7 @@ public class Canvas
 					new Vec2(position.x - width / 2, position.y + height / 2)};
 		}
 		
-		public void drawGui(PoseStack matrixStack, List<Quad> exclusions, int width, int height)
+		public void drawGui(PoseStack matrixStack, List<Quad2> exclusions, int width, int height)
 		{
 			boolean outOfBounds = true;
 			for(Vec2 vertex : vertices)
@@ -269,7 +270,7 @@ public class Canvas
 		    RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 		}
 		
-		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad> exclusions)
+		public void drawWorld(PoseStack matrixStack, MultiBufferSource bufferSource, List<Quad2> exclusions)
 		{
 			Vec2 topLeft = vertices[0];
 			Vec2 topRight = vertices[1];
@@ -297,14 +298,14 @@ public class Canvas
 	/** Defines a quad where canvas objects below should not be drawn */
 	public static class ExclusionQuad implements ICanvasExclusion
 	{
-		private final Quad quad;
+		private final Quad2 quad;
 		
 		public ExclusionQuad(Vec2 xyIn, Vec2 XyIn, Vec2 XYin, Vec2 xYIn)
 		{
-			this.quad = new Quad(xyIn, XyIn, XYin, xYIn);
+			this.quad = new Quad2(xyIn, XyIn, XYin, xYIn);
 		}
 		
-		public List<Quad> getQuads(){ return List.of(this.quad); }
+		public List<Quad2> getQuads(){ return List.of(this.quad); }
 	}
 	
 	/** Defines a circle of quads where canvas objects below should not be drawn */
@@ -315,15 +316,15 @@ public class Canvas
 		private static final double SIN = Math.sin(TURN);
 		private static final double COS2 = Math.cos(TURN / 2);
 		private static final double SIN2 = Math.sin(TURN / 2);
-		private final List<Quad> quads = Lists.newArrayList();
+		private final List<Quad2> quads = Lists.newArrayList();
 		
 		public ExclusionCircle(Vec2 pos, float radius)
 		{	
 			Vec2 offset = new Vec2(radius, 0);
 			for(int i=0; i<360 / TURN; i++)
-				quads.add(new Quad(pos, pos.add(offset), pos.add(CMUtils.rotate(offset, COS2, SIN2)), pos.add(offset = CMUtils.rotate(offset, COS, SIN))));
+				quads.add(new Quad2(pos, pos.add(offset), pos.add(CMUtils.rotate(offset, COS2, SIN2)), pos.add(offset = CMUtils.rotate(offset, COS, SIN))));
 		}
 		
-		public List<Quad> getQuads() { return this.quads; }
+		public List<Quad2> getQuads() { return this.quads; }
 	}
 }

@@ -11,6 +11,7 @@ public class CMDataGenerators
 		DataGenerator generator = event.getGenerator();
 		ExistingFileHelper fileHelper = event.getExistingFileHelper();
 		generator.addProvider(event.includeServer(), new CMBlockLootProvider(generator, fileHelper));
+		generator.addProvider(event.includeServer(), new CMBlockTags(generator, fileHelper));
 		generator.addProvider(event.includeServer(), new CMItemTags(generator, fileHelper));
 		generator.addProvider(event.includeServer(), new CMFunctionRecipeProvider(generator, fileHelper));
 	}

@@ -6,6 +6,8 @@ import com.lying.circles.blocks.entity.LeyPointBlockEntity;
 import com.lying.circles.init.CMBlockEntities;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -27,6 +29,33 @@ public class LeyPoint extends Block implements EntityBlock
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new LeyPointBlockEntity(pos, state);
+	}
+	
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource rand)
+	{
+		for(int i = 0; i < 4; ++i)
+		{
+			double posX = (double)pos.getX() + rand.nextDouble();
+			double posY = (double)pos.getY() + rand.nextDouble();
+			double posZ = (double)pos.getZ() + rand.nextDouble();
+			double velX = ((double)rand.nextFloat() - 0.5D) * 0.5D;
+			double velY = ((double)rand.nextFloat() - 0.5D) * 0.5D;
+			double velZ = ((double)rand.nextFloat() - 0.5D) * 0.5D;
+			
+			int j = rand.nextInt(2) * 2 - 1;
+			if (!world.getBlockState(pos.west()).is(this) && !world.getBlockState(pos.east()).is(this))
+			{
+				posX = (double)pos.getX() + 0.5D + 0.25D * (double)j;
+				velX = (double)(rand.nextFloat() * 2.0F * (float)j);
+			}
+			else
+			{
+				posZ = (double)pos.getZ() + 0.5D + 0.25D * (double)j;
+				velZ = (double)(rand.nextFloat() * 2.0F * (float)j);
+			}
+			
+			world.addParticle(ParticleTypes.PORTAL, posX, posY, posZ, velX, velY, velZ);
+		}
 	}
 	
 	@Nullable

@@ -117,11 +117,14 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		}
 		else if(currentMana > this.manaCapacity * 2 && !this.theEntity.isInvulnerableTo(CMDamageSource.TOO_MUCH_MANA))
 		{
+			Level world = this.theEntity.level;
+			if(world.isClientSide())
+				return;
+			
 			resetMana();
 			this.theEntity.hurt(CMDamageSource.TOO_MUCH_MANA, Float.MAX_VALUE);
 			
-			Level world = this.theEntity.level;
-			Explosion.BlockInteraction blockInteraction = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this.theEntity) ? Explosion.BlockInteraction.DESTROY : Explosion.BlockInteraction.NONE;
+			Explosion.BlockInteraction blockInteraction = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this.theEntity) ? Explosion.BlockInteraction.BREAK : Explosion.BlockInteraction.NONE;
 			world.explode(this.theEntity, this.theEntity.getX(), this.theEntity.getY(), this.theEntity.getZ(), 3F, blockInteraction);
 		}
 	}

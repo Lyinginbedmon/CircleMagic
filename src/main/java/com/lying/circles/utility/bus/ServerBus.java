@@ -7,6 +7,7 @@ import com.lying.circles.capabilities.LivingData;
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.init.CMBlocks;
 import com.lying.circles.init.CMDamageSource;
+import com.lying.circles.init.CMStatusEffects;
 import com.lying.circles.network.PacketHandler;
 import com.lying.circles.network.PacketSyncSpellManager;
 import com.lying.circles.reference.Reference;
@@ -17,6 +18,7 @@ import com.lying.circles.utility.SpellManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -99,21 +101,27 @@ public class ServerBus
 			manager.tick();
 		
 		LeylineManager leyLines = LeylineManager.instance(event.level);
-		if(!leyLines.isEmpty())
+		if(leyLines != null && !leyLines.isEmpty())
 			leyLines.tick();
 	}
 	
 	@SubscribeEvent
 	public static void onLivingTick(LivingTickEvent event)
 	{
-		LivingData data = LivingData.getCapability(event.getEntity());
-		data.tick(event.getEntity().getLevel());
+		LivingEntity living = event.getEntity();
 		
-		if(event.getEntity().getType() == EntityType.PLAYER)
+		LivingData data = LivingData.getCapability(living);
+		data.tick(living.getLevel());
+		
+		if(living.getType() == EntityType.PLAYER)
 		{
-			PlayerData playerData = PlayerData.getCapability((Player)event.getEntity());
-			playerData.tick(event.getEntity().getLevel());
+			PlayerData playerData = PlayerData.getCapability((Player)living);
+			playerData.tick(living.getLevel());
 		}
+		
+		LeylineManager leyLines = LeylineManager.instance(living.level);
+		if(leyLines != null && leyLines.isOnLeyLine(living))
+			living.addEffect(new MobEffectInstance(CMStatusEffects.LEY_POWER.get(), Reference.Values.TICKS_PER_SECOND * 5));
 	}
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)

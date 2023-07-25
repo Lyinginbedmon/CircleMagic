@@ -22,7 +22,7 @@ public abstract class FunctionRecipe<T>
 	
 	protected final RegistryObject<Function<JsonObject, FunctionRecipe<?>>> functionType;
 	protected final ResourceLocation id;
-	protected final Element[] elements;	// FIXME Allow for repeats of elements
+	protected final Element[] elements;
 	
 	protected FunctionRecipe(ResourceLocation idIn, RegistryObject<Function<JsonObject, FunctionRecipe<?>>> typeIn, Element... elementsIn)
 	{

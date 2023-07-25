@@ -1,14 +1,15 @@
 package com.lying.circles.utility;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.compress.utils.Lists;
 
 import com.lying.circles.reference.Reference;
-import com.mojang.datafixers.util.Pair;
+import com.lying.circles.utility.shapes.Line2;
+import com.lying.circles.utility.shapes.Line3;
+import com.lying.circles.utility.shapes.Tri2;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -30,7 +31,7 @@ public class LeylineManager extends SavedData
 	public static final double LEYLINE_RANGE = 8D;
 	
 	private List<BlockPos> leyPoints = Lists.newArrayList();
-	private List<Line> leyLines = Lists.newArrayList();
+	private List<Line3> leyLines = Lists.newArrayList();
 	
 	@Nullable
 	private Level world;
@@ -73,25 +74,25 @@ public class LeylineManager extends SavedData
 		ListTag points = nbt.getList("Points", Tag.TAG_COMPOUND);
 		for(int i=0; i<points.size(); i++)
 			this.leyPoints.add(NbtUtils.readBlockPos(points.getCompound(i)));
-		leyLines = calculateLeyLinesSalesman();
+		leyLines = calculateLeylinesDelaunay();
 	}
 	
 	public void addLeyPoint(BlockPos point)
 	{
-		if(!leyPoints.contains(point))
+		if(!hasPos(point))
 		{
 			leyPoints.add(point);
-			leyLines = calculateLeyLinesSalesman();
+			leyLines = calculateLeylinesDelaunay();
 			setDirty();
 		}
 	}
 	
 	public void removeLeyPoint(BlockPos point)
 	{
-		if(leyPoints.contains(point))
+		if(hasPos(point))
 		{
 			leyPoints.remove(point);
-			leyLines = calculateLeyLinesSalesman();
+			leyLines = calculateLeylinesDelaunay();
 			setDirty();
 		}
 	}
@@ -100,18 +101,22 @@ public class LeylineManager extends SavedData
 	
 	public int size() { return this.leyPoints.size(); }
 	
+	/** Returns true if this manager contains the given ley point */
+	public boolean hasPos(BlockPos pos)
+	{
+		for(BlockPos point : leyPoints)
+			if(point.distSqr(pos) == 0D)
+				return true;
+		return false;
+	}
+	
 	public boolean isOnLeyLine(LivingEntity entity)
 	{
-		if(isEmpty())
+		if(isEmpty() || this.leyLines.isEmpty())
 			return false;
 		
-		// If entity is within 8 blocks of a ley point
-		for(Vec3 point : pointsToVec())
-			if(point.distanceTo(entity.position()) <= (LEYLINE_RANGE * LEYLINE_RANGE))
-				return true;
-		
 		// If entity is within 8 blocks of a ley line
-		for(Line leyline : leyLines)
+		for(Line3 leyline : leyLines)
 			if(leyline.distanceTo(entity.position()) < LEYLINE_RANGE)
 				return true;
 		
@@ -126,7 +131,7 @@ public class LeylineManager extends SavedData
 	}
 	
 	/** Travelling Salesman between all known ley points */
-	public List<Line> calculateLeyLinesSalesman()
+	public List<Line3> calculateLeyLinesSalesman()
 	{
 		List<Vec3> visited = Lists.newArrayList();
 		List<Vec3> remaining = Lists.newArrayList();
@@ -159,79 +164,104 @@ public class LeylineManager extends SavedData
 		}
 		visited.add(currentPos);
 		
-		List<Line> lines = Lists.newArrayList();
+		List<Line3> lines = Lists.newArrayList();
 		for(int i=0; i<visited.size(); i++)
-			lines.add(new Line(visited.get(0), visited.get((i+1)%visited.size())));
+			lines.add(new Line3(visited.get(i), visited.get((i+1)%visited.size())));
 		return lines;
 	}
 	
-	/** TODO Implement Delaunay triangulation to map leyline network */
-	public List<Line> calculateLeylinesDelaunay()
+	/** Implementation of the Bowyer-Watson algorithm for Delaunay triangulation */
+	public List<Line3> calculateLeylinesDelaunay()
 	{
 		List<Vec3> totalPoints = pointsToVec();
 		System.out.println("Calculating Delaunay triangulation of "+size()+" points");
-		switch(size())
+		switch(totalPoints.size())
 		{
 			case 0:
 			case 1:
+				System.out.println(" - Insufficient points for a leyline");
 				return Lists.newArrayList();
 			case 2:
-				return List.of(new Line(totalPoints.get(0), totalPoints.get(1)));
+				System.out.println(" - Single leyline");
+				return List.of(new Line3(totalPoints.get(0), totalPoints.get(1)));
+			case 3:
+				System.out.println(" - Three leylines only");
+				return List.of(new Line3(totalPoints.get(0), totalPoints.get(1)), new Line3(totalPoints.get(0), totalPoints.get(2)), new Line3(totalPoints.get(1), totalPoints.get(2)));
 			default:
+				System.out.println(" - Full triangulation needed");
 				break;
 		}
 		
-		if(totalPoints.size() == 3)
-			return trianglesToUniqueLines(List.of(new Triangle(totalPoints.get(0), totalPoints.get(1), totalPoints.get(2))));
+		// Triangle mesh
+		List<Tri2> mesh = Lists.newArrayList();
 		
-		// List of triangles to test
-		List<Triangle> unsetTris = Lists.newArrayList();
-		unsetTris.add(Triangle.SUPER);
+		// Points to add
+		List<Vec2> points = Lists.newArrayList();
+		double yLevel = totalPoints.get(0).y;
+		totalPoints.forEach((point) -> points.add(new Vec2((float)point.x, (float)point.z)));
 		
-		// List of triangles with no conflicts
-		List<Triangle> fixedTris = Lists.newArrayList();
+		// Initialise mesh with super triangle containing all points
+		mesh.add(Tri2.makeTriangleContaining(points.toArray(new Vec2[0])));
 		
-		int tally = 0;
-		while(!unsetTris.isEmpty())
+		// Incrementally add points to the mesh
+		for(Vec2 point : points)
+			mesh = addPointToMesh(point, mesh);
+		
+		// Remove all triangles remaining from the super triangle
+		mesh.removeIf((tri) -> !points.containsAll(tri.points()));
+		
+		System.out.println(" - Triangles generated: "+mesh.size());
+		List<Line3> lines3 = Lists.newArrayList();
+		mesh.forEach((tri) -> tri.lines().forEach((line) -> 
 		{
-			Triangle tri = unsetTris.get(0);
-			
-			// Set of points contained within this triangle
-			List<Vec3> intersections = Lists.newArrayList();
-			totalPoints.forEach((pos) -> 
-			{
-				if(tri.circleContains(pos))
-					intersections.add(pos);
-			});
-			System.out.println("# Tri "+String.valueOf(tally++)+": "+intersections.size()+" contained points");
-			
-			// If triangle contains no extra points, fix it, else add all triangles connecting its intersections
-			if(intersections.isEmpty())
-				fixedTris.add(tri);
-			else
-				intersections.forEach((point) -> unsetTris.addAll(tri.connectTo(point)));
-			
-			unsetTris.remove(0);
-			System.out.println("Triangles remaining: "+unsetTris.size());
-		}
-		
-		// Remove all triangles with at least one point outside of our point set
-		fixedTris.removeIf((tri) -> !(totalPoints.containsAll(tri.points())));
-		System.out.println("Final count: "+fixedTris.size()+" triangles");
-		return trianglesToUniqueLines(fixedTris);
+			Vec2 a = line.getA();
+			Vec2 b = line.getB();
+			Line3 line3 = new Line3(new Vec3(a.x, yLevel, a.y), new Vec3(b.x, yLevel, b.y));
+			if(!lines3.contains(line3))
+				lines3.add(line3);
+		}));
+		System.out.println(" - Leylines generated: "+lines3.size());
+		return lines3;
 	}
 	
-	public List<Line> trianglesToUniqueLines(List<Triangle> triangles)
+	private static List<Tri2> addPointToMesh(Vec2 point, List<Tri2> mesh)
 	{
-		List<Line> lines = Lists.newArrayList();
+		System.out.println(" # "+mesh.size()+" tris to test");
 		
-		triangles.forEach((tri) -> tri.lines().forEach((line) -> 
-			{
-				if(!lines.contains(line))
-					lines.add(line);
-			}));
+		// The output mesh
+		List<Tri2> trisNext = Lists.newArrayList();
 		
-		return lines;
+		// Triangles rendered invalid by the addition of this point
+		List<Tri2> badTris = Lists.newArrayList();
+		
+		/**
+		 * For all triangles in the mesh:
+		 * * If they contain the point in their circumcircle, add them to badTris
+		 * * Else add them to trisNext
+		 */
+		mesh.forEach((tri) -> 
+		{
+			if(tri.contains(point))
+				badTris.add(tri);
+			else
+				trisNext.add(tri);
+		});
+		
+		// Collect all non-duplicate lines from all bad triangles
+		// This represents the polygon of affected space
+		List<Line2> polygon = Tri2.triMeshToUniqueLines(badTris);
+		System.out.println(" # # "+polygon.size()+"-sided polygon generated from "+badTris.size()+" tris");
+		
+		// Create new triangles from all polygon edges and the point
+		polygon.forEach((edge) -> 
+		{
+			Vec2 a = edge.getA();
+			Vec2 b = edge.getB();
+			if(!Tri2.checkParallel(a, b, point))
+				trisNext.add(new Tri2(a, b, point));
+		});
+		
+		return trisNext;
 	}
 	
 	public void tick()
@@ -240,10 +270,10 @@ public class LeylineManager extends SavedData
 			return;
 		
 		ServerLevel server = (ServerLevel)world;
-		for(Line leyline : this.leyLines)
+		for(Line3 leyline : this.leyLines)
 		{
-			Vec3 start = leyline.getFirst();
-			Vec3 end = leyline.getSecond();
+			Vec3 start = leyline.getA();
+			Vec3 end = leyline.getB();
 			
 			Vec3 offset = end.subtract(start);
 			Vec3 normal = offset.normalize();
@@ -253,190 +283,6 @@ public class LeylineManager extends SavedData
 				for(ServerPlayer player : server.players())
 					server.sendParticles(player, ParticleTypes.WITCH, false, position.x, position.y, position.z, 1, normal.x * 0.5D, normal.y * 0.5D, normal.z * 0.5D, 0D);
 			}
-		}
-	}
-	
-	private static class Triangle
-	{
-		public static Triangle SUPER;
-		
-		private final Vec3 a, b, c;
-		
-		private final Vec3 circumcenter;
-		private final double circumcircleRadius;
-		
-		public Triangle(Vec3 aIn, Vec3 bIn, Vec3 cIn) throws IllegalArgumentException
-		{
-			a = aIn;
-			b = bIn;
-			c = cIn;
-			
-			// New methodology, incomplete
-//			Pair<Vec3,Double> circumCalc = calculateCircumcircle(a, b, c);
-//			circumcenter = circumCalc.getFirst();
-//			circumcircleRadius = circumCalc.getSecond();
-			
-			// Old methodology, broken
-			Vec3 ac = c.subtract(a);
-			Vec3 ab = b.subtract(a);
-			Vec3 abXac = ab.cross(ac);
-			Vec3 toCircumcenter = (abXac.cross(ab).scale(ac.lengthSqr()).add(ac.cross(abXac).scale(ab.lengthSqr()))).scale(1D / (2F*abXac.lengthSqr()));
-			circumcircleRadius = toCircumcenter.length();
-			circumcenter = a.add(toCircumcenter);
-		}
-		
-		public String toString() { return "Triangle[" + a.toString()+", "+b.toString()+", "+c.toString()+"]"; }
-		
-		@SuppressWarnings("unused")
-		public boolean equals(Triangle tri2)
-		{
-			return tri2.circumcenter == circumcenter && tri2.circumcircleRadius == circumcircleRadius;
-		}
-		
-		/** Returns true if the circumcircle of this triangle contains the given point */
-		public boolean circleContains(Vec3 pos)
-		{
-			if(pos.distanceTo(a) == 0)
-				return false;
-			else if(pos.distanceTo(b) == 0)
-				return false;
-			else if(pos.distanceTo(c) == 0)
-				return false;
-			else
-				return circumcenter.distanceTo(pos) <= circumcircleRadius;
-		}
-		
-		/** Devolves this triangle into a set of triangles connected to the given point */
-		public Set<Triangle> connectTo(Vec3 pos)
-		{
-			return Set.of(new Triangle(a, b, pos), new Triangle(a, pos, c), new Triangle(pos, b, c));
-		}
-		
-		public Set<Vec3> points() { return Set.of(a, b, c); }
-		
-		public Set<Line> lines(){ return Set.of(new Line(a, b), new Line(a, c), new Line(b, c)); }
-		
-		// FIXME Correct formula to determine triangle circumcircle
-		private static Pair<Vec3,Double> calculateCircumcircle(Vec3 a, Vec3 b, Vec3 c)
-		{
-			// Convert all points to a local coordinate system relative to point A (which therefore becomes [0, 0, 0])
-			Vec3 localB = b.subtract(a);
-			Vec3 localC = c.subtract(a);
-			
-			// Rotate all points along the Y axis equal to yaw between A and B x -1
-			float yawFrom0 = (float)Math.atan2(localB.x, localB.z);
-			localB = localB.yRot(-yawFrom0);
-			localC = localC.yRot(-yawFrom0);
-			
-			// Rotate all points along the X axis equal to pitch between A and C x -1
-			// This leaves all points on a flat plane with point A always at [0, 0, 0]
-			float pitchFrom0 = (float)Math.asin(-localC.y);
-			localB = localB.xRot(-pitchFrom0);
-			localC = localC.xRot(-pitchFrom0);
-			
-			// Convert all points to 2D vectors
-			Vec2 b2D, c2D = Vec2.ZERO;
-			int convertMode = -1;
-			if(localB.x == 0D && localC.x == 0D)
-			{
-				b2D = new Vec2((float)localB.y, (float)localB.z);
-				c2D = new Vec2((float)localC.y, (float)localC.z);
-				convertMode = 0;
-			}
-			else if(localB.y == 0D && localC.y == 0D)
-			{
-				b2D = new Vec2((float)localB.x, (float)localB.z);
-				c2D = new Vec2((float)localC.x, (float)localC.z);
-				convertMode = 1;
-			}
-			else if(localB.z == 0D && localC.z == 0D)
-			{
-				b2D = new Vec2((float)localB.x, (float)localB.y);
-				c2D = new Vec2((float)localC.x, (float)localC.y);
-				convertMode = 2;
-			}
-			else
-				throw new IllegalArgumentException();
-			
-			// Calculate circumcenter position
-			// Circumcenter = intercept point of lines perpendicular to line AB and AC from the respective midpoints
-			Vec2 abMid = b2D.scale(0.5F);
-			Vec2 bNormal = new Vec2(-b2D.y, b2D.x).normalized();
-			Vec2 acMid = c2D.scale(0.5F);
-			Vec2 cNormal = new Vec2(-c2D.y, c2D.x).normalized();
-			
-			Vec2 center2D = Vec2.ZERO;
-			
-			// Rotate circumcenter by pitch and yaw, then add point A, to translate to 3D space
-			Vec3 center3D = null;
-			switch(convertMode)
-			{
-				case 0:
-					center3D = new Vec3(0D, center2D.x, center2D.y);
-					break;
-				case 1:
-					center3D = new Vec3(center2D.x, 0D, center2D.y);
-					break;
-				case 2:
-					center3D = new Vec3(center2D.x, center2D.y, 0D);
-					break;
-			}
-			center3D = center3D.xRot(pitchFrom0).yRot(yawFrom0).add(a);
-			
-			return Pair.of(center3D, a.distanceTo(center3D));
-		}
-		
-		static
-		{
-			Vec3 superA = new Vec3(Double.MAX_VALUE, 64, 0);
-			Vec3 superB = new Vec3(-superA.z, 64, superA.x);
-			Vec3 superC = new Vec3(-superB.z, 64, superB.x);
-			SUPER = new Triangle(superA, superB, superC);
-			System.out.println("Super triangle center: "+SUPER.circumcenter.toString());
-		}
-	}
-	
-	private static class Line extends Pair<Vec3, Vec3>
-	{
-		// Components of the slope intercept equation of this line
-		// y = mx + b OR x = a
-		private final double m, b;
-		private final boolean isVertical;
-		
-		public Line(Vec3 a, Vec3 b)
-		{
-			super(a, b);
-			
-			double run = getSecond().x - getFirst().x;
-			double rise = getSecond().y - getFirst().y;
-			
-			isVertical = run == 0;
-			if(isVertical)
-			{
-				this.m = getFirst().x;
-				this.b = 0;
-			}
-			else
-			{
-				this.m = run == 0 ? 0 : rise / run;
-				this.b = getFirst().y - (getFirst().x * m);
-			}
-		}
-		
-		public String toString() { return "Line["+getFirst().toString()+", "+getSecond().toString()+"]"; }
-		
-		@SuppressWarnings("unused")
-		public boolean equals(Line line2)
-		{
-			return
-					(line2.getFirst().distanceTo(getFirst()) == 0D && line2.getSecond().distanceTo(getSecond()) == 0D) ||
-					(line2.getSecond().distanceTo(getFirst()) == 0D && line2.getFirst().distanceTo(getSecond()) == 0D);
-		}
-		
-		public double distanceTo(Vec3 point)
-		{
-			// TODO Calculate distance of point to line
-			return Double.MAX_VALUE;
 		}
 	}
 }
