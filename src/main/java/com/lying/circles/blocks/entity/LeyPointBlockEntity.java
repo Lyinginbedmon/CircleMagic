@@ -206,13 +206,4 @@ public class LeyPointBlockEntity extends BlockEntity
 	{
 		;
 	}
-	
-	public void setRemoved()
-	{
-		super.setRemoved();
-		
-		LeylineManager manager = LeylineManager.instance(level);
-		if(manager != null)
-			manager.removeLeyPoint(worldPosition);
-	}
 }

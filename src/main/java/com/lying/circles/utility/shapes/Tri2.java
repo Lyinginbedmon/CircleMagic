@@ -16,8 +16,8 @@ public class Tri2
 {
 	private final Vec2 a, b, c;
 	
-	private final Vec2 circumcenter;
-	private final double circumRadius;
+	public final Vec2 circumcenter;
+	public final double circumRadius;
 	
 	public Tri2(Vec2 aIn, Vec2 bIn, Vec2 cIn) throws IllegalArgumentException
 	{
@@ -162,6 +162,54 @@ public class Tri2
 		Vec2 c = center.add(new Vec2((float)(Math.cos(turn) * dir.x - Math.sin(turn) * dir.y), (float)(Math.sin(turn) * dir.x + Math.cos(turn) * dir.y)));
 		
 		return new Tri2(a, b, c);
+	}
+	
+	public static List<Tri2> generateDelaunayMesh(Vec2... points)
+	{
+		// The triangle mesh
+		List<Tri2> mesh = Lists.newArrayList();
+		
+		// Initial super triangle containing all points
+		Tri2 superTri = makeTriangleContaining(points);
+		mesh.add(superTri);
+		
+		for(int i=0; i<points.length; i++)
+		{
+			Vec2 point = points[i];
+			
+			List<Tri2> trisNext = Lists.newArrayList();
+			List<Tri2> badTris = Lists.newArrayList();
+			mesh.forEach((tri) -> 
+			{
+				if(tri.contains(point))
+					badTris.add(tri);
+				else
+					trisNext.add(tri);
+			});
+			
+			if(!badTris.isEmpty())
+				triMeshToUniqueLines(badTris).forEach((edge) -> 
+				{
+					Vec2 a = edge.getA();
+					Vec2 b = edge.getB();
+					if(!checkParallel(a, b, point))
+						trisNext.add(new Tri2(a, b, point));
+				});
+			
+			mesh = trisNext;
+		}
+		
+		// Remove any triangles connected to the super triangle
+		mesh.removeIf((tri) -> 
+		{
+			for(Vec2 point : tri.points())
+				if(superTri.points().contains(point))
+					return true;
+			
+			return false;
+		});
+		
+		return mesh;
 	}
 	
 	/**

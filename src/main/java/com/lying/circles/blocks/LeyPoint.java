@@ -4,11 +4,13 @@ import javax.annotation.Nullable;
 
 import com.lying.circles.blocks.entity.LeyPointBlockEntity;
 import com.lying.circles.init.CMBlockEntities;
+import com.lying.circles.utility.LeylineManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -29,6 +31,16 @@ public class LeyPoint extends Block implements EntityBlock
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
 	{
 		return new LeyPointBlockEntity(pos, state);
+	}
+	
+	public void destroy(LevelAccessor world, BlockPos pos, BlockState state)
+	{
+		if(!(world instanceof Level))
+			return;
+		
+		LeylineManager manager = LeylineManager.instance((Level)world);
+		if(manager != null)
+			manager.removeLeyPoint(pos);
 	}
 	
 	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource rand)

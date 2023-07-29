@@ -1,5 +1,7 @@
 package com.lying.circles.utility;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -10,6 +12,7 @@ import com.lying.circles.reference.Reference;
 import com.lying.circles.utility.shapes.Line2;
 import com.lying.circles.utility.shapes.Line3;
 import com.lying.circles.utility.shapes.Tri2;
+import com.lying.circles.utility.shapes.Tri3;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -179,89 +182,53 @@ public class LeylineManager extends SavedData
 		{
 			case 0:
 			case 1:
-				System.out.println(" - Insufficient points for a leyline");
 				return Lists.newArrayList();
 			case 2:
-				System.out.println(" - Single leyline");
 				return List.of(new Line3(totalPoints.get(0), totalPoints.get(1)));
 			case 3:
-				System.out.println(" - Three leylines only");
 				return List.of(new Line3(totalPoints.get(0), totalPoints.get(1)), new Line3(totalPoints.get(0), totalPoints.get(2)), new Line3(totalPoints.get(1), totalPoints.get(2)));
 			default:
-				System.out.println(" - Full triangulation needed");
 				break;
 		}
 		
-		// Triangle mesh
-		List<Tri2> mesh = Lists.newArrayList();
+		List<Tri3> mesh2 = Tri3.generateDelaunayMesh(totalPoints.toArray(new Vec3[0]));
+		System.out.println("# Triangles generated in 3D: "+mesh2.size());
 		
 		// Points to add
 		List<Vec2> points = Lists.newArrayList();
 		double yLevel = totalPoints.get(0).y;
 		totalPoints.forEach((point) -> points.add(new Vec2((float)point.x, (float)point.z)));
 		
-		// Initialise mesh with super triangle containing all points
-		mesh.add(Tri2.makeTriangleContaining(points.toArray(new Vec2[0])));
-		
-		// Incrementally add points to the mesh
-		for(Vec2 point : points)
-			mesh = addPointToMesh(point, mesh);
-		
-		// Remove all triangles remaining from the super triangle
-		mesh.removeIf((tri) -> !points.containsAll(tri.points()));
-		
-		System.out.println(" - Triangles generated: "+mesh.size());
+		// Triangle mesh
+		List<Tri2> mesh = Tri2.generateDelaunayMesh(points.toArray(new Vec2[0]));
+		System.out.println("# Triangles generated in 2D: "+mesh.size());
 		List<Line3> lines3 = Lists.newArrayList();
-		mesh.forEach((tri) -> tri.lines().forEach((line) -> 
+		if(mesh.isEmpty())
 		{
-			Vec2 a = line.getA();
-			Vec2 b = line.getB();
-			Line3 line3 = new Line3(new Vec3(a.x, yLevel, a.y), new Vec3(b.x, yLevel, b.y));
-			if(!lines3.contains(line3))
-				lines3.add(line3);
-		}));
-		System.out.println(" - Leylines generated: "+lines3.size());
+			/**
+			 * Find two points furthest apart
+			 * Sort points by distance to either of the pair
+			 * Connect points according to order
+			 */
+			
+			totalPoints.sort((new PointSorter(totalPoints)).distSorter());
+			for(int i=0; i<totalPoints.size(); i++)
+			{
+				Vec3 p1 = totalPoints.get(i);
+				Vec3 p2 = totalPoints.get((i+1)%totalPoints.size());
+				lines3.add(new Line3(p1, p2));
+			}
+		}
+		else
+			mesh.forEach((tri) -> tri.lines().forEach((line) -> 
+			{
+				Vec2 a = line.getA();
+				Vec2 b = line.getB();
+				Line3 line3 = new Line3(new Vec3(a.x, yLevel, a.y), new Vec3(b.x, yLevel, b.y));
+				if(!lines3.contains(line3))
+					lines3.add(line3);
+			}));
 		return lines3;
-	}
-	
-	private static List<Tri2> addPointToMesh(Vec2 point, List<Tri2> mesh)
-	{
-		System.out.println(" # "+mesh.size()+" tris to test");
-		
-		// The output mesh
-		List<Tri2> trisNext = Lists.newArrayList();
-		
-		// Triangles rendered invalid by the addition of this point
-		List<Tri2> badTris = Lists.newArrayList();
-		
-		/**
-		 * For all triangles in the mesh:
-		 * * If they contain the point in their circumcircle, add them to badTris
-		 * * Else add them to trisNext
-		 */
-		mesh.forEach((tri) -> 
-		{
-			if(tri.contains(point))
-				badTris.add(tri);
-			else
-				trisNext.add(tri);
-		});
-		
-		// Collect all non-duplicate lines from all bad triangles
-		// This represents the polygon of affected space
-		List<Line2> polygon = Tri2.triMeshToUniqueLines(badTris);
-		System.out.println(" # # "+polygon.size()+"-sided polygon generated from "+badTris.size()+" tris");
-		
-		// Create new triangles from all polygon edges and the point
-		polygon.forEach((edge) -> 
-		{
-			Vec2 a = edge.getA();
-			Vec2 b = edge.getB();
-			if(!Tri2.checkParallel(a, b, point))
-				trisNext.add(new Tri2(a, b, point));
-		});
-		
-		return trisNext;
 	}
 	
 	public void tick()
@@ -283,6 +250,45 @@ public class LeylineManager extends SavedData
 				for(ServerPlayer player : server.players())
 					server.sendParticles(player, ParticleTypes.WITCH, false, position.x, position.y, position.z, 1, normal.x * 0.5D, normal.y * 0.5D, normal.z * 0.5D, 0D);
 			}
+		}
+	}
+	
+	private static class PointSorter
+	{
+		private final Vec3 farthestPoint;
+		
+		public PointSorter(Collection<Vec3> totalPoints)
+		{
+			Vec3 farthest = null;
+			double highest = Double.MIN_VALUE;
+			for(Vec3 point : totalPoints)
+			{
+				double maxDist = Double.MIN_VALUE;
+				for(Vec3 point2 : totalPoints)
+					if(point2.distanceTo(point) > maxDist)
+						maxDist = point2.distanceTo(point);
+				
+				if(maxDist > highest)
+				{
+					farthest = point;
+					highest = maxDist;
+				}
+			}
+			
+			farthestPoint = farthest;
+		}
+		
+		public Comparator<Vec3> distSorter()
+		{
+			return new Comparator<Vec3>()
+			{
+				public int compare(Vec3 o1, Vec3 o2)
+				{
+					double d1 = o1.distanceTo(farthestPoint);
+					double d2 = o2.distanceTo(farthestPoint);
+					return d1 < d2 ? 1 : d1 > d2 ? -1 : 0;
+				}
+			};
 		}
 	}
 }
