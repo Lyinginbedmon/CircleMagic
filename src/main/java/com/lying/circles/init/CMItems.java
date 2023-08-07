@@ -2,6 +2,7 @@ package com.lying.circles.init;
 
 import com.lying.circles.item.CurruidDustItem;
 import com.lying.circles.item.FairyJarItem;
+import com.lying.circles.item.LichSkull;
 import com.lying.circles.item.Pendulum;
 import com.lying.circles.item.ScrollItem;
 import com.lying.circles.reference.Reference;
@@ -34,6 +35,7 @@ public class CMItems
     public static final RegistryObject<Item> CURRUID_DUST = ITEMS.register("curruid_dust", () -> new CurruidDustItem(new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> CURRUID_BLOCK = ITEMS.register("curruid_block", () -> new BlockItem(CMBlocks.CURRUID_BLOCK.get(), new Item.Properties().tab(TAB)));
     public static final RegistryObject<Item> CURRUID_GEM = ITEMS.register("curruid_gem", () -> new Item(new Item.Properties().tab(TAB)));
+    public static final RegistryObject<Item> LICH_SKULL = ITEMS.register("lich_skull", () -> new LichSkull(new Item.Properties().tab(TAB)));
     
     // Block items
     public static final RegistryObject<Item> SANDBOX_ITEM = ITEMS.register("sandbox", () -> new BlockItem(CMBlocks.SANDBOX.get(), new Item.Properties().tab(TAB)));

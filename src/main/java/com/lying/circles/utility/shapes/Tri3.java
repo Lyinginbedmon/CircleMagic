@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.compress.utils.Lists;
 
 import com.lying.circles.CircleMagic;
+import com.lying.circles.utility.CMUtils;
 
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -46,43 +47,21 @@ public class Tri3
 		Vec3 a3 = aIn;
 		Vec3 b3 = bIn;
 		Vec3 c3 = cIn;
-		Vec3 aToB = b3.subtract(a3);
-		Vec3 aToC = c3.subtract(a3);
-		double yaw = Math.atan2(aToB.x, aToB.z);
 		
-		Matrix3 yawM = Matrix3.rotationYaw(-Math.asin(-aToC.y));
+		double yaw = CMUtils.yawOfVec(a3, b3);
+		Matrix3 yawM = Matrix3.rotationYaw(-yaw);
 		a3 = yawM.applyTo(a3);
 		b3 = yawM.applyTo(b3);
 		c3 = yawM.applyTo(c3);
 		
-		double pitch = Math.asin(-aToC.y);
-		Matrix3 pitM = Matrix3.rotationPitch(-Math.asin(-c3.subtract(a3).y));
+		double pitch = CMUtils.pitchOfVec(a3, c3);
+		Matrix3 pitM = Matrix3.rotationPitch(-pitch);
 		a3 = pitM.applyTo(a3);
 		
 		Matrix3 matrix2D = Matrix3.mul(yawM, pitM, Matrix3.translation(a3.scale(-1D)));
 		Matrix3 matrix3D = Matrix3.mul(Matrix3.rotationYaw(yaw), Matrix3.rotationPitch(pitch), Matrix3.translation(a3));
 		
-		CircleMagic.LOG.info("Generating 3D<->2D matrices");
-		CircleMagic.LOG.info("# Input values in 3D:");
-		CircleMagic.LOG.info("# # A: "+(float)(int)(aIn.x * 10F)/10F+", "+(float)(int)(aIn.y * 10F)/10F+", "+(float)(int)(aIn.z * 10F)/10F);
-		CircleMagic.LOG.info("# # B: "+(float)(int)(bIn.x * 10F)/10F+", "+(float)(int)(bIn.y * 10F)/10F+", "+(float)(int)(bIn.z * 10F)/10F);
-		CircleMagic.LOG.info("# # C: "+(float)(int)(cIn.x * 10F)/10F+", "+(float)(int)(cIn.y * 10F)/10F+", "+(float)(int)(cIn.z * 10F)/10F);
-		CircleMagic.LOG.info("# Adjusted values for 2D:");
-		Vec2 a2D = matrix2D.to2D(aIn);
-		Vec2 b2D = matrix2D.to2D(bIn);
-		Vec2 c2D = matrix2D.to2D(cIn);
-		CircleMagic.LOG.info("# # A: "+(float)(int)(a2D.x * 10F)/10F+", "+(float)(int)(a2D.y * 10F)/10F);
-		CircleMagic.LOG.info("# # B: "+(float)(int)(b2D.x * 10F)/10F+", "+(float)(int)(b2D.y * 10F)/10F);
-		CircleMagic.LOG.info("# # C: "+(float)(int)(c2D.x * 10F)/10F+", "+(float)(int)(c2D.y * 10F)/10F);
-		CircleMagic.LOG.info("# Values reverted to 3D:");
-		Vec3 a3D = matrix3D.to3D(a2D);
-		Vec3 b3D = matrix3D.to3D(b2D);
-		Vec3 c3D = matrix3D.to3D(c2D);
-		CircleMagic.LOG.info("# # A: "+(float)(int)(a3D.x * 10F)/10F+", "+(float)(int)(a3D.y * 10F)/10F+", "+(float)(int)(a3D.z * 10F)/10F);
-		CircleMagic.LOG.info("# # B: "+(float)(int)(b3D.x * 10F)/10F+", "+(float)(int)(b3D.y * 10F)/10F+", "+(float)(int)(b3D.z * 10F)/10F);
-		CircleMagic.LOG.info("# # C: "+(float)(int)(c3D.x * 10F)/10F+", "+(float)(int)(c3D.y * 10F)/10F+", "+(float)(int)(c3D.z * 10F)/10F);
-		
-		return new Tri3(matrix2D, matrix3D, matrix2D.to2D(aIn), matrix2D.to2D(bIn), matrix2D.to2D(cIn));
+		return new Tri3(matrix2D, matrix3D, matrix2D.to2D(aIn.subtract(aIn)), matrix2D.to2D(bIn.subtract(aIn)), matrix2D.to2D(cIn.subtract(aIn)));
 	}
 	
 	/**
@@ -153,11 +132,11 @@ public class Tri3
 	
 	public List<Line3> lines(){ return List.of(new Line3(a, b), new Line3(a, c), new Line3(b, c)); }
 	
-	public Vec3 circumcenter() { return this.matrixTo3D.to3D(this.tri.circumcenter); }
+	public Vec3 circumcenter() { return this.matrixTo3D.to3D(this.tri.circumcenter).add(a); }
 	
 	public double circumradius() { return this.tri.circumRadius; }
 	
-	public boolean contains(Vec3 point) { return this.tri.contains(this.matrixTo2D.to2D(point)); }
+	public boolean contains(Vec3 point) { return this.tri.contains(this.matrixTo2D.to2D(point.subtract(a))); }
 	
 	/** Applies the Bowyer-Watson algorithm to generate a Delaunay triangulation mesh from the given points */
 	public static List<Tri3> generateDelaunayMesh(Vec3... points)
@@ -368,6 +347,36 @@ public class Tri3
 		public Vec3 to3D(Vec2 vec)
 		{
 			return applyTo(new Vec3(vec.x, 0, vec.y));
+		}
+		
+		static
+		{
+			double yaw = 0D;
+			double pitch = 35D;
+			Matrix3 testMatrix = Matrix3.mul(Matrix3.rotationPitch(Math.toRadians(pitch)), Matrix3.rotationYaw(Math.toRadians(yaw)));
+			
+			Vec3[] testVectors = new Vec3[] { testMatrix.applyTo(new Vec3(18, 0, 24)), testMatrix.applyTo(new Vec3(-94, 0, 6)), testMatrix.applyTo(new Vec3(40, 0, -18)) };
+			
+			System.out.println("Testing vectors: Y "+(int)yaw+" P "+(int)pitch);
+			for(int i=0; i<testVectors.length; i++)
+				System.out.println("# "+CMUtils.vecToString(testVectors[i]));
+			
+			/**
+			 * The three vectors represent points on a plane in 3D space
+			 * By identifying the normal of the plane, we rotate to align the plane along an axis where one component of all vectors is 0
+			 */
+			
+			Vec3 pNormal = (testVectors[1].subtract(testVectors[0])).cross((testVectors[2].subtract(testVectors[0])));
+			double pYaw = CMUtils.yawOfVec(pNormal);
+			double pPit = CMUtils.pitchOfVec(pNormal);
+			
+			System.out.println("Plane:");
+			System.out.println("# Cross: "+CMUtils.vecToString(pNormal.normalize()));
+			System.out.println("# # Angle Y "+(int)Math.toDegrees(pYaw)+", P "+(int)Math.toDegrees(pPit));
+			
+			Matrix3 reverse = Matrix3.mul(Matrix3.rotationYaw(-pYaw), Matrix3.rotationPitch(-pPit));
+			for(int i=0; i<testVectors.length; i++)
+				System.out.println("# # "+CMUtils.vecToString(reverse.applyTo(testVectors[i])));
 		}
 	}
 }

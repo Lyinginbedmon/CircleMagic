@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 public class CMUtils
 {
@@ -33,6 +34,36 @@ public class CMUtils
 	public static Vec2 rotate(Vec2 vec, double cos, double sin)
 	{
 		return new Vec2((float)(vec.x * cos - vec.y * sin), (float)(vec.y * cos + vec.x * sin));
+	}
+	
+	/** Returns the yaw angle from one vector to another, in radians */
+	public static double yawOfVec(Vec3 from, Vec3 to)
+	{
+		return yawOfVec(from.subtract(to));
+	}
+	
+	public static double yawOfVec(Vec3 vec)
+	{
+		return Math.atan2(vec.normalize().x, vec.normalize().z);
+	}
+	
+	/** Returns the pitch angle from one vector to another, in radians */
+	public static double pitchOfVec(Vec3 from, Vec3 to)
+	{
+		return pitchOfVec(to.subtract(from));
+	}
+	
+	public static double pitchOfVec(Vec3 vec)
+	{
+		return -Math.asin(vec.normalize().y);
+	}
+	
+	public static String vecToString(Vec3 vec)
+	{
+		double pX = (double)(int)(vec.x * 100) / 100;
+		double pY = (double)(int)(vec.y * 100) / 100;
+		double pZ = (double)(int)(vec.z * 100) / 100;
+		return "["+pX+", "+pY+", "+pZ+"]";
 	}
 	
 	/** Returns true if the given point is inside the given polygon.<br>Does not perform a boundary check. */

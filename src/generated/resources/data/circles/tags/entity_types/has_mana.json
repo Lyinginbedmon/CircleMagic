@@ -1,0 +1,13 @@
+{
+  "values": [
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    "minecraft:villager",
+    "minecraft:player",
+    "minecraft:witch"
+  ]
+}

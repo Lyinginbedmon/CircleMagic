@@ -32,7 +32,7 @@ public class CurruisisLayer<T extends Player, M extends HumanoidModel<T>> extend
 	public void render(PoseStack p_116951_, MultiBufferSource p_116952_, int p_116953_, T player, float p_116955_, float p_116956_, float p_116957_, float p_116958_, float p_116959_, float p_116960_)
 	{
 		PlayerData data = PlayerData.getCapability(player);
-		if(!data.hasCurruisis())
+		if(!data.hasCurruisis() || data.isALich())
 			return;
 		
 		for(int i=1; i<PlayerData.MAX_CURRUISIS; i++)

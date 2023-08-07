@@ -47,6 +47,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	private Map<EnumBodyPart, Integer> curruisisMap = new HashMap<>();
 	private boolean diedToCurruisis = false;
 	
+	private boolean isLich = true;
+	
 	private int tickCounter = 0;
 	
 	public PlayerData(Player playerIn)
@@ -115,12 +117,13 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 			return;
 		
 		if(this.thePlayer.isAlive() && !worldIn.isClientSide())
+		{
 			if(this.diedToCurruisis)
 			{
 				ameliorateCurruisis(this.thePlayer.getRandom());
 				this.diedToCurruisis = false;
 			}
-			else if(isFullyCurruided() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION))
+			else if(isFullyCurruided() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION) && !isALich())
 			{
 				BlockPos feetPos = this.thePlayer.blockPosition();
 				BlockPos headPos = new BlockPos(feetPos.getX(), this.thePlayer.getEyeY(), feetPos.getZ());
@@ -132,6 +135,10 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 				
 				this.thePlayer.hurt(CMDamageSource.PETRIFICATION, Float.MAX_VALUE);
 			}
+			
+			if(isALich())
+				LivingData.trySpendManaFrom(thePlayer, 1F);
+		}
 	}
 	
 	public boolean hasCurruisis() { return !this.curruisisMap.isEmpty(); }
@@ -180,6 +187,9 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	
 	public void addCurruisis(RandomSource rand)
 	{
+		if(isALich())
+			return;
+		
 		if(this.curruisisMap.isEmpty())
 		{
 			// Pick a random limb and set it to curruisis=1
@@ -229,6 +239,14 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	{
 		this.curruisisMap.put(part, severity);
 		this.markDirty();
+	}
+	
+	public boolean isALich() { return this.isLich; }
+	
+	public void setIsLich(boolean bool)
+	{
+		this.isLich = bool;
+		markDirty();
 	}
 	
 	public void markDirty()

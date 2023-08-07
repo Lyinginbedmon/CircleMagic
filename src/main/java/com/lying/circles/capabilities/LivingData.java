@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -32,13 +33,16 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	
 	private LivingEntity theEntity;
 	
-	private float manaCapacity = INITIAL_CAPACITY;
+	private float manaCapacity = -1F;
 	private float currentMana = manaCapacity;
 	private float recoveryRate = 1F;
 	
-	public LivingData(LivingEntity playerIn)
+	private int tickCounter = 0;
+	
+	public LivingData(LivingEntity livingIn)
 	{
-		this.theEntity = playerIn;
+		this.theEntity = livingIn;
+		this.manaCapacity = getBaseMaxMana(livingIn);
 	}
 	
 	public void setLiving(LivingEntity playerIn) { this.theEntity = playerIn; }
@@ -81,7 +85,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	
 	public void tick(Level worldIn)
 	{
-		if(!this.theEntity.isAlive())
+		if(!this.theEntity.isAlive() || tickCounter++ % Reference.Values.TICKS_PER_SECOND > 0)
 			return;
 		
 		float capacity = getCurrentCapacity();
@@ -97,7 +101,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 			markDirty();
 		}
 		
-		if(currentMana < 0)
+		if(currentMana <= 0)
 		{
 			ManaReserve reserve = ManaReserve.instance(worldIn);
 			float value = Math.abs(currentMana - 1);
@@ -129,6 +133,14 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		}
 	}
 	
+	public static float getBaseMaxMana(LivingEntity living) { return living == null ? INITIAL_CAPACITY : (float)(living.getAttributeBaseValue(Attributes.MAX_HEALTH) / 20D) * INITIAL_CAPACITY; }
+	
+	public static boolean trySpendManaFrom(LivingEntity living, float amount)
+	{
+		LivingData data = LivingData.getCapability(living);
+		return data != null && data.spendMana(amount);
+	}
+	
 	public void resetMana() { this.currentMana = this.manaCapacity; markDirty(); }
 	
 	public boolean spendMana(float amount)
@@ -147,7 +159,9 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		if(this.theEntity.getType() == EntityType.PLAYER)
 		{
 			PlayerData data = PlayerData.getCapability((Player)this.theEntity);
-			if(data.hasCurruisis())
+			if(data.isALich())
+				bonus = 0F;
+			else if(data.hasCurruisis())
 				bonus *= 1F - (data.curruisisIntensity() * 2F);
 		}
 		

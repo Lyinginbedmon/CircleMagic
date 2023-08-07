@@ -13,6 +13,7 @@ public class CMDataGenerators
 		generator.addProvider(event.includeServer(), new CMBlockLootProvider(generator, fileHelper));
 		generator.addProvider(event.includeServer(), new CMBlockTags(generator, fileHelper));
 		generator.addProvider(event.includeServer(), new CMItemTags(generator, fileHelper));
+		generator.addProvider(event.includeServer(), new CMEntityTags(generator, fileHelper));
 		generator.addProvider(event.includeServer(), new CMFunctionRecipeProvider(generator, fileHelper));
 	}
 }

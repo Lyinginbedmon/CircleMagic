@@ -14,4 +14,5 @@ public class CMStatusEffects
 	public static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, Reference.ModInfo.MOD_ID);
 	
 	public static final RegistryObject<MobEffect> LEY_POWER = EFFECTS.register("ley_power", () -> new CMMobEffect(MobEffectCategory.BENEFICIAL, -1));
+	public static final RegistryObject<MobEffect> MANA_DRAIN = EFFECTS.register("mana_drain", () -> new CMMobEffect(MobEffectCategory.HARMFUL, -1));
 }

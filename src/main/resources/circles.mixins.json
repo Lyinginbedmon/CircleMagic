@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "com.lying.circles.mixin",
+	"mixins":
+	[
+		"LivingEntityMixin",
+		"AbstractContainerMenuMixin"
+	],
+	"client":
+	[
+		
+	]
+}

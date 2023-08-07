@@ -18,10 +18,12 @@ import com.lying.circles.init.SpellComponents;
 import com.lying.circles.init.SpellVariables;
 import com.lying.circles.network.PacketHandler;
 import com.lying.circles.reference.Reference;
+import com.lying.circles.utility.shapes.Tri3;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerPotBlock;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -67,6 +69,8 @@ public class CircleMagic
         EVENT_BUS.addListener(SpellComponents::reportInit);
         
         MinecraftForge.EVENT_BUS.register(this);
+        
+        Tri3.make(Vec3.ZERO, new Vec3(19,6,7), new Vec3(28,2,4));
     }
     
     @SubscribeEvent
