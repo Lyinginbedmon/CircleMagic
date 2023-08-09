@@ -27,6 +27,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
@@ -47,7 +49,7 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	private Map<EnumBodyPart, Integer> curruisisMap = new HashMap<>();
 	private boolean diedToCurruisis = false;
 	
-	private boolean isLich = true;
+	private boolean isLich = false;
 	
 	private int tickCounter = 0;
 	
@@ -92,6 +94,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 			}
 		data.put("Curruisis", curruisis);
 		
+		data.putBoolean("IsLich", isLich);
+		
 		return data;
 	}
 	
@@ -109,6 +113,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 			if(value > 0 && limb != null)
 				this.curruisisMap.put(limb, value);
 		}
+		
+		this.isLich = nbt.getBoolean("IsLich");
 	}
 	
 	public void tick(Level worldIn)
@@ -239,6 +245,16 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	{
 		this.curruisisMap.put(part, severity);
 		this.markDirty();
+	}
+	
+	public static boolean isLich(Entity player)
+	{
+		if(player.getType() == EntityType.PLAYER)
+		{
+			PlayerData data = PlayerData.getCapability((Player)player);
+			return data != null && data.isALich();
+		}
+		return false;
 	}
 	
 	public boolean isALich() { return this.isLich; }

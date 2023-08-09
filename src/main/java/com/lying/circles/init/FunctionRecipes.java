@@ -121,7 +121,7 @@ public class FunctionRecipes extends SimpleJsonResourceReloadListener
 			for(Entry<ResourceLocation, Map<ResourceLocation, FunctionRecipe<?>>> entry : getInstance().recipeMap.entrySet())
 			{
 				CircleMagic.LOG.info("# For recipe type "+entry.getKey().getPath()+":");
-				entry.getValue().values().forEach((recipe) -> CircleMagic.LOG.info("# * "+recipe.getId().getPath()));
+				entry.getValue().values().forEach((recipe) -> CircleMagic.LOG.info("# * "+recipe.getId().getPath()+" of class ["+recipe.getClass().getSimpleName()+"]"));
 			}
 	}
 	

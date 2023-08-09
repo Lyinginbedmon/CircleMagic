@@ -95,7 +95,6 @@ public abstract class RootGlyph extends ComponentCircle.Basic
 	
 	public void performExecution(@Nonnull Level world, @Nonnull LivingEntity caster, @Nonnull VariableSet variablesIn)
 	{
-		System.out.println("Executing spell at "+variablesIn.get(Slot.POSITION).asVec().toString());
 		variablesIn.resetExecutions();
 		variablesIn.recacheBeforeExecution(world);
 		

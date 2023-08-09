@@ -13,6 +13,7 @@ import com.lying.circles.CircleMagic;
 import com.lying.circles.data.recipe.CreationRecipe;
 import com.lying.circles.data.recipe.FunctionRecipe;
 import com.lying.circles.data.recipe.ImbueRecipe;
+import com.lying.circles.data.recipe.LichImbueRecipe;
 import com.lying.circles.data.recipe.StatusEffectRecipe;
 import com.lying.circles.init.CMBlocks;
 import com.lying.circles.magic.Element;
@@ -112,5 +113,6 @@ public class CMFunctionRecipeProvider implements DataProvider
 		list.add(new ImbueRecipe("mana_crystal", CMBlocks.MANA_CRYSTAL.get().defaultBlockState(), new Element[] {Element.ORIGO, Element.ORIGO}, new Block[] {Blocks.DIAMOND_BLOCK}, new BlockState[] {Blocks.LEVER.defaultBlockState()}));
 		list.add(new ImbueRecipe("snow_golem", EntityType.SNOW_GOLEM, new Element[] { Element.ORIGO, Element.ORIGO }, new Block[] {Blocks.SNOW_BLOCK, Blocks.SNOW_BLOCK, Blocks.CARVED_PUMPKIN}, new BlockState[0]));
 		list.add(new ImbueRecipe("ley_point", CMBlocks.LEY_POINT.get().defaultBlockState(), new Element[] {Element.ORIGO, Element.ORIGO}, new Block[] {Blocks.DIAMOND_BLOCK, Blocks.EMERALD_BLOCK, Blocks.DRAGON_EGG, Blocks.BEACON}, new BlockState[] {}));
+		list.add(new LichImbueRecipe("lich_ritual", new Element[]{ Element.SCULK }, new Block[0], new BlockState[0]));
 	}
 }

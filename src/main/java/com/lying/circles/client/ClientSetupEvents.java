@@ -7,6 +7,7 @@ import com.lying.circles.client.gui.screen.ScreenSandbox;
 import com.lying.circles.client.model.CurruisisModel;
 import com.lying.circles.client.renderer.CMModelLayers;
 import com.lying.circles.client.renderer.entity.CurruisisLayer;
+import com.lying.circles.client.renderer.entity.LichLayer;
 import com.lying.circles.client.renderer.entity.PendulumLayer;
 import com.lying.circles.client.renderer.entity.SpellLayer;
 import com.lying.circles.init.CMBlocks;
@@ -43,7 +44,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 public class ClientSetupEvents
 {
 	private static final Minecraft MC = Minecraft.getInstance();
-	private static SpellManager LOCAL_DATA = null;
+	private static SpellManager LOCAL_SPELL_MANAGER = null;
 	public static PlayerData LOCAL_DATA_PLAYER = new PlayerData(null);
 	public static LivingData LOCAL_DATA_LIVING = new LivingData(null);
 	
@@ -90,6 +91,7 @@ public class ClientSetupEvents
     {
     	event.registerLayerDefinition(CMModelLayers.STATUE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
     	event.registerLayerDefinition(CMModelLayers.CURRUISIS, () -> LayerDefinition.create(CurruisisModel.createMesh(CubeDeformation.NONE, 0F), 32, 32));
+    	event.registerLayerDefinition(CMModelLayers.LICH, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -103,6 +105,7 @@ public class ClientSetupEvents
     		value.addLayer((PendulumLayer)(new PendulumLayer<>(value)));
     		value.addLayer((SpellLayer)(new SpellLayer<>(value)));
     		value.addLayer((CurruisisLayer)(new CurruisisLayer(value, event.getEntityModels())));
+    		value.addLayer((LichLayer)(new LichLayer(value, event.getEntityModels())));
     	}
     	dispatcher.renderers.forEach((type,renderer) -> 
     	{
@@ -116,12 +119,14 @@ public class ClientSetupEvents
 	
 	public static SpellManager getLocalData()
 	{
-		if(LOCAL_DATA == null)
-			LOCAL_DATA = new ClientSpellManager(MC.player.getLevel());
-		return LOCAL_DATA;
+		if(LOCAL_SPELL_MANAGER == null)
+			LOCAL_SPELL_MANAGER = new ClientSpellManager(MC.player.getLevel());
+		return LOCAL_SPELL_MANAGER;
 	}
 	
 	public static ClientLevel getLevel() { return MC.level; }
+	
+	public static Player getLocalPlayer() { return MC.player; }
 	
 	public static PlayerData getPlayerData(Player playerIn)
 	{

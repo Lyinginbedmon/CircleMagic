@@ -21,12 +21,6 @@ import net.minecraft.world.level.Level;
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin
 {
-	private boolean isLich(Player living)
-	{
-		PlayerData data = PlayerData.getCapability(living);
-		return data != null && data.isALich();
-	}
-	
 	private ItemStack getLichSkull(Player living)
 	{
 		for(int i=0; i<living.getInventory().getContainerSize(); i++)
@@ -42,7 +36,7 @@ public class LivingEntityMixin
 	public void onLichMobType(final CallbackInfoReturnable<MobType> ci)
 	{
 		LivingEntity living = (LivingEntity)(Object)this;
-		if(living.getType() == EntityType.PLAYER && isLich((Player)living))
+		if(living.getType() == EntityType.PLAYER && PlayerData.isLich(living))
 			ci.setReturnValue(MobType.UNDEAD);
 	}
 	
@@ -51,7 +45,7 @@ public class LivingEntityMixin
 	{
 		LivingEntity living = (LivingEntity)(Object)this;
 		Level world = living.level;
-		if(living.getType() == EntityType.PLAYER && isLich((Player)living))
+		if(living.getType() == EntityType.PLAYER && PlayerData.isLich(living))
 			if(source == DamageSource.STARVE)
 			{
 				ci.setReturnValue(false);

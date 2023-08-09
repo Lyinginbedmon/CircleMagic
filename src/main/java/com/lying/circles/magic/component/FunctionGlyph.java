@@ -494,28 +494,26 @@ public abstract class FunctionGlyph extends ComponentBase
 			if(inputVariables.isEmpty())
 				return;
 			
-			System.out.println("Performing imbue");
-			
 			Entity caster = totalVariables.get(Slot.CASTER).asEntity();
 			Vec3 spellPos = totalVariables.get(Slot.POSITION).asVec();
 			
 			Vec3 targetVec = inputVariables.get(0).asVec();
 			BlockPos blockPos = new BlockPos(targetVec.x, targetVec.y, targetVec.z);
-			ImbueRecipe recipe = getMatchingRecipe(inputElements, world, blockPos);
+			ImbueRecipe recipe = getMatchingRecipe(inputElements, world, blockPos, caster);
 			if(recipe == null)
 			{
 				// Default behaviour
 			}
 			else
 			{
-				System.out.println("Recipe found");
 				recipe.consumeIngredients(world, blockPos);
+				
+				recipe.applyToCaster(caster);
 				
 				BlockState state = recipe.getState();
 				if(state != null)
 				{
 					placeBlock(inputVariables, world, state);
-					System.out.println("Placing block: "+state.toString());
 					
 					CompoundTag data = new CompoundTag();
 					data.put("Pos", NbtUtils.writeBlockPos(blockPos));
@@ -540,15 +538,13 @@ public abstract class FunctionGlyph extends ComponentBase
 			}
 		}
 		
-		protected ImbueRecipe getMatchingRecipe(EnumSet<Element> elements, Level world, BlockPos pos)
+		protected ImbueRecipe getMatchingRecipe(EnumSet<Element> elements, Level world, BlockPos pos, Entity caster)
 		{
 			for(FunctionRecipe<?> recipe : FunctionRecipes.getInstance().getRecipes(FunctionRecipes.IMBUE))
 			{
-				System.out.println("Checking recipe "+recipe.getId());
-				if(((ImbueRecipe)recipe).matches(elements, world, pos))
+				if(((ImbueRecipe)recipe).matches(elements, world, pos, caster))
 					return (ImbueRecipe)recipe;
 			}
-			System.out.println("No recipe found");
 			return null;
 		}
 	}

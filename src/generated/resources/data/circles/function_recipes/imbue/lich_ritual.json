@@ -1,0 +1,10 @@
+{
+  "ID": "circles:imbue/lich_ritual",
+  "Ingredients": {
+    "Elements": [
+      "sculk"
+    ]
+  },
+  "Special": "minecraft:lich_ritual",
+  "Type": "circles:imbue_function"
+}

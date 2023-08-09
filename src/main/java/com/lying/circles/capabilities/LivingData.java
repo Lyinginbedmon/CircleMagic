@@ -15,7 +15,7 @@ import com.lying.circles.utility.ManaReserve;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -34,7 +34,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	private LivingEntity theEntity;
 	
 	private float manaCapacity = -1F;
-	private float currentMana = manaCapacity;
+	private float currentMana = INITIAL_CAPACITY;
 	private float recoveryRate = 1F;
 	
 	private int tickCounter = 0;
@@ -57,7 +57,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	{
 		if(player == null)
 			return null;
-		else if(player.getLevel().isClientSide())
+		else if(player.getLevel().isClientSide() && player == ClientSetupEvents.getLocalPlayer())
 			return ClientSetupEvents.getLivingData(player);
 		
 		LivingData data = player.getCapability(CMCapabilities.LIVING_DATA).orElse(new LivingData(player));
@@ -85,7 +85,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	
 	public void tick(Level worldIn)
 	{
-		if(!this.theEntity.isAlive() || tickCounter++ % Reference.Values.TICKS_PER_SECOND > 0)
+		if(!this.theEntity.isAlive() || this.theEntity.getLevel().isClientSide() || tickCounter++ % Reference.Values.TICKS_PER_SECOND > 0)
 			return;
 		
 		float capacity = getCurrentCapacity();
@@ -121,10 +121,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		}
 		else if(currentMana > this.manaCapacity * 2 && !this.theEntity.isInvulnerableTo(CMDamageSource.TOO_MUCH_MANA))
 		{
-			Level world = this.theEntity.level;
-			if(world.isClientSide())
-				return;
-			
+			Level world = this.theEntity.getLevel();
 			resetMana();
 			this.theEntity.hurt(CMDamageSource.TOO_MUCH_MANA, Float.MAX_VALUE);
 			
@@ -133,15 +130,22 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 		}
 	}
 	
-	public static float getBaseMaxMana(LivingEntity living) { return living == null ? INITIAL_CAPACITY : (float)(living.getAttributeBaseValue(Attributes.MAX_HEALTH) / 20D) * INITIAL_CAPACITY; }
+	public static float getBaseMaxMana(LivingEntity living) { return (living == null || living.getAttributes() == null) ? INITIAL_CAPACITY : (float)(living.getAttributeBaseValue(Attributes.MAX_HEALTH) / 20D) * INITIAL_CAPACITY; }
 	
 	public static boolean trySpendManaFrom(LivingEntity living, float amount)
 	{
+		if(living == null || living.getLevel().isClientSide())
+			return false;
+		
 		LivingData data = LivingData.getCapability(living);
 		return data != null && data.spendMana(amount);
 	}
 	
-	public void resetMana() { this.currentMana = this.manaCapacity; markDirty(); }
+	public void resetMana()
+	{
+		this.currentMana = this.manaCapacity;
+		markDirty();
+	}
 	
 	public boolean spendMana(float amount)
 	{
@@ -182,7 +186,7 @@ public class LivingData implements ICapabilitySerializable<CompoundTag>
 	
 	public void markDirty()
 	{
-		if(!this.theEntity.getLevel().isClientSide())
-			PacketHandler.sendToAll((ServerLevel)this.theEntity.getLevel(), new PacketSyncLivingData(this.theEntity.getUUID(), this.theEntity.position(), this.serializeNBT()));
+		if(!this.theEntity.getLevel().isClientSide() && this.theEntity.getType() == EntityType.PLAYER)
+			PacketHandler.sendTo((ServerPlayer)this.theEntity, new PacketSyncLivingData(this.theEntity.getUUID(), this.theEntity.position(), this.serializeNBT()));
 	}
 }

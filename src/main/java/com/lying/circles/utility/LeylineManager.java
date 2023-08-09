@@ -9,9 +9,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.compress.utils.Lists;
 
 import com.lying.circles.reference.Reference;
-import com.lying.circles.utility.shapes.Line2;
 import com.lying.circles.utility.shapes.Line3;
-import com.lying.circles.utility.shapes.Tri2;
 import com.lying.circles.utility.shapes.Tri3;
 
 import net.minecraft.core.BlockPos;
@@ -25,7 +23,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 public class LeylineManager extends SavedData
@@ -177,7 +174,6 @@ public class LeylineManager extends SavedData
 	public List<Line3> calculateLeylinesDelaunay()
 	{
 		List<Vec3> totalPoints = pointsToVec();
-		System.out.println("Calculating Delaunay triangulation of "+size()+" points");
 		switch(totalPoints.size())
 		{
 			case 0:
@@ -191,18 +187,8 @@ public class LeylineManager extends SavedData
 				break;
 		}
 		
-		List<Tri3> mesh2 = Tri3.generateDelaunayMesh(totalPoints.toArray(new Vec3[0]));
-		System.out.println("# Triangles generated in 3D: "+mesh2.size());
-		
-		// Points to add
-		List<Vec2> points = Lists.newArrayList();
-		double yLevel = totalPoints.get(0).y;
-		totalPoints.forEach((point) -> points.add(new Vec2((float)point.x, (float)point.z)));
-		
-		// Triangle mesh
-		List<Tri2> mesh = Tri2.generateDelaunayMesh(points.toArray(new Vec2[0]));
-		System.out.println("# Triangles generated in 2D: "+mesh.size());
-		List<Line3> lines3 = Lists.newArrayList();
+		List<Tri3> mesh = Tri3.generateDelaunayMesh(totalPoints.toArray(new Vec3[0]));
+		List<Line3> lines = Lists.newArrayList();
 		if(mesh.isEmpty())
 		{
 			/**
@@ -216,19 +202,16 @@ public class LeylineManager extends SavedData
 			{
 				Vec3 p1 = totalPoints.get(i);
 				Vec3 p2 = totalPoints.get((i+1)%totalPoints.size());
-				lines3.add(new Line3(p1, p2));
+				lines.add(new Line3(p1, p2));
 			}
 		}
 		else
 			mesh.forEach((tri) -> tri.lines().forEach((line) -> 
 			{
-				Vec2 a = line.getA();
-				Vec2 b = line.getB();
-				Line3 line3 = new Line3(new Vec3(a.x, yLevel, a.y), new Vec3(b.x, yLevel, b.y));
-				if(!lines3.contains(line3))
-					lines3.add(line3);
+				if(!lines.contains(line))
+					lines.add(line);
 			}));
-		return lines3;
+		return lines;
 	}
 	
 	public void tick()

@@ -1,9 +1,12 @@
 package com.lying.circles.data.recipe;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
@@ -35,16 +38,20 @@ import net.minecraft.world.phys.Vec3;
 public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityRecipe
 {
 	// Maximum number of steps to take away from origin in any direction whilst searching for in-world ingredients
-	private static final int SEARCH_RANGE = 2;
+	protected static final int SEARCH_RANGE = 2;
+	
+	public static final Map<ResourceLocation, Function<JsonObject, ImbueRecipe>> RECIPE_CONSTRUCTORS = new HashMap<>();
+	
+	protected ResourceLocation specialRecipeId = null;
 	
 	// In-world ingredients
-	private Block[] blockIngredients;
-	private BlockState[] blockStateIngredients;
+	protected Block[] blockIngredients;
+	protected BlockState[] blockStateIngredients;
 	
-	private BlockState blockPlaced = null;
-	private EntityType<?> entitySpawned = null;
-	private CompoundTag entityData = null;
-	private CommandFunction.CacheableFunction onEntity = CommandFunction.CacheableFunction.NONE;
+	protected BlockState blockPlaced = null;
+	protected EntityType<?> entitySpawned = null;
+	protected CompoundTag entityData = null;
+	protected CommandFunction.CacheableFunction onEntity = CommandFunction.CacheableFunction.NONE;
 	
 	protected ImbueRecipe(String idIn, Element[] elementsIn, Block[] blocksIn, BlockState[] statesIn)
 	{
@@ -96,7 +103,7 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 			obj.addProperty("Function", onEntity.getId().toString());
 	}
 	
-	public boolean matches(EnumSet<Element> elements, Level worldIn, BlockPos pos)
+	public boolean matches(EnumSet<Element> elements, Level worldIn, BlockPos pos, Entity caster)
 	{
 		if(!super.matches(elements))
 			return false;
@@ -257,6 +264,8 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 	
 	public CommandFunction.CacheableFunction getFunction() { return this.onEntity; }
 	
+	public void applyToCaster(Entity entity) { }
+	
 	public void consumeIngredients(Level worldIn, BlockPos pos)
 	{
 		if(blockStateIngredients.length > 0)
@@ -286,6 +295,9 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 		JsonObject obj = new JsonObject();
 		obj.addProperty("ID", id.toString());
 		obj.addProperty("Type", functionType.getId().toString());
+		
+		if(this.specialRecipeId != null)
+			obj.addProperty("Special", this.specialRecipeId.toString());
 		
 		JsonObject ingredients = new JsonObject();
 		
@@ -323,7 +335,14 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 	
 	public static ImbueRecipe deserialize(JsonObject obj)
 	{
-		ImbueRecipe recipe = new ImbueRecipe(new ResourceLocation(obj.get("ID").getAsString()), loadElements(obj), loadBlocks(obj), loadBlockStates(obj));
+		ResourceLocation constructorID = null;
+		if(obj.has("Special"))
+			constructorID = new ResourceLocation(obj.get("Special").getAsString());
+		
+		ImbueRecipe recipe = 
+				constructorID == null ? 
+					generateFresh(obj) : 
+					RECIPE_CONSTRUCTORS.getOrDefault(constructorID, ImbueRecipe::generateFresh).apply(obj);
 		
 		if(obj.has("Block"))
 		{
@@ -357,9 +376,14 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 		return recipe;
 	}
 	
+	protected static ImbueRecipe generateFresh(JsonObject obj)
+	{
+		return new ImbueRecipe(new ResourceLocation(obj.get("ID").getAsString()), loadElements(obj), loadBlocks(obj), loadBlockStates(obj));
+	}
+	
 	protected static Element[] loadElements(JsonObject obj)
 	{
-		EnumSet<Element> elements = EnumSet.noneOf(Element.class);
+		List<Element> elements = Lists.newArrayList();
 		JsonObject ingredients = obj.getAsJsonObject("Ingredients");
 		if(!ingredients.has("Elements"))
 			return new Element[0];
@@ -417,5 +441,10 @@ public class ImbueRecipe extends FunctionRecipe<ImbueRecipe> implements IEntityR
 				states.add(state);
 		}
 		return states.toArray(new BlockState[0]);
+	}
+	
+	static
+	{
+		RECIPE_CONSTRUCTORS.put(LichImbueRecipe.RECIPE_ID, LichImbueRecipe::generateNew);
 	}
 }

@@ -4,9 +4,6 @@ import java.util.List;
 
 import org.apache.commons.compress.utils.Lists;
 
-import com.lying.circles.CircleMagic;
-import com.lying.circles.utility.CMUtils;
-
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,7 +16,7 @@ public class Tri3
 	
 	private Tri3(Matrix3 matrix2D, Matrix3 matrix3D, Vec3 a, Vec3 b, Vec3 c)
 	{
-		this.tri = new Tri2(matrix2D.to2D(a), matrix2D.to2D(b), matrix2D.to2D(c));
+		this.tri = new Tri2(Vec2.ZERO, matrix2D.to2D(b.subtract(a)), matrix2D.to2D(c.subtract(a)));
 		this.matrixTo2D = matrix2D;
 		this.matrixTo3D = matrix3D;
 		
@@ -28,40 +25,30 @@ public class Tri3
 		this.c = c;
 	}
 	
-	private Tri3(Matrix3 matrix2D, Matrix3 matrix3D, Vec2 a, Vec2 b, Vec2 c)
-	{
-		this.tri = new Tri2(Vec2.ZERO, b, c);
-		this.matrixTo2D = matrix2D;
-		this.matrixTo3D = matrix3D;
-		
-		this.a = matrix2D.to3D(Vec2.ZERO);
-		this.b = matrix2D.to3D(b);
-		this.c = matrix2D.to3D(c);
-	}
-	
 	public static Tri3 make(Vec3 aIn, Vec3 bIn, Vec3 cIn) throws IllegalArgumentException
 	{
 		if(checkParallel(aIn, bIn, cIn))
 			throw new IllegalArgumentException();
 		
-		Vec3 a3 = aIn;
-		Vec3 b3 = bIn;
-		Vec3 c3 = cIn;
+		Vec3 q = bIn.subtract(aIn);
+		Vec3 r = cIn.subtract(aIn);
+		Vec3 e0 = q.normalize().cross(r.normalize());
+		Vec3 e1 = e0.normalize().cross(q.normalize());
+		Vec3 e2 = e0.cross(e1);
 		
-		double yaw = CMUtils.yawOfVec(a3, b3);
-		Matrix3 yawM = Matrix3.rotationYaw(-yaw);
-		a3 = yawM.applyTo(a3);
-		b3 = yawM.applyTo(b3);
-		c3 = yawM.applyTo(c3);
+		Matrix3 matrix2D = new Matrix3(
+				new Double[] {e0.x, e0.y, e0.z, 0D}, 
+				new Double[] {e1.x, e1.y, e1.z, 0D}, 
+				new Double[] {e2.x, e2.y, e2.z, 0D}, 
+				new Double[] {0D, 0D, 0D, 1D});
 		
-		double pitch = CMUtils.pitchOfVec(a3, c3);
-		Matrix3 pitM = Matrix3.rotationPitch(-pitch);
-		a3 = pitM.applyTo(a3);
+		Matrix3 matrix3D = new Matrix3(
+				new Double[] {e0.x, e1.x, e2.x, 0D}, 
+				new Double[] {e0.y, e1.y, e2.y, 0D}, 
+				new Double[] {e0.z, e1.z, e2.z, 0D}, 
+				new Double[] {0D, 0D, 0D, 1D});
 		
-		Matrix3 matrix2D = Matrix3.mul(yawM, pitM, Matrix3.translation(a3.scale(-1D)));
-		Matrix3 matrix3D = Matrix3.mul(Matrix3.rotationYaw(yaw), Matrix3.rotationPitch(pitch), Matrix3.translation(a3));
-		
-		return new Tri3(matrix2D, matrix3D, matrix2D.to2D(aIn.subtract(aIn)), matrix2D.to2D(bIn.subtract(aIn)), matrix2D.to2D(cIn.subtract(aIn)));
+		return new Tri3(matrix2D, matrix3D, aIn, bIn, cIn);
 	}
 	
 	/**
@@ -206,177 +193,5 @@ public class Tri3
 		}));
 		
 		return edges;
-	}
-	
-	/** Describes a matrix for 3 dimensions */
-	private static class Matrix3
-	{
-		private Double[][] values = new Double[4][4];
-		
-		public Matrix3()
-		{
-			for(int i=0; i<4; i++)
-				for(int j=0; j<4; j++)
-					values[i][j] = (i == j ? 1D : 0D);
-		}
-		
-		/** Prints the contents of this matrix into the log */
-		public void print()
-		{
-			CircleMagic.LOG.info("Matrix contents:");
-			for(int i=0; i<4; i++)
-			{
-				String row = "";
-				for(double val : values[i])
-				{
-					if(row.length() == 0)
-						row = "[";
-					else
-						row += ", ";
-					
-					row += String.valueOf((double)((int)(val * 10)) / 10D);
-				}
-				CircleMagic.LOG.info(row + "]");
-			}
-		}
-		
-		public double get(int row, int col) { return values[row][col]; }
-		
-		public void set(int row, int col, double val) { values[row][col] = val; }
-		
-		/** Multiplies a set of matrices together in sequence */
-		public static Matrix3 mul(Matrix3... matrices)
-		{
-			Matrix3 matrix = matrices[0];
-			for(int i=1; i<matrices.length; i++)
-				matrix = mul(matrix, matrices[i]);
-			return matrix;
-		}
-		
-		/** Multiplies two matrices together */
-		public static Matrix3 mul(Matrix3 matrixA, Matrix3 matrixB)
-		{
-			Matrix3 matrix = new Matrix3();
-			for(int row=0; row<4; row++)
-				for(int col=0; col<4; col++)
-				{
-					double total = 0D;
-					for(int i=0; i<4; i++)
-						total += matrixA.get(row, i) * matrixB.get(i, col);
-					
-					matrix.set(row, col, total);
-				}
-			
-			return matrix;
-		}
-		
-		/** Returns a translation matrix of the given vector */
-		public static Matrix3 translation(Vec3 vec)
-		{
-			Matrix3 matrix = new Matrix3();
-			
-			matrix.set(0, 3, vec.x);
-			matrix.set(1, 3, vec.y);
-			matrix.set(2, 3, vec.z);
-			
-			return matrix;
-		}
-		
-		/** Returns a rotation matrix of the given radians on the P axis */
-		public static Matrix3 rotationPitch(double pitch)
-		{
-			Matrix3 matrix = new Matrix3();
-			
-			if(pitch != 0D)
-			{
-				double cos = Math.cos(pitch);
-				double sin = Math.sin(pitch);
-				matrix.set(1, 1, cos);
-				matrix.set(1, 2, sin);
-				matrix.set(2, 1, -sin);
-				matrix.set(2, 2, cos);
-			}
-			
-			return matrix;
-		}
-		
-		/** Returns a rotation matrix of the given radians on the Y axis */
-		public static Matrix3 rotationYaw(double yaw)
-		{
-			Matrix3 matrix = new Matrix3();
-			
-			if(yaw != 0D)
-			{
-				double cos = Math.cos(yaw);
-				double sin = Math.sin(yaw);
-				matrix.set(0, 0, cos);
-				matrix.set(0, 2, -sin);
-				matrix.set(2, 0, sin);
-				matrix.set(2, 2, cos);
-			}
-			
-			return matrix;
-		}
-		
-		/** Applies this matrix to the given 3D vector */
-		public Vec3 applyTo(Vec3 vec)
-		{
-			Double[] values = new Double[] { vec.x, vec.y, vec.z, 1D };
-			Double[] results = new Double[4];
-			
-			for(int row=0; row<4; row++)
-			{
-				double total = 0D;
-				for(int col=0; col<4; col++)
-					total += values[col] * get(row, col);
-				
-				results[row] = total;
-			}
-			
-			return new Vec3(results[0], results[1], results[2]);
-		}
-		
-		/** Applies this matrix to the given vector and returns the 2D equivalent */
-		public Vec2 to2D(Vec3 vec)
-		{
-			Vec3 applied = applyTo(vec);
-			return new Vec2((float)applied.x, (float)applied.z);
-		}
-		
-		/** Applies this matrix to the given vector and returns the 3D equivalent */
-		public Vec3 to3D(Vec2 vec)
-		{
-			return applyTo(new Vec3(vec.x, 0, vec.y));
-		}
-		
-		static
-		{
-			double yaw = 0D;
-			double pitch = 35D;
-			Matrix3 testMatrix = Matrix3.mul(Matrix3.rotationPitch(Math.toRadians(pitch)), Matrix3.rotationYaw(Math.toRadians(yaw)));
-			
-			Vec3[] testVectors = new Vec3[] { testMatrix.applyTo(new Vec3(18, 0, 24)), testMatrix.applyTo(new Vec3(-94, 0, 6)), testMatrix.applyTo(new Vec3(40, 0, -18)) };
-			
-			System.out.println("Testing vectors: Y "+(int)yaw+" P "+(int)pitch);
-			for(int i=0; i<testVectors.length; i++)
-				System.out.println("# "+CMUtils.vecToString(testVectors[i]));
-			
-			/**
-			 * The three vectors represent points on a plane in 3D space
-			 * By identifying the normal of the plane, we rotate to align the plane along an axis where one component of all vectors is 0
-			 */
-			
-			Vec3 pNormal = (testVectors[1].subtract(testVectors[0])).cross((testVectors[2].subtract(testVectors[0])));
-			double pYaw = CMUtils.yawOfVec(pNormal);
-			double pPit = CMUtils.pitchOfVec(pNormal);
-			
-			System.out.println("Plane:");
-			System.out.println("# Cross: "+CMUtils.vecToString(pNormal.normalize()));
-			System.out.println("# # Angle Y "+(int)Math.toDegrees(pYaw)+", P "+(int)Math.toDegrees(pPit));
-			
-			Matrix3 reverse = Matrix3.mul(Matrix3.rotationYaw(-pYaw), Matrix3.rotationPitch(-pPit));
-			for(int i=0; i<testVectors.length; i++)
-				System.out.println("# # "+CMUtils.vecToString(reverse.applyTo(testVectors[i])));
-		}
 	}
 }
