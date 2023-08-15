@@ -58,12 +58,19 @@ public class CMUtils
 		return -Math.asin(vec.normalize().y);
 	}
 	
-	public static String vecToString(Vec3 vec)
+	public static String vec3ToString(Vec3 vec)
 	{
 		double pX = (double)(int)(vec.x * 100) / 100;
 		double pY = (double)(int)(vec.y * 100) / 100;
 		double pZ = (double)(int)(vec.z * 100) / 100;
 		return "["+pX+", "+pY+", "+pZ+"]";
+	}
+	
+	public static String vec2ToString(Vec2 vec)
+	{
+		float pX = (float)(int)(vec.x * 100) / 100;
+		float pY = (float)(int)(vec.y * 100) / 100;
+		return "["+pX+", "+pY+"]";
 	}
 	
 	/** Returns true if the given point is inside the given polygon.<br>Does not perform a boundary check. */

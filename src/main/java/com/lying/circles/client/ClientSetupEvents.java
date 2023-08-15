@@ -5,6 +5,8 @@ import com.lying.circles.capabilities.LivingData;
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.client.gui.screen.ScreenSandbox;
 import com.lying.circles.client.model.CurruisisModel;
+import com.lying.circles.client.model.LichModel;
+import com.lying.circles.client.model.LichSkullModel;
 import com.lying.circles.client.renderer.CMModelLayers;
 import com.lying.circles.client.renderer.entity.CurruisisLayer;
 import com.lying.circles.client.renderer.entity.LichLayer;
@@ -91,7 +93,8 @@ public class ClientSetupEvents
     {
     	event.registerLayerDefinition(CMModelLayers.STATUE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
     	event.registerLayerDefinition(CMModelLayers.CURRUISIS, () -> LayerDefinition.create(CurruisisModel.createMesh(CubeDeformation.NONE, 0F), 32, 32));
-    	event.registerLayerDefinition(CMModelLayers.LICH, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
+    	event.registerLayerDefinition(CMModelLayers.LICH, () -> LayerDefinition.create(LichModel.createMesh(CubeDeformation.NONE, 0F), 64, 32));
+    	event.registerLayerDefinition(CMModelLayers.LICH_SKULL, () -> LichSkullModel.createSkullModel());
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })

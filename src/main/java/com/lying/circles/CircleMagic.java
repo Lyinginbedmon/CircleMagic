@@ -70,7 +70,7 @@ public class CircleMagic
         
         MinecraftForge.EVENT_BUS.register(this);
         
-        Tri3.make(Vec3.ZERO, new Vec3(19,6,7), new Vec3(28,2,4));
+        Tri3.make(new Vec3(-24.5D, -41.5D, 40.5D), new Vec3(-35.72D, -41.5D, -43.98D), new Vec3(-103.27D, -41.5D, 7.97D));
     }
     
     @SubscribeEvent

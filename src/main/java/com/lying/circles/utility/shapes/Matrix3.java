@@ -152,9 +152,9 @@ public class Matrix3
 		return new Vec2((float)applied.y, (float)applied.z);
 	}
 	
-	/** Applies this matrix to the given vector and returns the 3D equivalent */
+	/** Applies this matrix to the given vector and returns the 2D equivalent */
 	public Vec3 to3D(Vec2 vec)
 	{
-		return applyTo(new Vec3(0, vec.x, vec.y));
+		return applyTo(new Vec3(0, (double)vec.x, (double)vec.y));
 	}
 }

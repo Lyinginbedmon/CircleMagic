@@ -10,7 +10,7 @@ public class Line3 extends Tuple<Vec3, Vec3>
 		super(a, b);
 	}
 	
-	public String toString() { return "Line["+vecString(getA())+", "+vecString(getB())+"]"; }
+	public String toString() { return "Line[ "+vecString(getA())+", "+vecString(getB())+" ]"; }
 	
 	public boolean equals(Line3 line2)
 	{

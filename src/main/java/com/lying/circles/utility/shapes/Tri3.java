@@ -4,6 +4,9 @@ import java.util.List;
 
 import org.apache.commons.compress.utils.Lists;
 
+import com.lying.circles.CircleMagic;
+import com.lying.circles.utility.CMUtils;
+
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
@@ -16,13 +19,27 @@ public class Tri3
 	
 	private Tri3(Matrix3 matrix2D, Matrix3 matrix3D, Vec3 a, Vec3 b, Vec3 c)
 	{
+		this.a = a;
+		this.b = b;
+		this.c = c;
+		
 		this.tri = new Tri2(Vec2.ZERO, matrix2D.to2D(b.subtract(a)), matrix2D.to2D(c.subtract(a)));
 		this.matrixTo2D = matrix2D;
 		this.matrixTo3D = matrix3D;
 		
-		this.a = a;
-		this.b = b;
-		this.c = c;
+		CircleMagic.LOG.info("Tri: "+toString());
+		CircleMagic.LOG.info("MatrixTo3D");
+		this.matrixTo3D.print();
+		CircleMagic.LOG.info("MatrixTo2D");
+		this.matrixTo2D.print();
+		
+		CircleMagic.LOG.info("Distance to original points:");
+		for(int i=0; i<3; i++)
+		{
+			Vec2 p = tri.points().get(i);
+			Vec3 translated = a.add(matrix3D.to3D(p));
+			CircleMagic.LOG.info(" # "+CMUtils.vec2ToString(p)+": "+(int)points().get(i).distanceTo(translated));
+		};
 	}
 	
 	public static Tri3 make(Vec3 aIn, Vec3 bIn, Vec3 cIn) throws IllegalArgumentException
@@ -50,6 +67,8 @@ public class Tri3
 		
 		return new Tri3(matrix2D, matrix3D, aIn, bIn, cIn);
 	}
+	
+	public String toString() { return "Tri[ " + CMUtils.vec3ToString(a)+", "+CMUtils.vec3ToString(b)+", "+CMUtils.vec3ToString(c) + " ]"; }
 	
 	/**
 	 * Returns true if the direction of any one line matches the direction of another.<br>
@@ -107,7 +126,7 @@ public class Tri3
 		Vec3 center = smallest.add(offset.scale(0.5F));
 		
 		float turn = (float)Math.toRadians(120D);
-		Vec3 dir = offset.scale(100F);
+		Vec3 dir = offset.scale(1.5F);
 		Vec3 a = center.add(dir);
 		Vec3 b = center.add(dir = dir.yRot(turn));
 		Vec3 c = center.add(dir.yRot(turn));
@@ -119,15 +138,24 @@ public class Tri3
 	
 	public List<Line3> lines(){ return List.of(new Line3(a, b), new Line3(a, c), new Line3(b, c)); }
 	
-	public Vec3 circumcenter() { return this.matrixTo3D.to3D(this.tri.circumcenter).add(a); }
+	public Vec3 circumcenter() { return a.add(matrixTo3D.to3D(this.tri.circumcenter)); }
 	
 	public double circumradius() { return this.tri.circumRadius; }
 	
-	public boolean contains(Vec3 point) { return this.tri.contains(this.matrixTo2D.to2D(point.subtract(a))); }
+	public boolean contains(Vec3 point)
+	{
+		Vec3 center = circumcenter();
+		double dist = center.distanceTo(point);
+		double range = circumradius();
+		System.out.println(" # "+toString());
+		System.out.println(" # # Range from "+CMUtils.vec3ToString(center)+" to "+CMUtils.vec3ToString(point)+": "+(int)dist+" of "+(int)range);
+		return dist < range;
+	}
 	
 	/** Applies the Bowyer-Watson algorithm to generate a Delaunay triangulation mesh from the given points */
 	public static List<Tri3> generateDelaunayMesh(Vec3... points)
 	{
+		System.out.println("Generating Delaunay mesh from "+points.length+" points");
 		List<Tri3> mesh = Lists.newArrayList();
 		Tri3 superTri = makeTriangleContaining(points);
 		mesh.add(superTri);
@@ -135,6 +163,7 @@ public class Tri3
 		for(int i=0; i<points.length; i++)
 		{
 			Vec3 point = points[i];
+			System.out.println("# Adding point "+CMUtils.vec3ToString(point)+" against "+mesh.size()+" tris");
 			
 			List<Tri3> trisNext = Lists.newArrayList();
 			List<Tri3> badTris = Lists.newArrayList();
@@ -146,6 +175,7 @@ public class Tri3
 					trisNext.add(tri);
 			});
 			
+			System.out.println("# # "+badTris.size()+" conflicting tris");
 			if(!badTris.isEmpty())
 				triMeshToUniqueLines(badTris).forEach((edge) -> 
 				{
@@ -158,6 +188,8 @@ public class Tri3
 			mesh = trisNext;
 		}
 		
+		System.out.println("# "+mesh.size()+" tris generated");
+		mesh.forEach((tri) -> System.out.println("# # "+tri.toString()));
 		mesh.removeIf((tri) -> 
 		{
 			for(Vec3 point : tri.points())
@@ -165,7 +197,8 @@ public class Tri3
 					return true;
 			return false;
 		});
-		
+		System.out.println("# Finalised to "+mesh.size()+" tris");
+		mesh.forEach((tri) -> System.out.println("# # "+tri.toString()));
 		return mesh;
 	}
 	

@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.init.CMItems;
 
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -28,12 +27,12 @@ public class AbstractContainerMenuMixin
 	
 	private boolean isLichSkull(ItemStack stack) { return !stack.isEmpty() && stack.getItem() == CMItems.LICH_SKULL.get(); }
 	
-	private boolean isLich() { return PlayerData.isLich((Entity)(Object)this); }
+	private boolean isLich(Player player) { return PlayerData.isLich(player); }
 	
 	@Inject(method = "doClick(IILnet/minecraft/world/inventory/ClickType;Lnet/minecraft/world/entity/player/Player;)V", at = @At("HEAD"), cancellable = true)
 	public void onSkullThrow(int slotClicked, int bitMask, ClickType type, Player player, final CallbackInfo ci)
 	{
-		if(!isLich()) return;
+		if(!isLich(player)) return;
 		
 		Inventory inv = player.getInventory();
 		Slot slot = slotClicked >= 0 ? getSlot(slotClicked) : null;

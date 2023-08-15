@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec2;
 
 public class Tri2
 {
-	private final Vec2 a, b, c;
+	public final Vec2 a, b, c;
 	
 	public final Vec2 circumcenter;
 	public final double circumRadius;

@@ -15,7 +15,7 @@ import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 @Mixin(PlayerRenderer.class)
 public class PlayerRendererMixin
 {
-	@Inject(method = "setModelProperties(Lnet/minecraft/client/player/AbstractClientPlayer;)V", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "setModelProperties(Lnet/minecraft/client/player/AbstractClientPlayer;)V", at = @At("RETURN"), cancellable = true)
 	public void setModelProperties(AbstractClientPlayer player, final CallbackInfo ci)
 	{
 		if(!PlayerData.isLich(player))
@@ -34,7 +34,5 @@ public class PlayerRendererMixin
 		for(ModelPart[] set : parts)
 			for(ModelPart part : set)
 				part.visible = false;
-		
-		ci.cancel();
 	}
 }
