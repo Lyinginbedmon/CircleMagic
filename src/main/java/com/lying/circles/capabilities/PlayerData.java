@@ -1,5 +1,6 @@
 package com.lying.circles.capabilities;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,10 +26,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
@@ -43,6 +46,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	public static final int MAX_CURRUISIS = 3;
 	/** Highest possible total curruisis across all body parts */
 	public static final int TOTAL_CURRUISIS = MAX_CURRUISIS * EnumBodyPart.values().length;
+	/** Total amount of damage any given limb can take */
+	public static final float HEALTH_PER_LIMB = 20F / 6F; 
 	
 	private Player thePlayer;
 	
@@ -50,6 +55,10 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	private boolean diedToCurruisis = false;
 	
 	private boolean isLich = false;
+	/** Degrees of decay on each limb */
+	private Map<EnumBodyPart, Float> skinDecay = new HashMap<>();
+	/** Current degrees of decay on each limb */
+	private Map<EnumBodyPart, Float> skinDecayOld = new HashMap<>();
 	
 	private int tickCounter = 0;
 	
@@ -95,6 +104,18 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		data.put("Curruisis", curruisis);
 		
 		data.putBoolean("IsLich", isLich);
+		if(isLich)
+		{
+			ListTag partList = new ListTag();
+			for(EnumBodyPart limb : EnumBodyPart.values())
+			{
+				CompoundTag compound = new CompoundTag();
+				compound.putString("Name", limb.getSerializedName());
+				compound.putFloat("Value", this.skinDecay.getOrDefault(limb, 0F));
+				partList.add(compound);
+			}
+			data.put("LichData", partList);
+		}
 		
 		return data;
 	}
@@ -115,36 +136,158 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		}
 		
 		this.isLich = nbt.getBoolean("IsLich");
+		if(nbt.contains("LichData", Tag.TAG_LIST))
+		{
+			ListTag partList = nbt.getList("LichData", Tag.TAG_COMPOUND);
+			
+			this.skinDecay.clear();
+			for(int i=0; i<partList.size(); i++)
+			{
+				CompoundTag compound = partList.getCompound(i);
+				this.skinDecay.put(EnumBodyPart.fromString(compound.getString("Name")), compound.getFloat("Value"));
+			}
+		}
 	}
 	
 	public void tick(Level worldIn)
 	{
+		if(!this.thePlayer.isAlive())
+			return;
+		
+		if(worldIn.isClientSide())
+			tickClient(worldIn);
+		else
+			tickServer(worldIn);
+	}
+	
+	private void tickClient(Level worldIn)
+	{
+		if(isALich())
+		{
+			/** Increment all limb values towards their targets */
+			for(EnumBodyPart limb : EnumBodyPart.values())
+			{
+				float decay = skinDecayOld.getOrDefault(limb, 0F);
+				float target = skinDecay.getOrDefault(limb, 0F);
+				
+				if(decay != target)
+				{
+					float sep = (target - decay);
+					skinDecayOld.put(limb, decay + (float)(Math.min(1F / Reference.Values.TICKS_PER_SECOND, Math.abs(sep)) * Math.signum(sep)));
+				}
+			}
+		}
+	}
+	
+	private void tickServer(Level worldIn)
+	{
 		if(++tickCounter % Reference.Values.TICKS_PER_SECOND > 0)
 			return;
 		
-		if(this.thePlayer.isAlive() && !worldIn.isClientSide())
+		if(this.diedToCurruisis)
 		{
-			if(this.diedToCurruisis)
+			ameliorateCurruisis(this.thePlayer.getRandom());
+			this.diedToCurruisis = false;
+		}
+		else if(isFullyCurruided() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION) && !isALich())
+		{
+			BlockPos feetPos = this.thePlayer.blockPosition();
+			BlockPos headPos = new BlockPos(feetPos.getX(), this.thePlayer.getEyeY(), feetPos.getZ());
+			if(worldIn.getBlockState(feetPos).canBeReplaced(Fluids.FLOWING_WATER) && worldIn.getBlockState(headPos).canBeReplaced(Fluids.FLOWING_WATER))
 			{
-				ameliorateCurruisis(this.thePlayer.getRandom());
-				this.diedToCurruisis = false;
-			}
-			else if(isFullyCurruided() && !this.thePlayer.isInvulnerableTo(CMDamageSource.PETRIFICATION) && !isALich())
-			{
-				BlockPos feetPos = this.thePlayer.blockPosition();
-				BlockPos headPos = new BlockPos(feetPos.getX(), this.thePlayer.getEyeY(), feetPos.getZ());
-				if(worldIn.getBlockState(feetPos).canBeReplaced(Fluids.FLOWING_WATER) && worldIn.getBlockState(headPos).canBeReplaced(Fluids.FLOWING_WATER))
-				{
-					worldIn.setBlockAndUpdate(feetPos, CMBlocks.STATUE.get().defaultBlockState());
-					worldIn.setBlockAndUpdate(headPos, CMBlocks.STATUE.get().defaultBlockState().cycle(Statue.HALF));
-				}
-				
-				this.thePlayer.hurt(CMDamageSource.PETRIFICATION, Float.MAX_VALUE);
+				worldIn.setBlockAndUpdate(feetPos, CMBlocks.STATUE.get().defaultBlockState());
+				worldIn.setBlockAndUpdate(headPos, CMBlocks.STATUE.get().defaultBlockState().cycle(Statue.HALF));
 			}
 			
-			if(isALich())
-				LivingData.trySpendManaFrom(thePlayer, 1F);
+			this.thePlayer.hurt(CMDamageSource.PETRIFICATION, Float.MAX_VALUE);
 		}
+		
+		if(isALich())
+		{
+			LivingData.trySpendManaFrom(thePlayer, 1F);
+			
+			/** If the player is at full health, reset all decay targets */
+			if(thePlayer.getHealth() >= thePlayer.getAttributeValue(Attributes.MAX_HEALTH))
+			{
+				if(!skinDecay.isEmpty())
+				{
+					skinDecay.clear();
+					markDirty();
+				}
+			}
+			else
+			{
+				/**
+				 * Calculate total decay displayed
+				 * Compare to player's current health within range of 1 to max health
+				 * 
+				 * If higher: Reduce decay
+				 * If lower: Increase decay
+				 */
+				
+				/** Total damage represented by decay */
+				float totalDecay = 0F;
+				for(Float val : this.skinDecay.values())
+					totalDecay += val;
+				
+				/** Player health within margin */
+				float actualDecay = Math.max(0F, (float)thePlayer.getAttributeValue(Attributes.MAX_HEALTH) - (thePlayer.getHealth() + 1));
+				
+				if(actualDecay != totalDecay)
+				{
+					attemptDecay(Math.signum(actualDecay - totalDecay), RandomSource.create());
+					markDirty();
+				}
+			}
+		}
+	}
+	
+	private void attemptDecay(float amount, RandomSource rand)
+	{
+		/** If amount is zero, no changes need to be made */
+		if(amount == 0F)
+			return;
+		
+		for(EnumBodyPart limb : skinDecay.keySet())
+			amount = decayLimb(limb, amount, rand);
+		
+		/** Spread damage to additional limbs if necessary */
+		if(amount > 0F && skinDecay.size() < EnumBodyPart.values().length)
+		{
+			EnumSet<EnumBodyPart> options = skinDecay.isEmpty() ? EnumSet.allOf(EnumBodyPart.class) : EnumSet.noneOf(EnumBodyPart.class);
+			
+			if(!skinDecay.isEmpty())
+			{
+				Collection<EnumBodyPart> existing = skinDecay.keySet();
+				for(EnumBodyPart limb : existing)
+					options.addAll(limb.getPotentialSpread());
+				existing.forEach((limb) -> options.remove(limb));
+			}
+			
+			if(!options.isEmpty())
+			{
+				EnumBodyPart limb = options.toArray(new EnumBodyPart[0])[rand.nextInt(options.size())]; 
+				amount = decayLimb(limb, amount, rand);
+			}
+		}
+		
+		/** If amount has not been expended, repeat process until it has been */
+		if(amount != 0F)
+			attemptDecay(amount, rand);
+	}
+	
+	private float decayLimb(EnumBodyPart limb, float amount, RandomSource rand)
+	{
+		float current = skinDecay.getOrDefault(limb, 0F);
+		if(current == 0F && amount < 0)
+			return amount;
+		else if(current == HEALTH_PER_LIMB && amount > 0F)
+			return amount;
+		
+		float add = Mth.clamp(amount * rand.nextFloat(), -current, HEALTH_PER_LIMB - current);
+		skinDecay.put(limb, current + add);
+		
+		return amount - add;
 	}
 	
 	public boolean hasCurruisis() { return !this.curruisisMap.isEmpty(); }
@@ -269,6 +412,11 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	{
 		if(!this.thePlayer.getLevel().isClientSide())
 			PacketHandler.sendToAll((ServerLevel)this.thePlayer.getLevel(), new PacketSyncPlayerData(this.thePlayer.getUUID(), this.serializeNBT()));
+	}
+	
+	public float getSkinDecay(EnumBodyPart limb)
+	{
+		return Mth.clamp(this.skinDecayOld.getOrDefault(limb, 0F) / HEALTH_PER_LIMB, 0F, 1F);
 	}
 	
 	public static enum EnumBodyPart implements StringRepresentable
