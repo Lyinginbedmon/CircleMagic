@@ -23,7 +23,7 @@ public class LichModel<T extends LivingEntity> extends HumanoidModel<T>
 	{
 		MeshDefinition mesh = new MeshDefinition();
 		PartDefinition parts = mesh.getRoot();
-		float rescale = -0.01F;
+		float rescale = 0.01F;
 		CubeDeformation partScale = new CubeDeformation(-rescale);
 		parts.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F, partScale), PartPose.offset(0.0F, 0.0F + scale, 0.0F));
 		parts.addOrReplaceChild("hat", CubeListBuilder.create(), PartPose.offset(0.0F, 0.0F + scale, 0.0F));

@@ -13,14 +13,18 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.data.worldgen.features.FeatureUtils;
+import net.minecraft.data.worldgen.placement.PlacementUtils;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.LevelSimulatedReader;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.BlobFoliagePlacer;
@@ -28,6 +32,11 @@ import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacer.F
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.TrunkPlacerType;
+import net.minecraft.world.level.levelgen.placement.BiomeFilter;
+import net.minecraft.world.level.levelgen.placement.CountPlacement;
+import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
+import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public class CMWorldEvents
 {
@@ -52,4 +61,12 @@ public class CMWorldEvents
 					BlockStateProvider.simple(Blocks.OAK_LEAVES), 
 					new BlobFoliagePlacer(ConstantInt.of(1), ConstantInt.of(0), 0), 
 					new TwoLayersFeatureSize(0, 0, 0)).build());
+	
+	public static ResourceLocation STATUES_ID = new ResourceLocation(Reference.ModInfo.MOD_ID, "ancient_statue");
+	public static Holder<ConfiguredFeature<NoneFeatureConfiguration, ?>> STATUES = FeatureUtils.register(Reference.ModInfo.MOD_ID+":curruid_statue", new OldStatueFeature());
+	
+	public static Holder<PlacedFeature> OLD_STATUE = PlacementUtils.register(
+			STATUES_ID.toString(), 
+			STATUES, 
+			List.of(CountPlacement.of(10), InSquarePlacement.spread(), HeightRangePlacement.uniform(VerticalAnchor.aboveBottom(20), VerticalAnchor.top()), BiomeFilter.biome()));
 }

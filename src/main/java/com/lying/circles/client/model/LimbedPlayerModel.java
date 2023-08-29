@@ -25,9 +25,12 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 	
 	public void hideOtherLimbs()
 	{
+		this.hat.visible = this.jacket.visible = this.rightSleeve.visible = this.leftSleeve.visible = this.rightPants.visible = this.leftPants.visible = false;
+		
 		switch(limb)
 		{
 			case HEAD:
+				this.head.visible = true;
 				this.body.visible = this.jacket.visible = false;
 				this.leftLeg.visible = this.leftPants.visible = false;
 				this.rightLeg.visible = this.rightPants.visible = false;
@@ -35,6 +38,7 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 				this.rightArm.visible = this.rightSleeve.visible = false;
 				break;
 			case LEFT_ARM:
+				this.leftArm.visible = true;
 				this.head.visible = this.hat.visible = false;
 				this.body.visible = this.jacket.visible = false;
 				this.leftLeg.visible = this.leftPants.visible = false;
@@ -42,6 +46,7 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 				this.rightArm.visible = this.rightSleeve.visible = false;
 				break;
 			case LEFT_LEG:
+				this.leftLeg.visible = true;
 				this.head.visible = this.hat.visible = false;
 				this.body.visible = this.jacket.visible = false;
 				this.rightLeg.visible = this.rightPants.visible = false;
@@ -49,6 +54,7 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 				this.rightArm.visible = this.rightSleeve.visible = false;
 				break;
 			case RIGHT_ARM:
+				this.rightArm.visible = true;
 				this.head.visible = this.hat.visible = false;
 				this.body.visible = this.jacket.visible = false;
 				this.leftLeg.visible = this.leftPants.visible = false;
@@ -56,6 +62,7 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 				this.leftArm.visible = this.leftSleeve.visible = false;
 				break;
 			case RIGHT_LEG:
+				this.rightLeg.visible = true;
 				this.head.visible = this.hat.visible = false;
 				this.body.visible = this.jacket.visible = false;
 				this.leftLeg.visible = this.leftPants.visible = false;
@@ -63,6 +70,7 @@ public class LimbedPlayerModel<T extends LivingEntity> extends PlayerModel<T>
 				this.rightArm.visible = this.rightSleeve.visible = false;
 				break;
 			case TORSO:
+				this.body.visible = true;
 				this.head.visible = this.hat.visible = false;
 				this.leftLeg.visible = this.leftPants.visible = false;
 				this.rightLeg.visible = this.rightPants.visible = false;

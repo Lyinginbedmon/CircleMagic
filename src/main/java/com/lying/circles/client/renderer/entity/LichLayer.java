@@ -28,14 +28,14 @@ import net.minecraft.world.entity.player.Player;
 
 public class LichLayer<T extends Player, M extends HumanoidModel<T>> extends RenderLayer<T, M>
 {
-	private static final ResourceLocation ENERGY_TEX = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/lich.png");
+	private static final ResourceLocation LICH_TEX = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/lich.png");
+	private static final ResourceLocation ENERGY_TEX = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/lich_energy.png");
 	private static final ResourceLocation SKULL_TEX = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/lich_skull.png");
 	private static final ResourceLocation DECAY_TEX = new ResourceLocation(Reference.ModInfo.MOD_ID, "textures/entity/lich_decay.png");
 	private static final RenderType DECAY_TYPE = RenderType.dragonExplosionAlpha(DECAY_TEX);
 	private final LichModel<T> glowModel;
 	private final LichSkullModel skullModel;
 	
-	// FIXME Skin layer glowing in the dark
 	// FIXME Fix transparent pixels in player skin displaying as opaque white
 	
 	private final Map<Boolean, Map<EnumBodyPart, LimbedPlayerModel<T>>> limbMap = new HashMap<>();
@@ -93,7 +93,7 @@ public class LichLayer<T extends Player, M extends HumanoidModel<T>> extends Ren
 			VertexConsumer decayAlpha = bufferSource.getBuffer(DECAY_TYPE);
 			model.renderToBuffer(matrixStack, decayAlpha, packedLight, OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, decayVolume);
 			
-			VertexConsumer decal = bufferSource.getBuffer(RenderType.entityDecal(getTextureLocation(player)));
+			VertexConsumer decal = bufferSource.getBuffer(RenderType.entityDecal(LICH_TEX));
 			model.renderToBuffer(matrixStack, decal, packedLight, OverlayTexture.pack(0F, hurt), 1F, 1F, 1F, 1F);
 		matrixStack.popPose();
 	}
