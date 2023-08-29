@@ -173,6 +173,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 				if(decay != target)
 				{
 					float sep = (target - decay);
+					
+					
 					skinDecayOld.put(limb, decay + (float)(Math.min(1F / Reference.Values.TICKS_PER_SECOND, Math.abs(sep)) * Math.signum(sep)));
 				}
 			}
@@ -260,7 +262,8 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 			{
 				Collection<EnumBodyPart> existing = skinDecay.keySet();
 				for(EnumBodyPart limb : existing)
-					options.addAll(limb.getPotentialSpread());
+					if(skinDecay.get(limb) >= 0.6F)
+						options.addAll(limb.getPotentialSpread());
 				existing.forEach((limb) -> options.remove(limb));
 			}
 			
@@ -286,7 +289,6 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 		
 		float add = Mth.clamp(amount * rand.nextFloat(), -current, HEALTH_PER_LIMB - current);
 		skinDecay.put(limb, current + add);
-		
 		return amount - add;
 	}
 	
@@ -416,7 +418,16 @@ public class PlayerData implements ICapabilitySerializable<CompoundTag>
 	
 	public float getSkinDecay(EnumBodyPart limb)
 	{
-		return Mth.clamp(this.skinDecayOld.getOrDefault(limb, 0F) / HEALTH_PER_LIMB, 0F, 1F);
+		float decay = Mth.clamp(this.skinDecayOld.getOrDefault(limb, 0F) / HEALTH_PER_LIMB, 0F, 1F); 
+		return (float)(int)(decay * 10F) / 10F;
+	}
+	
+	public boolean hasSkinDecay()
+	{
+		for(EnumBodyPart limb : EnumBodyPart.values())
+			if(getSkinDecay(limb) > 0F)
+				return true;
+		return false;
 	}
 	
 	public static enum EnumBodyPart implements StringRepresentable

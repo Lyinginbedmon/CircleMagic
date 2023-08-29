@@ -1,17 +1,22 @@
 package com.lying.circles.client.renderer.entity;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.lying.circles.capabilities.PlayerData;
 import com.lying.circles.capabilities.PlayerData.EnumBodyPart;
 import com.lying.circles.client.model.LichModel;
 import com.lying.circles.client.model.LichSkullModel;
+import com.lying.circles.client.model.LimbedPlayerModel;
 import com.lying.circles.client.renderer.CMModelLayers;
 import com.lying.circles.reference.Reference;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
@@ -20,7 +25,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.PlayerModelPart;
 
 public class LichLayer<T extends Player, M extends HumanoidModel<T>> extends RenderLayer<T, M>
 {
@@ -31,117 +35,77 @@ public class LichLayer<T extends Player, M extends HumanoidModel<T>> extends Ren
 	private final LichModel<T> glowModel;
 	private final LichSkullModel skullModel;
 	
-	// FIXME Individual limb decay rendering
 	// FIXME Skin layer glowing in the dark
+	// FIXME Fix transparent pixels in player skin displaying as opaque white
 	
-//	private static final Function<ResourceLocation, RenderType> DECAY_SHARD = Util.memoize((texture) -> {
-//	      RenderType.CompositeState composite = 
-//	    		  RenderType.CompositeState.builder()
-//	    		  .setShaderState(RenderType.RENDERTYPE_ENTITY_ALPHA_SHADER)
-//	    		  .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
-//	    		  .setCullState(RenderType.NO_CULL).createCompositeState(true);
-//	      return RenderType.create("entity_alpha", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, composite);
-//	   });
-//	private static final RenderType DECAY_TYPE = DECAY_SHARD.apply(DECAY_TEX);
+	private final Map<Boolean, Map<EnumBodyPart, LimbedPlayerModel<T>>> limbMap = new HashMap<>();
 	
 	public LichLayer(RenderLayerParent<T, M> parent, EntityModelSet modelSet)
 	{
 		super(parent);
 		this.glowModel = new LichModel<T>(modelSet.bakeLayer(CMModelLayers.LICH));
 		this.skullModel = new LichSkullModel(modelSet.bakeLayer(CMModelLayers.LICH_SKULL));
+		
+		Map<EnumBodyPart, LimbedPlayerModel<T>> slimLimbs = new HashMap<>();
+		Map<EnumBodyPart, LimbedPlayerModel<T>> normLimbs = new HashMap<>();
+		for(EnumBodyPart limb : EnumBodyPart.values())
+		{
+			slimLimbs.put(limb, new LimbedPlayerModel<T>(modelSet.bakeLayer(ModelLayers.PLAYER_SLIM), true, limb));
+			normLimbs.put(limb, new LimbedPlayerModel<T>(modelSet.bakeLayer(ModelLayers.PLAYER), false, limb));
+		}
+		limbMap.put(true, slimLimbs);
+		limbMap.put(false, normLimbs);
 	}
 	
 	public void render(PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, T player, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch)
 	{
-		if(!PlayerData.isLich(player))
+		if(!PlayerData.isLich(player) || !PlayerData.getCapability(player).hasSkinDecay())
 			return;
 		
 		renderSkull(matrixStack, bufferSource, 180F, limbSwing, packedLight);
-		renderEnergy(matrixStack, bufferSource, ageInTicks, partialTicks);
-		renderSkin(matrixStack, bufferSource, packedLight, player, partialTicks);
+		renderEnergy(matrixStack, bufferSource, player, ageInTicks, partialTicks);
+		renderSkin(matrixStack, bufferSource, packedLight, player, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
 	}
 	
 	/** Renders the player's skin on top of the energy body */
-	@SuppressWarnings("unchecked")
-	private void renderSkin(PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, T player, float partialTicks)
+	private void renderSkin(PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight, T player, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float partialTicks)
 	{
-		// FIXME Fix transparent pixels in player skin displaying as opaque white
 		PlayerData playerData = PlayerData.getCapability(player);
-		System.out.println("Rendering limb decay");
 		matrixStack.pushPose();
-			PlayerModel<T> model = (PlayerModel<T>)getParentModel();
 			boolean flag = player.hurtTime > 0;
 			for(EnumBodyPart limb : EnumBodyPart.values())
 			{
 				float decayVolume = playerData == null ? 0F : playerData.getSkinDecay(limb);
-				System.out.println("# Decay of "+limb.getSerializedName()+": "+(int)(decayVolume*100F));
-				if(decayVolume < 1F)
-					renderDecayedLimb(model, limb, decayVolume, flag, player, matrixStack, bufferSource, packedLight);
+				if(decayVolume < 1F && decayVolume > 0F)
+					renderDecayedLimb(limb, decayVolume, flag, player, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, partialTicks, matrixStack, bufferSource, packedLight);
 			}
 		matrixStack.popPose();
 	}
 	
-	private void renderDecayedLimb(PlayerModel<T> model, EnumBodyPart limb, float decayVolume, boolean hurt, T player, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight)
+	private void renderDecayedLimb(EnumBodyPart limb, float decayVolume, boolean hurt, T player, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource, int packedLight)
 	{
 		matrixStack.pushPose();
-			if(decayVolume <= 0F)
-			{
-				prepareModel(model, limb, player);
-				VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutout(getTextureLocation(player)));
-				model.renderToBuffer(matrixStack, consumer, packedLight, OverlayTexture.pack(0F, hurt), 1F, 1F, 1F, 1F);
-			}
-			else
-			{
-				model.setAllVisible(true);
-				VertexConsumer decayAlpha = bufferSource.getBuffer(DECAY_TYPE);
-				model.renderToBuffer(matrixStack, decayAlpha, packedLight, OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, decayVolume);
-				
-				prepareModel(model, limb, player);
-				VertexConsumer decal = bufferSource.getBuffer(RenderType.entityDecal(getTextureLocation(player)));
-				model.renderToBuffer(matrixStack, decal, packedLight, OverlayTexture.pack(0F, hurt), 1F, 1F, 1F, 1F);
-			}
+			LimbedPlayerModel<T> model = limbMap.get(((AbstractClientPlayer)player).getModelName().equalsIgnoreCase("slim")).get(limb);
+			model.setupAnim(player, limbSwing, limbSwingAmount, ageInTicks + partialTicks, netHeadYaw, headPitch);
+			getParentModel().copyPropertiesTo(model);
+			model.hideOtherLimbs();
+			
+			VertexConsumer decayAlpha = bufferSource.getBuffer(DECAY_TYPE);
+			model.renderToBuffer(matrixStack, decayAlpha, packedLight, OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, decayVolume);
+			
+			VertexConsumer decal = bufferSource.getBuffer(RenderType.entityDecal(getTextureLocation(player)));
+			model.renderToBuffer(matrixStack, decal, packedLight, OverlayTexture.pack(0F, hurt), 1F, 1F, 1F, 1F);
 		matrixStack.popPose();
-	}
-	
-	private void prepareModel(PlayerModel<T> model, EnumBodyPart limb, T player)
-	{
-		model.setAllVisible(false);
-		switch(limb)
-		{
-			case HEAD:
-				model.head.visible = true;
-				model.hat.visible = player.isModelPartShown(PlayerModelPart.HAT);
-				break;
-			case LEFT_ARM:
-				model.leftArm.visible = true;
-				model.leftSleeve.visible = player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE);
-				break;
-			case LEFT_LEG:
-				model.leftLeg.visible = true;
-				model.leftPants.visible = player.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG);
-				break;
-			case RIGHT_ARM:
-				model.rightArm.visible = true;
-				model.rightSleeve.visible = player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE);
-				break;
-			case RIGHT_LEG:
-				model.rightLeg.visible = true;
-				model.rightPants.visible = player.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG);
-				break;
-			case TORSO:
-				model.body.visible = true;
-				model.jacket.visible = player.isModelPartShown(PlayerModelPart.JACKET);
-				break;
-		}
 	}
 	
 	/** Renders a body of swirling energy */
-	private void renderEnergy(PoseStack matrixStack, MultiBufferSource bufferSource, float ageInTicks, float partialTicks)
+	private void renderEnergy(PoseStack matrixStack, MultiBufferSource bufferSource, T player, float ageInTicks, float partialTicks)
 	{
 		matrixStack.pushPose();
+			getParentModel().copyPropertiesTo(this.glowModel);
 			float time = ageInTicks + partialTicks;
 			VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.energySwirl(ENERGY_TEX, xOffset(time) % 1F, time * 0.01F % 1F));
-			this.getParentModel().copyPropertiesTo(this.glowModel);
+			this.glowModel.prepareModel(PlayerData.getCapability(player));
 			this.glowModel.renderToBuffer(matrixStack, vertexconsumer, 15728640, OverlayTexture.NO_OVERLAY, 0.5F, 0.5F, 0.5F, 1.0F);
 		matrixStack.popPose();
 	}
